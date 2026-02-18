@@ -48,8 +48,8 @@ defined('BASEPATH') OR exit('No direct script access allowed');
 
 */
 
-$config['base_url'] = 'https://fitcket.com/';
-
+$config['base_url'] = 'http://localhost/kaushik_php/ci_project/fitcket-new';
+/* https://fitcket.com/ */
 
 
 /*

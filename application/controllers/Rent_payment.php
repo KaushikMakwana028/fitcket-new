@@ -20,6 +20,7 @@ class Rent_payment extends User_Controller
         $this->razorpay_key_id = 'rzp_live_RCge2Oz6kUJE74';
         $this->razorpay_key_secret = 'Pw0gRqzQkzjl5pYW10pXXZeq';
         $this->api = new Api($this->razorpay_key_id, $this->razorpay_key_secret);
+        $this->load->model('General_model');
 //         echo date('h:i A'); // 12-hour format → 07:50 PM
 // echo date('H:i'); 
 // die;

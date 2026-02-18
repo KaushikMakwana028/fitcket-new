@@ -1,4 +1,3 @@
-
 <style>
     :root {
         --primary-color: #6c5ce7;
@@ -588,147 +587,186 @@
     .contact-icon:hover {
         transform: scale(1.1) rotate(5deg);
     }
+
     /* Review Card Styles */
-        .review-card {
-            background: #fff;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 20px;
-            margin-bottom: 15px;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
+    .review-card {
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
 
-        .review-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            transform: translateY(-2px);
-        }
+    .review-card:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: translateY(-2px);
+    }
 
+    .review-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .reviewer-name {
+        font-weight: 600;
+        color: #333;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .reviewer-name i {
+        color: #007bff;
+        font-size: 1.2rem;
+    }
+
+    .review-stars {
+        color: #ffc107;
+        font-size: 1rem;
+    }
+
+    .review-stars i {
+        margin: 0 2px;
+    }
+
+    .review-text {
+        color: #555;
+        line-height: 1.6;
+        margin: 0;
+        word-wrap: break-word;
+    }
+
+    .review-date {
+        color: #999;
+        font-size: 0.85rem;
+        margin-top: 10px;
+        display: block;
+    }
+
+    /* Star Rating Input Styles */
+    .star-rating-input {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .star-rating-input label {
+        cursor: pointer;
+        color: #ffc107;
+        font-weight: 500;
+    }
+
+    /* Scroll Container */
+    .reviews-scroll-container {
+        padding-right: 10px;
+        max-height: 600px;
+        overflow-y: auto;
+    }
+
+    .reviews-scroll-container::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .reviews-scroll-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+
+    .reviews-scroll-container::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+
+    .reviews-scroll-container::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    /* =============== Certificate Btn ==================== */
+
+    .certificate-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 50px;
+        text-decoration: none;
+        color: #fff;
+        background: var(--gradient-primary);
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .certificate-btn i {
+        font-size: 14px;
+        transition: transform 0.3s ease;
+    }
+
+    .certificate-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+        color: #fff;
+    }
+
+    .certificate-btn:hover i {
+        transform: translateX(3px);
+    }
+
+    .certificate-btn:active {
+        transform: scale(0.96);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
         .review-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            flex-wrap: wrap;
-            gap: 10px;
+            flex-direction: column;
+            align-items: flex-start;
         }
 
+        .review-card {
+            padding: 15px;
+        }
+
+        .reviews-scroll-container {
+            max-height: 500px !important;
+        }
+    }
+
+    @media (max-width: 576px) {
         .reviewer-name {
-            font-weight: 600;
-            color: #333;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .reviewer-name i {
-            color: #007bff;
-            font-size: 1.2rem;
+            font-size: 0.95rem;
         }
 
         .review-stars {
-            color: #ffc107;
-            font-size: 1rem;
-        }
-
-        .review-stars i {
-            margin: 0 2px;
+            font-size: 0.9rem;
         }
 
         .review-text {
-            color: #555;
-            line-height: 1.6;
-            margin: 0;
-            word-wrap: break-word;
+            font-size: 0.9rem;
         }
 
-        .review-date {
-            color: #999;
-            font-size: 0.85rem;
-            margin-top: 10px;
-            display: block;
-        }
-
-        /* Star Rating Input Styles */
-        .star-rating-input {
-            display: flex;
-            flex-wrap: wrap;
+        .header-section {
+            flex-direction: column !important;
             gap: 10px;
         }
 
-        .star-rating-input label {
-            cursor: pointer;
-            color: #ffc107;
-            font-weight: 500;
+        .header-section .btn {
+            width: 100%;
         }
-
-        /* Scroll Container */
-        .reviews-scroll-container {
-            padding-right: 10px;
-            max-height: 600px;
-            overflow-y: auto;
-        }
-
-        .reviews-scroll-container::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .reviews-scroll-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 10px;
-        }
-
-        .reviews-scroll-container::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 10px;
-        }
-
-        .reviews-scroll-container::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .review-header {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .review-card {
-                padding: 15px;
-            }
-            
-            .reviews-scroll-container {
-                max-height: 500px !important;
-            }
-        }
-
-        @media (max-width: 576px) {
-            .reviewer-name {
-                font-size: 0.95rem;
-            }
-            
-            .review-stars {
-                font-size: 0.9rem;
-            }
-            
-            .review-text {
-                font-size: 0.9rem;
-            }
-            
-            .header-section {
-                flex-direction: column !important;
-                gap: 10px;
-            }
-            
-            .header-section .btn {
-                width: 100%;
-            }
-        }
+    }
 
     /* ========== NEW SECTIONS STYLES ========== */
-    
+
     /* Gallery Styles */
     .gallery-grid {
         display: grid;
@@ -769,7 +807,7 @@
         left: 0;
         right: 0;
         bottom: 0;
-        background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.7) 100%);
+        background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
         opacity: 0;
         transition: var(--transition);
         z-index: 1;
@@ -1048,28 +1086,28 @@
                     <a href="#about" class="text-primary fw-bold small d-inline-block" onclick="openAboutTab()">Read
                         More</a>
 
-                   <!-- Expertise Tags -->
-<?php
-$tags = [];
-if (isset($provider->expertise_tags) && !empty($provider->expertise_tags)) {
-    $tags = explode(',', $provider->expertise_tags);
-}
-?>
+                    <!-- Expertise Tags -->
+                    <?php
+                    $tags = [];
+                    if (isset($provider->expertise_tags) && !empty($provider->expertise_tags)) {
+                        $tags = explode(',', $provider->expertise_tags);
+                    }
+                    ?>
 
-<div class="mt-3">
-    <h6 class="fw-bold mb-2">Expertise</h6>
-    <div class="d-flex flex-wrap gap-2">
-        <?php if (!empty($tags)): ?>
-            <?php foreach ($tags as $tag): ?>
-                <span class="badge rounded-pill bg-light text-primary border px-3 py-2 fade-in">
-                    <?= htmlspecialchars(trim($tag)); ?>
-                </span>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <span class="text-muted">No expertise added</span>
-        <?php endif; ?>
-    </div>
-</div>
+                    <div class="mt-3">
+                        <h6 class="fw-bold mb-2">Expertise</h6>
+                        <div class="d-flex flex-wrap gap-2">
+                            <?php if (!empty($tags)): ?>
+                                <?php foreach ($tags as $tag): ?>
+                                    <span class="badge rounded-pill bg-light text-primary border px-3 py-2 fade-in">
+                                        <?= htmlspecialchars(trim($tag)); ?>
+                                    </span>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <span class="text-muted">No expertise added</span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
 
                 </div>
             </div>
@@ -1171,16 +1209,16 @@ if (isset($provider->expertise_tags) && !empty($provider->expertise_tags)) {
                                         class="text-muted">/month</small>
                                 </label>
 
-                              <?php 
-$yearPrice = is_numeric($provider->year_price) ? (float)$provider->year_price : 0;
-?>
-<label class="list-group-item">
-    <input class="form-check-input me-2" type="radio" name="priceOption"
-        data-price="<?= $yearPrice; ?>" data-label="Year">
-    <i class="fa fa-calendar me-2 text-primary"></i>
-    ₹<?= $yearPrice > 0 ? number_format($yearPrice, 2) : 'N/A'; ?>
-    <small class="text-muted">/year</small>
-</label>
+                                <?php
+                                $yearPrice = is_numeric($provider->year_price) ? (float)$provider->year_price : 0;
+                                ?>
+                                <label class="list-group-item">
+                                    <input class="form-check-input me-2" type="radio" name="priceOption"
+                                        data-price="<?= $yearPrice; ?>" data-label="Year">
+                                    <i class="fa fa-calendar me-2 text-primary"></i>
+                                    ₹<?= $yearPrice > 0 ? number_format($yearPrice, 2) : 'N/A'; ?>
+                                    <small class="text-muted">/year</small>
+                                </label>
                             <?php endif; ?>
                         </div>
 
@@ -1275,7 +1313,7 @@ $yearPrice = is_numeric($provider->year_price) ? (float)$provider->year_price : 
                 <!-- About -->
                 <div class="tab-pane fade" id="about" role="tabpanel" aria-labelledby="about-tab">
                     <div class="container py-4">
-                      
+
 
                         <!-- Service Type -->
                         <div class="row mb-4">
@@ -1286,16 +1324,31 @@ $yearPrice = is_numeric($provider->year_price) ? (float)$provider->year_price : 
                                             <i class="fa fa-server me-2 text-primary"></i>Service Types Available
                                         </h5>
                                         <div class="service-type-container">
-                                            <div class="service-type-badge online">
-                                                <i class="fa fa-wifi"></i>
-                                                <h5>Online</h5>
-                                                <p>Live video classes & personalized training</p>
-                                            </div>
-                                            <div class="service-type-badge offline">
-                                                <i class="fa fa-building"></i>
-                                                <h5>Offline</h5>
-                                                <p>Visit our facility for hands-on experience</p>
-                                            </div>
+
+                                            <?php if (!empty($provider->service_type)) : ?>
+
+                                                <?php if ($provider->service_type == 'online' || $provider->service_type == 'both') : ?>
+                                                    <div class="service-type-badge online">
+                                                        <i class="fa fa-wifi"></i>
+                                                        <h5>Online</h5>
+                                                        <p>Live video classes & personalized training</p>
+                                                    </div>
+                                                <?php endif; ?>
+
+                                                <?php if ($provider->service_type == 'offline' || $provider->service_type == 'both') : ?>
+                                                    <div class="service-type-badge offline">
+                                                        <i class="fa fa-building"></i>
+                                                        <h5>Offline</h5>
+                                                        <p>Visit our facility for hands-on experience</p>
+                                                    </div>
+                                                <?php endif; ?>
+
+                                            <?php else : ?>
+
+                                                <p class="text-danger fw-bold text-align-center text-center w-100">
+                                                    Services Type not Specified.
+                                                </p>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </div>
@@ -1307,33 +1360,56 @@ $yearPrice = is_numeric($provider->year_price) ? (float)$provider->year_price : 
                             <div class="col-12">
                                 <div class="card shadow-sm border-0 fade-in">
                                     <div class="card-body">
+
+                                        <!-- Languages -->
                                         <h5 class="fw-bold mb-3">
-                                            <i class="fa fa-language me-2 text-primary"></i>Languages Spoken
+                                            <i class="fa fa-language me-2 text-primary"></i>
+                                            Languages Spoken
                                         </h5>
+
                                         <div class="d-flex flex-wrap gap-3">
-                                            <div class="language-chip">
-                                                <i class="fa fa-globe"></i>
-                                                <span>English</span>
-                                            </div>
-                                            <div class="language-chip">
-                                                <i class="fa fa-globe"></i>
-                                                <span>Hindi</span>
-                                            </div>
-                                            <div class="language-chip">
-                                                <i class="fa fa-globe"></i>
-                                                <span>Marathi</span>
-                                            </div>
+
+                                            <?php if (!empty($provider->language)) : ?>
+
+                                                <?php
+                                                $languages = explode(',', $provider->language);
+                                                foreach ($languages as $lang) :
+                                                ?>
+
+                                                    <div class="language-chip">
+                                                        <i class="fa fa-globe"></i>
+                                                        <span><?= htmlspecialchars(trim($lang)) ?></span>
+                                                    </div>
+
+                                                <?php endforeach; ?>
+
+                                            <?php else : ?>
+
+                                                <span class="text-danger fw-bold w-100 text-center">
+                                                    Language Not Specified.
+                                                </span>
+
+                                            <?php endif; ?>
+
                                         </div>
-                                        <h5 class="fw-bold mb-3">
-                                            <i class="fa fa-language me-2 text-primary"></i>Hand On Experience
+
+                                        <!-- Experience -->
+                                        <h5 class="fw-bold mt-4 mb-3">
+                                            <i class="fa fa-briefcase me-2 text-primary"></i>
+                                            Hand On Experience
                                         </h5>
+
                                         <div class="d-flex flex-wrap gap-3">
+
                                             <div class="language-chip">
-                                                <i class="fa fa-globe"></i>
-                                                <span>5+ Years</span>
+                                                <i class="fa fa-clock"></i>
+                                                <span>
+                                                    <?= !empty($provider->exp) ? $provider->exp . '' : 'Experience not specified' ?>
+                                                </span>
                                             </div>
-                                            
+
                                         </div>
+
                                     </div>
                                 </div>
                             </div>
@@ -1396,14 +1472,13 @@ $yearPrice = is_numeric($provider->year_price) ? (float)$provider->year_price : 
                                     </div>
                                     <div class="card-footer p-0 map-container">
                                         <!-- Clickable Static Map -->
-                                        <img 
+                                        <img
                                             src="https://maps.googleapis.com/maps/api/staticmap?center=<?= urlencode($provider->address); ?>&zoom=15&size=400x200&markers=color:red%7C<?= $provider->latitude; ?>,<?= $provider->longitude; ?>&key=AIzaSyAR5-9XtV0r0VyR7uu0ppEKhNHanKlGwWk"
                                             class="img-fluid w-100 rounded-bottom map-image"
                                             alt="Map of <?= $provider->address; ?>"
                                             data-gym-lat="<?= $provider->latitude; ?>"
                                             data-gym-lng="<?= $provider->longitude; ?>"
-                                            style="cursor:pointer;"
-                                        >
+                                            style="cursor:pointer;">
                                     </div>
                                 </div>
                             </div>
@@ -1484,11 +1559,10 @@ $yearPrice = is_numeric($provider->year_price) ? (float)$provider->year_price : 
                                     <?php if (isset($this->user['id']) && isset($provider->id)) : ?>
                                         <?php if ($can_add_review): ?>
                                             <button class="btn btn-primary"
-                                                    id="openReviewModal"
-                                                    data-user="<?= $this->user['id']; ?>"
-                                                    data-bs-toggle="modal"
-                                                    data-bs-target="#addReviewModal"
-                                                    >
+                                                id="openReviewModal"
+                                                data-user="<?= $this->user['id']; ?>"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#addReviewModal">
                                                 <i class="fa fa-plus me-2"></i>Add Review
                                             </button>
                                         <?php endif; ?>
@@ -1545,25 +1619,25 @@ $yearPrice = is_numeric($provider->year_price) ? (float)$provider->year_price : 
                                     <i class="fa fa-images me-2 text-primary"></i>Photo Gallery
                                 </h5>
                                 <div class="gallery-grid">
-                                    <!-- Sample Images - Replace with dynamic PHP -->
-                                    <div class="gallery-item fade-in">
-                                        <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=500" alt="Gym Image 1">
-                                    </div>
-                                    <div class="gallery-item fade-in">
-                                        <img src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=500" alt="Gym Image 2">
-                                    </div>
-                                    <div class="gallery-item fade-in">
-                                        <img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500" alt="Gym Image 3">
-                                    </div>
-                                    <div class="gallery-item fade-in">
-                                        <img src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=500" alt="Gym Image 4">
-                                    </div>
-                                    <div class="gallery-item fade-in">
-                                        <img src="https://images.unsplash.com/photo-1593476087123-36d1de271f08?w=500" alt="Gym Image 5">
-                                    </div>
-                                    <div class="gallery-item fade-in">
-                                        <img src="https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=500" alt="Gym Image 6">
-                                    </div>
+
+                                    <?php if (!empty($gallery_images)) : ?>
+
+                                        <?php foreach ($gallery_images as $image) : ?>
+
+                                            <div class="gallery-item fade-in">
+                                                <img src="<?= base_url($image->image) ?>"
+                                                    alt="Gallery Image"
+                                                    class="img-fluid rounded">
+                                            </div>
+
+                                        <?php endforeach; ?>
+
+                                    <?php else : ?>
+                                        <p class="text-danger fw-bold text-align-center text-center w-100">
+                                            No Gallery Image Uploaded yet.
+                                        </p>
+                                    <?php endif; ?>
+
                                 </div>
                             </div>
                         </div>
@@ -1579,48 +1653,54 @@ $yearPrice = is_numeric($provider->year_price) ? (float)$provider->year_price : 
                                     <i class="fa fa-certificate me-2 text-primary"></i>Certifications & Achievements
                                 </h5>
                                 <div class="row g-3">
-                                    <!-- Sample Certifications - Replace with dynamic PHP -->
-                                    <div class="col-md-6">
-                                        <div class="certification-card fade-in">
-                                            <h6 class="certification-title">Certified Personal Trainer</h6>
-                                            <p class="certification-issuer">
-                                                <i class="fa fa-building me-2"></i>American Council on Exercise (ACE)
-                                            </p>
-                                            <span class="certification-year">2019</span>
+
+                                    <?php if (!empty($certifications)) : ?>
+                                        <?php foreach ($certifications as $cert) : ?>
+
+                                            <div class="col-md-6">
+                                                <div class="certification-card fade-in">
+                                                    <h6 class="certification-title">
+                                                        <?= htmlspecialchars($cert->title) ?>
+                                                    </h6>
+                                                    <p class="certification-issuer">
+                                                        <i class="fa fa-map-marker-alt me-2"></i>
+                                                        <?= htmlspecialchars($provider->address ?? 'Address Not Available') ?>
+                                                    </p>
+
+                                                    <?php if (!empty($cert->image_path)) : ?>
+
+                                                        <p class="certification-year">
+                                                            <a href="<?= base_url($cert->image_path) ?>" target="_blank" class="certificate-btn">
+                                                                <i class="fa fa-file me-2 text-light"></i>
+                                                                View Certificate
+                                                            </a>
+                                                        </p>
+
+                                                    <?php endif; ?>
+
+                                                    <span class="certification-year">
+                                                        <?= date('Y', strtotime($cert->created_on)) ?>
+                                                    </span>
+
+                                                </div>
+                                            </div>
+
+                                        <?php endforeach; ?>
+
+                                    <?php else : ?>
+
+                                        <div class="col-12 text-danger fw-bold text-align-center text-center">
+                                            No Certifications Uploaded yet.
                                         </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="certification-card fade-in">
-                                            <h6 class="certification-title">Nutrition & Wellness Consultant</h6>
-                                            <p class="certification-issuer">
-                                                <i class="fa fa-building me-2"></i>International Sports Sciences Association
-                                            </p>
-                                            <span class="certification-year">2020</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="certification-card fade-in">
-                                            <h6 class="certification-title">Advanced Strength Training</h6>
-                                            <p class="certification-issuer">
-                                                <i class="fa fa-building me-2"></i>National Academy of Sports Medicine
-                                            </p>
-                                            <span class="certification-year">2021</span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="certification-card fade-in">
-                                            <h6 class="certification-title">Yoga Instructor Level 2</h6>
-                                            <p class="certification-issuer">
-                                                <i class="fa fa-building me-2"></i>Yoga Alliance International
-                                            </p>
-                                            <span class="certification-year">2022</span>
-                                        </div>
-                                    </div>
+
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+
             </div>
         </div>
     </div>
@@ -1646,13 +1726,13 @@ $yearPrice = is_numeric($provider->year_price) ? (float)$provider->year_price : 
                     <div class="mb-3">
                         <label class="form-label fw-bold">Rating <span class="text-danger">*</span></label>
                         <div class="star-rating-input">
-                            <?php for($i=1;$i<=5;$i++): ?>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="rating" value="<?= $i ?>">
-                                <label class="form-check-label">
-                                    <i class="fa fa-star"></i> <?= $i ?>
-                                </label>
-                            </div>
+                            <?php for ($i = 1; $i <= 5; $i++): ?>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="rating" value="<?= $i ?>">
+                                    <label class="form-check-label">
+                                        <i class="fa fa-star"></i> <?= $i ?>
+                                    </label>
+                                </div>
                             <?php endfor; ?>
                         </div>
                     </div>
