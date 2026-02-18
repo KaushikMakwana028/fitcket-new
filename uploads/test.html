@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no,viewport-fit=cover" />
+  <title>Fitcket Live</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    html,body{width:100%;height:100%;background:#000;overflow:hidden;font-family:system-ui,-apple-system,sans-serif}
+    #root{position:relative;width:100vw;height:100vh;background:#000}
+    
+    #mainVideo{
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      z-index:1;
+      background:#111;
+      overflow:hidden;
+    }
+    #mainVideo video,
+    #mainVideo div{
+      width:100%!important;
+      height:100%!important;
+      object-fit:cover!important;
+    }
+    #mainVideo.mirrored video{transform:scaleX(-1)}
+    
+    #pipVideo{
+      position:absolute;
+      bottom:140px;
+      right:16px;
+      width:120px;
+      height:160px;
+      background:#222;
+      border-radius:16px;
+      overflow:hidden;
+      z-index:100;
+      border:3px solid rgba(255,255,255,0.5);
+      display:none;
+      cursor:pointer;
+    }
+    #pipVideo video,
+    #pipVideo div{
+      width:100%!important;
+      height:100%!important;
+      object-fit:cover!important;
+    }
+    #pipVideo.mirrored video{transform:scaleX(-1)}
+    
+    #placeholder{
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      z-index:2;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      background:radial-gradient(circle at 30% 30%,#5e1c73,#1a1a2e 70%,#000);
+      color:#fff;
+      gap:16px;
+      text-align:center;
+      padding:32px;
+    }
+    #placeholder.hidden{display:none!important}
+    #phTitle{font-size:24px;font-weight:900}
+    #phSub{font-size:15px;color:rgba(255,255,255,0.85);line-height:1.6;max-width:320px}
+    
+    #tapToStart{
+      position:absolute;
+      top:0;
+      left:0;
+      width:100%;
+      height:100%;
+      z-index:500;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:rgba(0,0,0,0.85);
+      padding:24px;
+      text-align:center;
+    }
+    #tapCard{
+      width:min(400px,92vw);
+      background:rgba(30,30,40,0.98);
+      border:1px solid rgba(255,255,255,0.2);
+      border-radius:24px;
+      padding:28px;
+      color:#fff;
+    }
+    #tapTitle{font-size:24px;font-weight:900}
+    #tapDesc{margin-top:12px;font-size:15px;color:rgba(255,255,255,0.85);line-height:1.6}
+    
+    #startBtn{
+      margin-top:16px;
+      width:100%;
+      padding:20px;
+      border-radius:16px;
+      border:0;
+      background:#10B981;
+      color:#fff;
+      font-weight:900;
+      font-size:18px;
+      cursor:pointer;
+    }
+    #startBtn:disabled{opacity:0.5}
+    
+    #statusText{
+      margin-top:16px;
+      font-size:14px;
+      color:#FBBF24;
+      font-weight:700;
+      min-height:24px;
+    }
+    #statusText.error{color:#EF4444}
+    #statusText.success{color:#10B981}
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div id="mainVideo"></div>
+    <div id="pipVideo"></div>
+    
+    <div id="placeholder">
+      <div id="phTitle">🎥 Connecting...</div>
+      <div id="phSub">Setting up your live session</div>
+    </div>
+    
+    <div id="tapToStart">
+      <div id="tapCard">
+        <div id="tapTitle">📹 Enable Camera & Mic</div>
+        <div id="tapDesc">Tap the button below to enable your camera and microphone.</div>
+        <button id="startBtn">🎥 Start Camera & Mic</button>
+        <div id="statusText"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://download.agora.io/sdk/release/AgoraRTC_N-4.20.0.js"></script>
+  
+  <script>
+    function parseQuery(){
+      var out={};
+      location.search.slice(1).split('&').forEach(function(pair){
+        var kv=pair.split('=');
+        if(kv[0])out[decodeURIComponent(kv[0])]=decodeURIComponent(kv[1]||'');
+      });
+      return out;
+    }
+    
+    function send(type,payload){
+      payload=payload||{};
+      payload.type=type;
+      payload.ts=Date.now();
+      try{
+        if(window.ReactNativeWebView)window.ReactNativeWebView.postMessage(JSON.stringify(payload));
+      }catch(e){}
+    }
+    
+    function withTimeout(promise,ms,label){
+      return Promise.race([
+        promise,
+        new Promise(function(_,reject){
+          setTimeout(function(){reject(new Error(label+' timeout'))},ms);
+        })
+      ]);
+    }
+
+    var params=parseQuery();
+    var IS_HOST=params.isHost==='true';
+    var AUTO_START=params.autoStart==='true';
+    var APP_ID=params.appId||'';
+    var CHANNEL=params.channel||'';
+    var TOKEN=params.token||null;
+    var UID=params.uid?Number(params.uid):null;
+    var SESSION_TYPE=params.sessionType||'group';
+    var USER_NAME=params.userName||'Participant';
+    var HOST_UID=params.hostUid?Number(params.hostUid):null;
+
+    var mainVideo=document.getElementById('mainVideo');
+    var pipVideo=document.getElementById('pipVideo');
+    var placeholder=document.getElementById('placeholder');
+    var tapToStart=document.getElementById('tapToStart');
+    var startBtn=document.getElementById('startBtn');
+    var statusText=document.getElementById('statusText');
+    var phTitle=document.getElementById('phTitle');
+    var phSub=document.getElementById('phSub');
+
+    var client=null;
+    var localAudio=null;
+    var localVideo=null;
+    var localUid=null;
+    var hasStarted=false;
+    var isJoined=false;
+    var currentFacingMode='user';
+    var availableCameras=[];
+    var currentCameraIndex=0;
+    var isSwapped=false;
+
+    // Remote users tracking
+    var remoteUsers={}; // {uid: {user, videoTrack, audioTrack}}
+    var hostUid=HOST_UID;
+    var activeRemoteUid=null; // Currently displayed remote user
+
+    function setStatus(text,type){
+      statusText.textContent=text;
+      statusText.className=type||'';
+    }
+    
+    function showTapUI(){
+      tapToStart.style.display='flex';
+      send('need-user-action',{reason:'camera-mic'});
+    }
+    
+    function hideTapUI(){
+      tapToStart.style.display='none';
+    }
+
+    function playVideoToContainer(track, container, mirror){
+      if(!track || !container) return;
+      
+      container.innerHTML='';
+      container.classList.remove('mirrored');
+      
+      track.play(container, {fit:'cover', mirror:false});
+      
+      if(mirror){
+        container.classList.add('mirrored');
+      }
+      
+      setTimeout(function(){
+        var vid = container.querySelector('video');
+        if(vid){
+          vid.style.cssText = 'width:100%!important;height:100%!important;object-fit:cover!important;display:block!important;';
+        }
+      }, 100);
+    }
+
+    function getActiveRemoteTrack(){
+      // Priority: host > active speaker > first remote user
+      var remoteUids = Object.keys(remoteUsers);
+      
+      if(remoteUids.length === 0) return null;
+      
+      // If host exists and has video, show host
+      if(hostUid && remoteUsers[hostUid] && remoteUsers[hostUid].videoTrack){
+        activeRemoteUid = hostUid;
+        return remoteUsers[hostUid].videoTrack;
+      }
+      
+      // If we have an active remote user and they still exist, keep showing them
+      if(activeRemoteUid && remoteUsers[activeRemoteUid] && remoteUsers[activeRemoteUid].videoTrack){
+        return remoteUsers[activeRemoteUid].videoTrack;
+      }
+      
+      // Otherwise, show the first remote user with video
+      for(var i = 0; i < remoteUids.length; i++){
+        var uid = remoteUids[i];
+        if(remoteUsers[uid].videoTrack){
+          activeRemoteUid = uid;
+          return remoteUsers[uid].videoTrack;
+        }
+      }
+      
+      return null;
+    }
+
+    function renderVideos(){
+      mainVideo.innerHTML='';
+      pipVideo.innerHTML='';
+      mainVideo.classList.remove('mirrored');
+      pipVideo.classList.remove('mirrored');
+      pipVideo.style.display='none';
+      
+      var hasAnyVideo = false;
+      var remoteVideoTrack = getActiveRemoteTrack();
+      
+      if(IS_HOST){
+        // HOST VIEW:
+        // Main: Local camera (host's camera)
+        // PiP: Remote user (if any)
+        
+        if(localVideo){
+          playVideoToContainer(localVideo, mainVideo, currentFacingMode==='user');
+          hasAnyVideo = true;
+        }
+        
+        if(remoteVideoTrack){
+          playVideoToContainer(remoteVideoTrack, pipVideo, false);
+          pipVideo.style.display='block';
+        }
+      } else {
+        // USER VIEW:
+        // Default - Main: Remote (host/active speaker), PiP: Local
+        // Swapped - Main: Local, PiP: Remote
+        
+        if(!isSwapped){
+          // Default: Show remote in main, local in pip
+          if(remoteVideoTrack){
+            playVideoToContainer(remoteVideoTrack, mainVideo, false);
+            hasAnyVideo = true;
+          }
+          if(localVideo){
+            playVideoToContainer(localVideo, pipVideo, currentFacingMode==='user');
+            pipVideo.style.display='block';
+          }
+        } else {
+          // Swapped: Show local in main, remote in pip
+          if(localVideo){
+            playVideoToContainer(localVideo, mainVideo, currentFacingMode==='user');
+            hasAnyVideo = true;
+          }
+          if(remoteVideoTrack){
+            playVideoToContainer(remoteVideoTrack, pipVideo, false);
+            pipVideo.style.display='block';
+          }
+        }
+      }
+      
+      if(hasAnyVideo){
+        placeholder.classList.add('hidden');
+      }
+    }
+
+    function updateParticipantCount(){
+      var remoteCount = Object.keys(remoteUsers).length;
+      var totalCount = remoteCount + (localVideo ? 1 : 0);
+      
+      send('participant-count', {
+        count: totalCount,
+        remoteCount: remoteCount
+      });
+    }
+
+    function checkMediaSupport(){
+      return !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
+    }
+
+    async function getCameraList(){
+      try{
+        var devices = await navigator.mediaDevices.enumerateDevices();
+        availableCameras = devices.filter(function(d){return d.kind==='videoinput'});
+      }catch(e){}
+    }
+
+    async function testGetUserMedia(){
+      setStatus('Requesting camera access...','');
+      
+      return new Promise(function(resolve){
+        var timeout = setTimeout(function(){
+          setStatus('Camera request timed out','error');
+          resolve(false);
+        }, 8000);
+        
+        navigator.mediaDevices.getUserMedia({audio:true, video:{facingMode:'user'}})
+          .then(function(stream){
+            clearTimeout(timeout);
+            stream.getTracks().forEach(function(t){t.stop()});
+            setStatus('Camera access granted!','success');
+            resolve(true);
+          })
+          .catch(function(err){
+            clearTimeout(timeout);
+            setStatus('Camera access denied','error');
+            resolve(false);
+          });
+      });
+    }
+
+    async function init(){
+      try{
+        if(!window.AgoraRTC) throw new Error('Agora SDK not loaded');
+        if(!APP_ID || !CHANNEL) throw new Error('Missing appId or channel');
+
+        await getCameraList();
+
+        client = AgoraRTC.createClient({mode:'rtc', codec:'vp8'});
+
+        // User published
+        client.on('user-published', async function(user, mediaType){
+          try{
+            await client.subscribe(user, mediaType);
+            
+            var uid = user.uid;
+            
+            if(!remoteUsers[uid]){
+              remoteUsers[uid] = {
+                user: user,
+                videoTrack: null,
+                audioTrack: null
+              };
+            }
+            
+            if(mediaType === 'video'){
+              remoteUsers[uid].videoTrack = user.videoTrack;
+              
+              // If this is the first remote user or the host, set as active
+              if(!activeRemoteUid || uid === hostUid){
+                activeRemoteUid = uid;
+              }
+            }
+            
+            if(mediaType === 'audio'){
+              remoteUsers[uid].audioTrack = user.audioTrack;
+              try{ user.audioTrack.play(); }catch(e){}
+            }
+            
+            renderVideos();
+            updateParticipantCount();
+          }catch(e){
+            console.error('Subscribe error:', e);
+          }
+        });
+
+        // User unpublished
+        client.on('user-unpublished', function(user, mediaType){
+          var uid = user.uid;
+          
+          if(remoteUsers[uid]){
+            if(mediaType === 'video'){
+              remoteUsers[uid].videoTrack = null;
+              
+              // If active user stopped video, switch to another
+              if(activeRemoteUid === uid){
+                activeRemoteUid = null;
+              }
+            }
+            if(mediaType === 'audio'){
+              remoteUsers[uid].audioTrack = null;
+            }
+          }
+          
+          renderVideos();
+        });
+
+        // User joined
+        client.on('user-joined', function(user){
+          var uid = user.uid;
+          
+          if(!remoteUsers[uid]){
+            remoteUsers[uid] = {
+              user: user,
+              videoTrack: null,
+              audioTrack: null
+            };
+          }
+          
+          // If this is the host joining, prioritize them
+          if(uid === hostUid){
+            activeRemoteUid = uid;
+          }
+          
+          updateParticipantCount();
+          
+          send('user-joined', {
+            uid: uid,
+            count: Object.keys(remoteUsers).length + (localVideo ? 1 : 0),
+            remoteCount: Object.keys(remoteUsers).length
+          });
+        });
+
+        // User left
+        client.on('user-left', function(user, reason){
+          var uid = user.uid;
+          
+          // Check if host left
+          if(uid === hostUid && !IS_HOST){
+            send('host-disconnected', {});
+          }
+          
+          delete remoteUsers[uid];
+          
+          // If active user left, clear active
+          if(activeRemoteUid === uid){
+            activeRemoteUid = null;
+          }
+          
+          renderVideos();
+          updateParticipantCount();
+          
+          send('user-left', {
+            uid: uid,
+            count: Object.keys(remoteUsers).length + (localVideo ? 1 : 0),
+            remoteCount: Object.keys(remoteUsers).length,
+            reason: reason
+          });
+        });
+
+        // Volume indicator (for active speaker detection in group sessions)
+        if(SESSION_TYPE === 'group'){
+          client.enableAudioVolumeIndicator();
+          
+          client.on('volume-indicator', function(volumes){
+            // Find the loudest remote speaker
+            var loudestUid = null;
+            var maxVolume = 0;
+            
+            volumes.forEach(function(volume){
+              if(volume.uid !== localUid && volume.level > maxVolume && volume.level > 10){
+                maxVolume = volume.level;
+                loudestUid = volume.uid;
+              }
+            });
+            
+            // Switch to loudest speaker if they're talking and not the host
+            if(loudestUid && loudestUid !== hostUid && remoteUsers[loudestUid] && remoteUsers[loudestUid].videoTrack){
+              if(activeRemoteUid !== loudestUid){
+                activeRemoteUid = loudestUid;
+                renderVideos();
+              }
+            }
+          });
+        }
+
+        phTitle.textContent = '🔗 Joining...';
+        
+        localUid = await client.join(APP_ID, CHANNEL, TOKEN, UID);
+        isJoined = true;
+        
+        // If we're the host, set hostUid
+        if(IS_HOST){
+          hostUid = localUid;
+        }
+        
+        send('joined', {uid: localUid, channel: CHANNEL, isHost: IS_HOST});
+
+        phTitle.textContent = '✅ Connected!';
+        
+        if(!checkMediaSupport()){
+          phSub.textContent = 'Camera not available.';
+          send('error', {message: 'Camera not available'});
+          return;
+        }
+
+        if(IS_HOST && AUTO_START){
+          phSub.textContent = 'Starting camera...';
+          send('auto-starting', {});
+          setTimeout(function(){
+            if(!hasStarted) startTracks();
+          }, 1500);
+        } else {
+          showTapUI();
+          setStatus('Tap "Start Camera & Mic" to begin', '');
+        }
+      }catch(e){
+        phTitle.textContent = '❌ Connection Failed';
+        phSub.textContent = e.message;
+        send('fatal', {message: e.message});
+      }
+    }
+
+    async function startTracks(){
+      if(hasStarted) return;
+      
+      hasStarted = true;
+      startBtn.disabled = true;
+      send('user-action-started', {});
+
+      try{
+        var gumWorks = await testGetUserMedia();
+        if(!gumWorks){
+          setStatus('Camera/microphone access required', 'error');
+          setTimeout(function(){hasStarted=false; startBtn.disabled=false;}, 2000);
+          return;
+        }
+
+        setStatus('Creating audio...', '');
+        try{
+          localAudio = await withTimeout(
+            AgoraRTC.createMicrophoneAudioTrack({
+              encoderConfig: 'music_standard',
+              AEC: true,
+              AGC: true,
+              ANS: true
+            }),
+            10000,
+            'mic'
+          );
+        }catch(e){
+          send('mic-error', {message: e.message});
+        }
+
+        setStatus('Creating video...', '');
+        try{
+          localVideo = await withTimeout(
+            AgoraRTC.createCameraVideoTrack({
+              encoderConfig: '480p_1',
+              facingMode: currentFacingMode,
+              optimizationMode: 'motion'
+            }),
+            10000,
+            'camera'
+          );
+        }catch(e){
+          send('camera-error', {message: e.message});
+        }
+
+        send('tracks-created', {audio: !!localAudio, video: !!localVideo});
+
+        if(!localAudio && !localVideo){
+          setStatus('Could not access camera or microphone', 'error');
+          setTimeout(function(){hasStarted=false; startBtn.disabled=false;}, 2000);
+          return;
+        }
+
+        renderVideos();
+
+        setStatus('Publishing...', '');
+        var tracks = [];
+        if(localAudio) tracks.push(localAudio);
+        if(localVideo) tracks.push(localVideo);
+
+        await withTimeout(client.publish(tracks), 12000, 'publish');
+        
+        setStatus('You are live!', 'success');
+        hideTapUI();
+        placeholder.classList.add('hidden');
+        
+        var viewOnly = !localVideo && !localAudio;
+        send('published', {audio: !!localAudio, video: !!localVideo, viewOnly: viewOnly});
+        
+        updateParticipantCount();
+        setTimeout(renderVideos, 300);
+        
+      }catch(e){
+        setStatus('Error: ' + e.message, 'error');
+        setTimeout(function(){hasStarted=false; startBtn.disabled=false;}, 2000);
+      }
+    }
+
+    // ========== CONTROL FUNCTIONS ==========
+    
+    window.toggleMute = function(mute){
+      if(!localAudio) return;
+      try{
+        localAudio.setEnabled(!mute);
+        send('mute-changed', {muted: mute});
+      }catch(e){}
+    };
+
+    window.toggleVideo = function(disable){
+      if(!localVideo) return;
+      try{
+        localVideo.setEnabled(!disable);
+        
+        if(disable){
+          if(!IS_HOST || isSwapped){
+            mainVideo.innerHTML = '';
+          }
+          if(IS_HOST || !isSwapped){
+            pipVideo.style.display = 'none';
+          }
+        } else {
+          renderVideos();
+        }
+        
+        send('video-changed', {disabled: disable});
+      }catch(e){}
+    };
+
+    window.switchCamera = async function(){
+      if(!localVideo) return;
+      
+      try{
+        // Method 1: Use available cameras
+        if(availableCameras.length > 1){
+          currentCameraIndex = (currentCameraIndex + 1) % availableCameras.length;
+          var nextCamera = availableCameras[currentCameraIndex];
+          
+          await localVideo.setDevice(nextCamera.deviceId);
+          
+          currentFacingMode = nextCamera.label.toLowerCase().includes('front') ? 'user' : 'environment';
+          
+          renderVideos();
+          send('camera-switched', {success: true, facingMode: currentFacingMode});
+          return;
+        }
+
+        // Method 2: Toggle facing mode
+        currentFacingMode = currentFacingMode === 'user' ? 'environment' : 'user';
+        
+        var oldVideo = localVideo;
+        
+        localVideo = await AgoraRTC.createCameraVideoTrack({
+          encoderConfig: '480p_1',
+          facingMode: currentFacingMode,
+          optimizationMode: 'motion'
+        });
+        
+        if(oldVideo){
+          await client.unpublish(oldVideo);
+          oldVideo.close();
+        }
+        
+        await client.publish(localVideo);
+        renderVideos();
+        
+        send('camera-switched', {success: true, facingMode: currentFacingMode});
+        
+      }catch(e){
+        send('error', {message: 'Failed to switch camera'});
+      }
+    };
+
+    // Swap videos - ONLY FOR USER
+    window.swapVideos = function(){
+      if(IS_HOST) return; // Host cannot swap
+      
+      isSwapped = !isSwapped;
+      renderVideos();
+      send('videos-swapped', {isSwapped: isSwapped});
+    };
+
+    window.leaveChannel = async function(){
+      try{
+        if(localAudio) localAudio.close();
+        if(localVideo) localVideo.close();
+        if(client) await client.leave();
+      }catch(e){}
+    };
+
+    // PiP click handler - Only user can swap
+    pipVideo.onclick = function(){
+      if(!IS_HOST){
+        window.swapVideos();
+      }
+    };
+
+    startBtn.onclick = function(e){
+      e.preventDefault();
+      startTracks();
+    };
+
+    send('boot', {isHost: IS_HOST, sessionType: SESSION_TYPE});
+    setTimeout(init, 100);
+  </script>
+</body>
+</html>
