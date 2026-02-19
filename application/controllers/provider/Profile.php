@@ -553,7 +553,7 @@ public function save_certificate()
     // Upload Config
     $config['upload_path']   = './uploads/certificates/';
     $config['allowed_types'] = 'jpg|jpeg|png|pdf';
-    $config['max_size']      = 2048;
+    $config['max_size']      = 5120;
     $config['encrypt_name']  = true;
 
     $this->load->library('upload', $config);

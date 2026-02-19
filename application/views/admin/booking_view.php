@@ -57,18 +57,19 @@
             <thead class="table-light">
 
               <tr>
-    <th>#</th>
-    <th>Customer</th>
-    <th>Mobile</th>
-    <th>Provider</th>
-    <th>Created At</th>
-    <th>Amount</th>
-    <th>Duration</th>
-    <th>Qty</th>
-    <th>Free Qty</th>
-    <th>End Date</th>
-    <th>Status</th>
-  </tr>            </thead>
+                <th>#</th>
+                <th>Customer</th>
+                <th>Mobile</th>
+                <th>Provider</th>
+                <th>Created At</th>
+                <th>Amount</th>
+                <th>Duration</th>
+                <th>Qty</th>
+                <th>Free Qty</th>
+                <th>End Date</th>
+                <th>Status</th>
+              </tr>
+            </thead>
 
             <tbody id="bookingTableBodyy"></tbody>
 
@@ -93,3 +94,21 @@
   </div>
 
 </div>
+
+<style>
+  .page-item.disabled .page-link {
+    pointer-events: none;
+    opacity: 0.6;
+  }
+
+  .page-item.active .page-link {
+    background: linear-gradient(135deg, #4f46e5, #6366f1);
+    border: none;
+    color: #fff;
+  }
+
+  .page-link {
+    border-radius: 8px;
+    margin: 0 3px;
+  }
+</style>

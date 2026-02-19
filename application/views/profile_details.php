@@ -397,7 +397,7 @@
         border-radius: 8px;
         margin: 0 0.25rem;
         border: none;
-        color: var(--primary-color);
+        color: #ffffff;
         background: white;
         box-shadow: var(--shadow-sm);
         transition: var(--transition);
@@ -725,6 +725,81 @@
     .certificate-btn:active {
         transform: scale(0.96);
     }
+
+
+    /*================= Services View ========================== */
+
+    .service-card {
+        display: flex;
+        gap: 20px;
+        padding: 20px;
+        border-radius: 16px;
+        background: #fff;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+        transition: all 0.3s ease;
+        margin-bottom: 20px;
+        align-items: center;
+    }
+
+    .service-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 10px 30px rgba(108, 92, 231, 0.15);
+    }
+
+    .service-image {
+        flex: 0 0 160px;
+        height: 120px;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .service-image img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .service-content {
+        flex: 1;
+    }
+
+    .service-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .service-header h5 {
+        font-weight: 700;
+        margin: 0;
+    }
+
+    .service-price {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: #fff;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .service-description {
+        color: #666;
+        margin: 10px 0;
+        font-size: 14px;
+    }
+
+    .service-footer {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .service-city {
+        font-size: 13px;
+        color: #888;
+    }
+
 
     /* Responsive Design */
     @media (max-width: 768px) {
@@ -1304,7 +1379,7 @@
                 </div>
 
                 <div class="tab-pane fade" id="services" role="tabpanel" aria-labelledby="services-tab">
-                    <div id="service-list"></div>
+                    <div id="service-list" data-provider="<?= $provider->provider_id ?>"></div>
                     <nav class="mt-3 mb-5">
                         <ul class="pagination justify-content-center" id="service-pagination"></ul>
                     </nav>
@@ -1415,74 +1490,97 @@
                             </div>
                         </div>
 
-                        <div class="row">
-                            <!-- Profile Description -->
-                            <div class="col-lg-8 col-md-7 mb-4">
-                                <div class="card shadow-sm border-0 h-100 fade-in">
-                                    <div class="card-body">
+                        <div class="row g-4 align-items-stretch">
+
+                            <!-- About Description -->
+                            <div class="col-lg-7 col-md-12">
+                                <div class="card shadow-sm border-0 h-100 about-card-enhanced">
+                                    <div class="card-body p-4">
                                         <h4 class="fw-bold mb-3">
-                                            <i class="fa fa-user-circle me-2 text-primary"></i>About the Provider
+                                            <i class="fa fa-user-circle me-2 text-primary"></i>
+                                            About the Provider
                                         </h4>
-                                        <p class="text-muted mb-0">
-                                            <?= !empty($provider->description) ? $provider->description : 'No description available.'; ?>
+
+                                        <p class="text-muted mb-0 about-description">
+                                            <?= !empty($provider->description)
+                                                ? nl2br(htmlspecialchars($provider->description))
+                                                : 'No description available.'; ?>
                                         </p>
                                     </div>
                                 </div>
                             </div>
-                            <!-- Contact Info -->
-                            <div class="col-lg-4 col-md-5 mb-4">
-                                <div class="card shadow-sm border-0 h-100 fade-in">
-                                    <div class="card-header bg-primary text-white fw-bold">
-                                        <i class="fa fa-address-card me-2"></i> Contact Information
+
+                            <!-- Contact Information -->
+                            <div class="col-lg-5 col-md-12">
+                                <div class="card shadow-sm border-0 h-100 contact-card-enhanced">
+
+                                    <div class="card-header text-white text-center fw-bold">
+                                        <i class="fa fa-address-card me-2"></i>
+                                        Contact Information
                                     </div>
-                                    <div class="card-body">
-                                        <div class="mb-3 d-flex align-items-center">
-                                            <div class="contact-icon user">
-                                                <i class="fa fa-user text-white"></i>
+
+                                    <div class="card-body p-4">
+
+                                        <div class="contact-row">
+                                            <div class="contact-circle bg-purple">
+                                                <i class="fa fa-user"></i>
                                             </div>
                                             <div>
-                                                <strong>Owner:</strong> <span><?= $provider->name; ?></span>
+                                                <small>Owner</small>
+                                                <strong><?= $provider->name; ?></strong>
                                             </div>
                                         </div>
-                                        <div class="mb-3 d-flex align-items-center">
-                                            <div class="contact-icon email">
-                                                <i class="fa fa-envelope text-white"></i>
+
+                                        <div class="contact-row">
+                                            <div class="contact-circle bg-pink">
+                                                <i class="fa fa-envelope"></i>
                                             </div>
                                             <div>
-                                                <strong>Email:</strong> <span><?= $provider->email; ?></span>
+                                                <small>Email</small>
+                                                <span><?= $provider->email; ?></span>
                                             </div>
                                         </div>
-                                        <div class="mb-3 d-flex align-items-center">
-                                            <div class="contact-icon phone">
-                                                <i class="fa fa-phone text-white"></i>
+
+                                        <div class="contact-row">
+                                            <div class="contact-circle bg-blue">
+                                                <i class="fa fa-phone"></i>
                                             </div>
                                             <div>
-                                                <strong>Mobile:</strong> <span><?= $provider->mobile; ?></span>
+                                                <small>Mobile</small>
+                                                <span><?= $provider->mobile; ?></span>
                                             </div>
                                         </div>
-                                        <div class="mb-3 d-flex align-items-start">
-                                            <div class="contact-icon location">
-                                                <i class="fa fa-map-marker-alt text-white"></i>
+
+                                        <div class="contact-row">
+                                            <div class="contact-circle bg-green">
+                                                <i class="fa fa-map-marker-alt"></i>
                                             </div>
                                             <div>
-                                                <strong>Address:</strong>
-                                                <div><?= $provider->address; ?></div>
+                                                <small>Address</small>
+                                                <span><?= $provider->address; ?></span>
                                             </div>
                                         </div>
+
                                     </div>
-                                    <div class="card-footer p-0 map-container">
-                                        <!-- Clickable Static Map -->
-                                        <img
-                                            src="https://maps.googleapis.com/maps/api/staticmap?center=<?= urlencode($provider->address); ?>&zoom=15&size=400x200&markers=color:red%7C<?= $provider->latitude; ?>,<?= $provider->longitude; ?>&key=AIzaSyAR5-9XtV0r0VyR7uu0ppEKhNHanKlGwWk"
-                                            class="img-fluid w-100 rounded-bottom map-image"
-                                            alt="Map of <?= $provider->address; ?>"
-                                            data-gym-lat="<?= $provider->latitude; ?>"
-                                            data-gym-lng="<?= $provider->longitude; ?>"
-                                            style="cursor:pointer;">
-                                    </div>
+
+                                    <!-- Map (Better & Safer Version) -->
+                                    <?php if (!empty($provider->address)): ?>
+                                        <div class="map-container">
+                                            <iframe
+                                                src="https://www.google.com/maps?q=<?= urlencode($provider->address) ?>&output=embed"
+                                                width="100%"
+                                                height="220"
+                                                style="border:0;"
+                                                loading="lazy">
+                                            </iframe>
+                                        </div>
+                                    <?php endif; ?>
+
                                 </div>
                             </div>
+
                         </div>
+
                     </div>
                 </div>
 
@@ -1752,3 +1850,92 @@
         </div>
     </div>
 </div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<script>
+    var base_url = "<?= base_url(); ?>";
+</script>
+
+<script>
+    $(document).ready(function() {
+        if ($("#service-list").length > 0) {
+            const providerId = $("#service-list").data("provider");
+
+            function loadServices(page = 1) {
+
+                $.ajax({
+                    url: site_url + "profile/get_services_ajax/" + providerId,
+                    type: "GET",
+                    data: {
+                        page: page
+                    },
+                    dataType: "json",
+                    success: function(res) {
+                        let html = "";
+
+                        if (res.services.length > 0) {
+                            res.services.forEach(function(service) {
+
+                                html += `
+                                    <div class="service-card fade-in">
+                                        <div class="service-image">
+                                            <img src="${base_url + service.image}" alt="${service.name}">
+                                        </div>
+
+                                        <div class="service-content">
+                                            <div class="service-header">
+                                                <h5>${service.name}</h5>
+                                                ${service.month_price ? `<span class="service-price">₹${service.month_price}/mo</span>` : ''}
+                                            </div>
+
+                                            <p class="service-description">
+                                                ${service.description}
+                                            </p>
+
+                                            <div class="service-footer">
+                                                <span class="service-city">
+                                                    <i class="fa fa-location-dot"></i> ${service.city ?? 'Location Not Available'} 
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    `;
+
+                            });
+                        } else {
+                            html = `
+                                <div class="text-danger fw-bold text-align-center text-center">
+                                    No Services Available!
+                                </div>
+                            `;
+                        }
+
+                        $("#service-list").html(html);
+
+                        let totalPages = Math.ceil(res.total / res.limit);
+                        let currentPage = res.page;
+
+                        let pagination = "";
+                        for (let i = 1; i <= res.totalPages; i++) {
+                            pagination += `
+                            <li class="page-item ${i == res.currentPage ? 'active' : ''}">
+                                <a class="page-link" href="#" data-page="${i}">${i}</a>
+                            </li>
+                            `;
+                        }
+
+                        $("#service-pagination").html(pagination);
+                    }
+                });
+            }
+
+            loadServices();
+
+            $(document).on("click", "#service-pagination .page-link", function(e) {
+                e.preventDefault();
+                loadServices($(this).data("page"));
+            });
+        }
+    });
+</script>

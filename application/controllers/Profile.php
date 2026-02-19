@@ -144,6 +144,7 @@ class Profile extends User_Controller
         $this->db->join('users', 'users.id = provider.provider_id', 'left');
         $this->db->join('service', 'service.provider_id = provider.provider_id', 'left');
         $this->db->join('reviews', 'reviews.provider_id = provider.provider_id', 'left');
+        $this->db->order_by('id', 'DESC');
 
         $this->db->where('users.isActive', 1);
 
@@ -283,7 +284,7 @@ class Profile extends User_Controller
             return;
         }
 
-        
+
 
         // echo "<pre>";
         // print_r($data);
@@ -368,18 +369,18 @@ class Profile extends User_Controller
             $this->data['can_add_review'] = $has_order ? true : false;
 
             $this->data['gallery_images'] = $this->db
-            ->where('provider_id', $id)
-            ->where('status', 1)
-            ->order_by('id', 'DESC')
-            ->get('gym_gallery')
-            ->result();
+                ->where('provider_id', $id)
+                ->where('status', 1)
+                ->order_by('id', 'DESC')
+                ->get('gym_gallery')
+                ->result();
 
             $this->data['certifications'] = $this->db
-            ->where('provider_id', $id)
-            ->where('is_active', 1)
-            ->order_by('id', 'DESC')
-            ->get('certifications')
-            ->result();
+                ->where('provider_id', $id)
+                ->where('is_active', 1)
+                ->order_by('id', 'DESC')
+                ->get('certifications')
+                ->result();
 
             $this->load->view('header');
             $this->load->view('profile_details', $this->data);
@@ -399,7 +400,7 @@ class Profile extends User_Controller
 
         // Count total
 
-        $this->db->where(['provider_id' => $provider_id, 'isactive' => 1]);
+        $this->db->where(['provider_id' => $provider_id, 'isActive' => 1]);
 
         $totalServices = $this->db->count_all_results('service');
 
@@ -413,11 +414,18 @@ class Profile extends User_Controller
 
         // Fetch services with limit
 
-        $this->db->where(['provider_id' => $provider_id, 'isactive' => 1]);
+        $this->db->select('service.*, provider.city');
+        $this->db->from('service');
+        $this->db->join('provider', 'provider.provider_id = service.provider_id', 'left');
+
+        $this->db->where([
+            'service.provider_id' => $provider_id,
+            'service.isActive' => 1
+        ]);
 
         $this->db->limit($perPage, $offset);
 
-        $services = $this->db->get('service')->result();
+        $services = $this->db->get()->result();
 
 
 
