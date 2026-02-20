@@ -25,6 +25,7 @@ class Payment extends Admin_Controller
     {
         $limit  = (int)($this->input->post('limit') ?? 5);
         $page   = (int)($this->input->post('page') ?? 1);
+        $search = $this->input->post('search');
 
         if ($page < 1) $page = 1;
         if ($limit < 1) $limit = 5;
@@ -32,11 +33,27 @@ class Payment extends Admin_Controller
         $offset = ($page - 1) * $limit;
 
         // -------------------------
-        // Fetch Data
+        // BASE QUERY (for filtering)
         // -------------------------
-        $this->db->select("p.id, p.provider_id, p.amount, p.status, p.created_at as request_date, u.gym_name, u.mobile");
         $this->db->from("provider_payouts p");
         $this->db->join("users u", "u.id = p.provider_id", "left");
+
+        if (!empty($search)) {
+            $this->db->group_start();
+            $this->db->like('u.gym_name', $search);
+            $this->db->or_like('u.mobile', $search);
+            $this->db->group_end();
+        }
+
+        // -------------------------
+        // TOTAL COUNT WITH FILTER
+        // -------------------------
+        $total = $this->db->count_all_results('', false); // false = don't reset query
+
+        // -------------------------
+        // SELECT DATA
+        // -------------------------
+        $this->db->select("p.id, p.provider_id, p.amount, p.status, p.created_at as request_date, u.gym_name, u.mobile");
         $this->db->order_by("p.id", "DESC");
         $this->db->limit($limit, $offset);
 
@@ -44,14 +61,9 @@ class Payment extends Admin_Controller
         $data  = $query->result();
 
         // -------------------------
-        // Total Count
+        // PAGINATION
         // -------------------------
-        $total = $this->db->count_all("provider_payouts");
-
-        // -------------------------
-        // Pagination Logic (Compact)
-        // -------------------------
-        $total_pages = max(1, (int)ceil($total / $limit));
+        $total_pages = max(1, ceil($total / $limit));
         $page = min($page, $total_pages);
 
         $pagination = '';
@@ -60,57 +72,48 @@ class Payment extends Admin_Controller
 
         // Previous
         $pagination .= '<li class="page-item ' . ($page == 1 ? 'disabled' : '') . '">
-    <a class="page-link" href="#" data-page="' . $prev_page . '">Previous</a>
-</li>';
+        <a class="page-link" href="#" data-page="' . $prev_page . '">Previous</a>
+    </li>';
 
-        // Always show First Page
+        // First
         $pagination .= '<li class="page-item ' . ($page == 1 ? 'active' : '') . '">
-    <a class="page-link" href="#" data-page="1">1</a>
-</li>';
+        <a class="page-link" href="#" data-page="1">1</a>
+    </li>';
 
-        // Left dots
         if ($page > 3) {
             $pagination .= '<li class="page-item disabled">
-        <span class="page-link">...</span>
-    </li>';
+            <span class="page-link">...</span>
+        </li>';
         }
 
-        // Show only 3 middle pages
         $start = max(2, $page - 1);
         $end   = min($total_pages - 1, $page + 1);
 
         for ($i = $start; $i <= $end; $i++) {
             if ($i > 1 && $i < $total_pages) {
-                $active = ($i == $page) ? 'active' : '';
-                $pagination .= '<li class="page-item ' . $active . '">
-            <a class="page-link" href="#" data-page="' . $i . '">' . $i . '</a>
-        </li>';
+                $pagination .= '<li class="page-item ' . ($i == $page ? 'active' : '') . '">
+                <a class="page-link" href="#" data-page="' . $i . '">' . $i . '</a>
+            </li>';
             }
         }
 
-        // Right dots
         if ($page < $total_pages - 2) {
             $pagination .= '<li class="page-item disabled">
-        <span class="page-link">...</span>
-    </li>';
+            <span class="page-link">...</span>
+        </li>';
         }
 
-        // Always show Last Page (if more than 1)
         if ($total_pages > 1) {
             $pagination .= '<li class="page-item ' . ($page == $total_pages ? 'active' : '') . '">
-        <a class="page-link" href="#" data-page="' . $total_pages . '">' . $total_pages . '</a>
-    </li>';
+            <a class="page-link" href="#" data-page="' . $total_pages . '">' . $total_pages . '</a>
+        </li>';
         }
 
         // Next
         $pagination .= '<li class="page-item ' . ($page == $total_pages ? 'disabled' : '') . '">
-    <a class="page-link" href="#" data-page="' . $next_page . '">Next</a>
-</li>';
+        <a class="page-link" href="#" data-page="' . $next_page . '">Next</a>
+    </li>';
 
-
-        // -------------------------
-        // Return JSON
-        // -------------------------
         echo json_encode([
             'data'       => $data,
             'total'      => $total,

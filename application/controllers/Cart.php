@@ -9,35 +9,15 @@ require_once FCPATH . 'vendor/autoload.php';
 
 use Razorpay\Api\Api;
 
-
-
-
-
-
-
-
-
 class Cart extends User_Controller
 {
-
-
 
     private $RAZORPAY_KEY_ID = "rzp_live_RCge2Oz6kUJE74";
 
     private $RAZORPAY_KEY_SECRET = "Pw0gRqzQkzjl5pYW10pXXZeq";
 
-
-
-
-
     public function __construct()
     {
-
-
-
-
-
-
 
         parent::__construct();
 
@@ -51,10 +31,6 @@ class Cart extends User_Controller
 
         // }
 
-
-
-
-
     }
 
 
@@ -67,91 +43,315 @@ class Cart extends User_Controller
         $this->load->view('cart_view');
 
         $this->load->view('footer');
-
-
-
     }
 
 
 
     public function add_to_cart()
     {
+        if (!$this->user) redirect('login');
 
-        $data = array(
+        $user_id     = $this->user['id'];
+        $provider_id = $this->input->post('provider_id'); // this is users.id
+        $duration    = strtolower($this->input->post('duration'));
+        $qty         = (int)$this->input->post('quantity');
+        $start_date  = $this->input->post('start_date');
 
-            'id' => $this->input->post('provider_id'),
+        // âœ… Fetch provider using provider.provider_id (NOT provider.id)
+        $provider = $this->db
+            ->select('provider.*, users.gym_name')
+            ->from('provider')
+            ->join('users', 'users.id = provider.provider_id', 'left')
+            ->where('provider.provider_id', $provider_id)
+            ->get()
+            ->row();
 
-            'name' => $this->input->post('provider_name'),
+        if (!$provider) {
+            show_error('Provider not found');
+        }
 
-            'image' => $this->input->post('provider_image'),
-
-            'price' => $this->input->post('price'),
-
-            'duration' => $this->input->post('duration'),
-
-            'qty' => $this->input->post('quantity'),
-
-            'start_date' => $this->input->post('start_date')
-
-        );
-
-
-
-        $cart = $this->session->userdata('cart_items') ?? [];
-
-        $found = false;
-
-
-
-        foreach ($cart as $index => $item) {
-
-            if ($item['id'] == $data['id'] && $item['duration'] == $data['duration']) {
-
-                $cart[$index]['qty'] += $data['qty'];
-
-                $found = true;
-
+        // âœ… Get correct price
+        switch ($duration) {
+            case 'day':
+            case 'daily':
+                $price = $provider->day_price;
                 break;
 
-            }
+            case 'week':
+            case 'weekly':
+                $price = $provider->week_price;
+                break;
 
+            case 'month':
+            case 'monthly':
+                $price = $provider->month_price;
+                break;
+
+            case 'year':
+            case 'yearly':
+                $price = $provider->year_price;
+                break;
+
+            default:
+                $price = 0;
         }
 
+        $price = (float)($price ?? 0);
 
+        $existing = $this->db->get_where('cart_items', [
+            'user_id' => $user_id,
+            'provider_id' => $provider_id,
+            'duration' => $duration
+        ])->row();
 
-        if (!$found) {
+        if ($existing) {
 
-            $cart[] = $data;
+            $this->db->where('id', $existing->id)->update('cart_items', [
+                'qty' => $existing->qty + $qty
+            ]);
+        } else {
 
+            $this->db->insert('cart_items', [
+                'user_id'        => $user_id,
+                'provider_id'    => $provider_id, // this is users.id
+                'provider_name'  => $provider->gym_name ?? '',
+                'provider_image' => $provider->profile_image ?? '',
+                'price'          => $price,
+                'duration'       => $duration,
+                'qty'            => $qty,
+                'start_date'     => $start_date,
+                'created_on'     => date('Y-m-d H:i:s')
+            ]);
         }
 
-
-
-        $this->session->set_userdata('cart_items', $cart);
-
-
+        $this->send_provider_notification($provider->provider_id, $user_id, 'added');
 
         redirect('cart/view');
-
     }
 
+    public function view()
+    {
+        if (!$this->user) redirect('login');
 
+        $cart_items = $this->db
+            ->where('user_id', $this->user['id'])
+            ->get('cart_items')
+            ->result_array();
 
-   public function view()
-{
-    $cart_items = $this->session->userdata('cart_items');
-    $offer_setting = $this->db->get('offer_settings')->row();
-    $offer_percent = $offer_setting ? floatval($offer_setting->offer_percent) : 0;
-    $min_amount_for_offer = $offer_setting ? floatval($offer_setting->min_amount) : 0;
+        $subtotal = 0;
+        $duration_items = [];
 
-    $subtotal = 0;
-    $discount_amount = 0;
-
-    if ($cart_items) {
         foreach ($cart_items as &$item) {
+
+            // Safe casting
+            $item['price'] = (float)($item['price'] ?? 0);
+            $item['qty'] = (int)($item['qty'] ?? 1);
+
+            $item['item_total'] = $item['price'] * $item['qty'];
+            $subtotal += $item['item_total'];
+
+            $duration_items[$item['duration']][] = $item;
+        }
+
+        $data['cart_items'] = $cart_items;
+        $data['subtotal'] = $subtotal;
+        $data['duration_items'] = $duration_items;
+        $data['total_after_discount'] = $subtotal;
+
+        $this->load->view('header');
+        $this->load->view('cart_view', $data);
+        $this->load->view('footer');
+    }
+
+    public function remove()
+    {
+        $id = (int)$this->input->post('id');
+
+        $cart = $this->db->get_where('cart_items', [
+            'id' => $id,
+            'user_id' => $this->user['id']
+        ])->row();
+
+        if ($cart) {
+
+            $this->db->where('id', $id)->delete('cart_items');
+
+            // ðŸ”” Notify provider
+            $this->send_provider_notification(
+                $cart->provider_id,
+                $this->user['id'],
+                'removed'
+            );
+        }
+
+        echo json_encode(['status' => 'success']);
+    }
+    public function update_quantity()
+    {
+        if (!$this->user) {
+            return $this->output
+                ->set_content_type('application/json')
+                ->set_status_header(401)
+                ->set_output(json_encode(['status' => 'error', 'message' => 'Unauthorized']));
+        }
+
+        $id = (int)$this->input->post('id');
+        $action = $this->input->post('action');
+
+        if (!in_array($action, ['increase', 'decrease'], true)) {
+            return $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['status' => 'error', 'message' => 'Invalid action']));
+        }
+
+        $item = $this->db->get_where('cart_items', [
+            'id' => $id,
+            'user_id' => $this->user['id']
+        ])->row();
+
+        if (!$item) {
+            return $this->output
+                ->set_content_type('application/json')
+                ->set_output(json_encode(['status' => 'error', 'message' => 'Item not found']));
+        }
+
+        $new_qty = ($action === 'increase') ? ((int)$item->qty + 1) : max(1, (int)$item->qty - 1);
+
+        $this->db->where('id', $id)->update('cart_items', [
+            'qty' => $new_qty
+        ]);
+
+        $item_subtotal = (float)$item->price * $new_qty;
+
+        $cart_total_row = $this->db
+            ->select('COALESCE(SUM(price * qty), 0) AS subtotal', false)
+            ->where('user_id', $this->user['id'])
+            ->get('cart_items')
+            ->row();
+
+        return $this->output
+            ->set_content_type('application/json')
+            ->set_output(json_encode([
+                'status' => 'success',
+                'qty' => $new_qty,
+                'item_subtotal' => $item_subtotal,
+                'cart_subtotal' => (float)($cart_total_row->subtotal ?? 0)
+            ]));
+    }
+    public function get_cart_count()
+    {
+        $result = $this->db
+            ->select_sum('qty')
+            ->where('user_id', $this->user['id'])
+            ->get('cart_items')
+            ->row();
+
+        $count = (int)($result->qty ?? 0);
+
+        echo json_encode(['count' => $count]);
+    }
+    private function send_provider_notification($provider_id, $user_id, $action)
+    {
+        $provider_id = (int)$provider_id;
+
+        // Resolve provider as users.id (role=2). If provider_id is provider table id,
+        // map it to provider.provider_id first.
+        $provider = $this->db->get_where('users', [
+            'id' => $provider_id,
+            'role' => 2
+        ])->row();
+
+        if (!$provider) {
+            $provider_row = $this->db->get_where('provider', ['id' => $provider_id])->row();
+            if ($provider_row) {
+                $provider_id = (int)$provider_row->provider_id;
+                $provider = $this->db->get_where('users', [
+                    'id' => $provider_id,
+                    'role' => 2
+                ])->row();
+            }
+        }
+
+        $user = $this->db->get_where('users', [
+            'id' => $user_id
+        ])->row();
+
+        if (!$provider || !$user) return;
+
+        if ($action == 'added') {
+            $title = "New Cart Added";
+            $message = $user->gym_name . " added your service to cart.";
+        } else {
+            $title = "Cart Removed";
+            $message = $user->gym_name . " removed your service from cart.";
+        }
+
+        // 1) Insert in DB for Provider Dashboard
+        $this->db->insert('provider_notifications', [
+            'provider_id' => $provider_id,
+            'title' => $title,
+            'message' => $message,
+            'is_read' => 0,
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
+
+        $notification_id = $this->db->insert_id();
+
+        // 2) Push Notification
+        $this->send_expo_push($provider_id, $title, $message, [
+            'notification_id' => $notification_id
+        ]);
+
+        // 3) Email
+        $this->send_provider_email($provider->email, $title, $message);
+
+        // 4) SMS
+        $this->send_sms($provider->mobile, $message);
+    }
+    public function pay()
+    {
+
+        $cart_items = $this->db
+            ->where('user_id', $this->user['id'])
+            ->get('cart_items')
+            ->result_array();
+        if (!$cart_items || empty($cart_items)) {
+            redirect('cart/view');
+        }
+
+        // Get platform offer
+        $offer_setting = $this->db->get('offer_settings')->row();
+        $offer_percent = $offer_setting ? floatval($offer_setting->offer_percent) : 0;
+        $min_amount_for_offer = $offer_setting ? floatval($offer_setting->min_amount) : 0;
+
+        $subtotal = 0;
+        $discount_amount = 0;
+
+        // Loop through cart items and apply offers
+        foreach ($cart_items as &$item) { // & so we can update quantities
+            // Get active offer for this provider and duration
+            $offer = $this->db->where('provider_id', $item['provider_id'])
+                ->where('duration', $item['duration'])
+                ->where('isActive', 1)
+                ->where('valid_till >=', date('Y-m-d'))
+                ->get('offers')
+                ->row();
+
+            if ($offer) {
+                // Calculate free quantity
+                $sets = intval($item['qty'] / $offer->buy_quantity); // Complete sets bought
+                $item['free_qty'] = $sets * $offer->free_quantity;
+                $item['total_qty'] = $item['qty'] + $item['free_qty'];
+            } else {
+                $item['free_qty'] = 0;
+                $item['total_qty'] = $item['qty'];
+            }
+
+            // Add only paid quantity to subtotal
             $item_total = floatval($item['price']) * intval($item['qty']);
             $subtotal += $item_total;
 
+            // Apply platform offer
             if ($offer_percent > 0) {
                 if ($min_amount_for_offer == 0 || $subtotal >= $min_amount_for_offer) {
                     $item['platform_discount'] = ($item_total * $offer_percent) / 100;
@@ -163,209 +363,81 @@ class Cart extends User_Controller
                 $item['platform_discount'] = 0;
             }
         }
-        unset($item);
-    }
+        unset($item); // break reference
 
-    $total_after_discount = $subtotal - $discount_amount;
+        $total_after_discount = $subtotal - $discount_amount;
 
-    $data['cart_items'] = $cart_items;
-    $data['subtotal'] = $subtotal;
-    $data['discount_amount'] = $discount_amount;
-    $data['total_after_discount'] = $total_after_discount;
-    $data['offer_percent'] = $offer_percent;
-
-    $this->load->view('header');
-    $this->load->view('cart_view', $data);
-    $this->load->view('footer');
-}
-    public function remove()
-    {
-        $item_id = (int) $this->input->post('id');
-        $cart = $this->session->userdata('cart_items') ?? [];
-
-        
-        foreach ($cart as $key => $item) {
-            if ((int) $item['id'] === $item_id) {
-                unset($cart[$key]);
-                break;
-            }
+        if ($total_after_discount <= 0) {
+            $this->session->set_flashdata('error', 'Invalid payment amount.');
+            redirect('cart/view');
         }
 
-        
-        $cart = array_values($cart);
+        $amount_paise = intval($total_after_discount * 100);
+        $txnid = 'TXN' . uniqid();
 
-        $this->session->set_userdata('cart_items', $cart);
-
-        echo json_encode([
-            'status' => 'success',
-            'count' => count($cart)
-        ]);
-    }
-public function update_quantity()
-{
-    $item_id = (int) $this->input->post('id');
-    $action = $this->input->post('action'); // increase or decrease
-
-    $cart = $this->session->userdata('cart_items') ?? [];
-
-    foreach ($cart as $key => $item) {
-        if ((int) $item['id'] === $item_id) {
-            if ($action === 'increase') {
-                $cart[$key]['qty']++;
-            } elseif ($action === 'decrease' && $cart[$key]['qty'] > 1) {
-                $cart[$key]['qty']--;
-            }
-            break;
-        }
-    }
-
-    $this->session->set_userdata('cart_items', $cart);
-
-    echo json_encode([
-        'status' => 'success',
-        'cart' => $cart
-    ]);
-}
-
-
-
-
-    public function get_cart_count()
-    {
-        
-        $cart = $this->session->userdata('cart_items') ?? [];
-        $count = count($cart);
-
-        echo json_encode(['count' => $count]);
-    }
-
-public function pay()
-{
-    $cart_items = $this->session->userdata('cart_items');
-
-    if (!$cart_items || empty($cart_items)) {
-        redirect('cart/view');
-    }
-
-    // Get platform offer
-    $offer_setting = $this->db->get('offer_settings')->row();
-    $offer_percent = $offer_setting ? floatval($offer_setting->offer_percent) : 0;
-    $min_amount_for_offer = $offer_setting ? floatval($offer_setting->min_amount) : 0;
-
-    $subtotal = 0;
-    $discount_amount = 0;
-
-    // Loop through cart items and apply offers
-    foreach ($cart_items as &$item) { // & so we can update quantities
-        // Get active offer for this provider and duration
-        $offer = $this->db->where('provider_id', $item['id'])
-                          ->where('duration', $item['duration'])
-                          ->where('isActive', 1)
-                          ->where('valid_till >=', date('Y-m-d'))
-                          ->get('offers')
-                          ->row();
-
-        if ($offer) {
-            // Calculate free quantity
-            $sets = intval($item['qty'] / $offer->buy_quantity); // Complete sets bought
-            $item['free_qty'] = $sets * $offer->free_quantity;
-            $item['total_qty'] = $item['qty'] + $item['free_qty'];
-        } else {
-            $item['free_qty'] = 0;
-            $item['total_qty'] = $item['qty'];
-        }
-
-        // Add only paid quantity to subtotal
-        $item_total = floatval($item['price']) * intval($item['qty']);
-        $subtotal += $item_total;
-
-        // Apply platform offer
-        if ($offer_percent > 0) {
-            if ($min_amount_for_offer == 0 || $subtotal >= $min_amount_for_offer) {
-                $item['platform_discount'] = ($item_total * $offer_percent) / 100;
-            } else {
-                $item['platform_discount'] = 0;
-            }
-            $discount_amount += $item['platform_discount'];
-        } else {
-            $item['platform_discount'] = 0;
-        }
-    }
-    unset($item); // break reference
-
-    $total_after_discount = $subtotal - $discount_amount;
-
-    if ($total_after_discount <= 0) {
-        $this->session->set_flashdata('error', 'Invalid payment amount.');
-        redirect('cart/view');
-    }
-
-    $amount_paise = intval($total_after_discount * 100); 
-    $txnid = 'TXN' . uniqid();
-
-    // Insert order
-    $order_data = [
-        'user_id' => $this->user['id'],
-        'total' => $total_after_discount,
-        'txnid' => $txnid,
-        'status' => 'pending',
-        'created_at' => date('Y-m-d H:i:s')
-    ];
-    $this->db->insert('orders', $order_data);
-    $order_id = $this->db->insert_id();
-
-    // Insert order items
-    foreach ($cart_items as $item) {
-        $item_data = [
-            'order_id' => $order_id,
-            'provider_id' => $item['id'],
-            'name' => trim($item['name']),
-            'image' => $item['image'],
-            'price' => $item['price'],
-            'duration' => $item['duration'],
-            'qty' => $item['qty'],            // Paid qty
-            'free_qty' => $item['free_qty'],  // Free qty
-            'total_qty' => $item['total_qty'],// Paid + Free
-            // 'platform_discount' => $item['platform_discount'], 
-            'start_date' => $item['start_date']
+        // Insert order
+        $order_data = [
+            'user_id' => $this->user['id'],
+            'total' => $total_after_discount,
+            'txnid' => $txnid,
+            'status' => 'pending',
+            'created_at' => date('Y-m-d H:i:s')
         ];
-        $this->db->insert('order_items', $item_data);
+        $this->db->insert('orders', $order_data);
+        $order_id = $this->db->insert_id();
+
+        // Insert order items
+        foreach ($cart_items as $item) {
+            $item_data = [
+                'order_id' => $order_id,
+                'provider_id' => $item['provider_id'],
+                'name' => trim($item['provider_name'] ?? ''),
+                'image' => $item['provider_image'] ?? '',
+                'price' => $item['price'],
+                'duration' => $item['duration'],
+                'qty' => $item['qty'],            // Paid qty
+                'free_qty' => $item['free_qty'],  // Free qty
+                'total_qty' => $item['total_qty'], // Paid + Free
+                // 'platform_discount' => $item['platform_discount'], 
+                'start_date' => $item['start_date']
+            ];
+            $this->db->insert('order_items', $item_data);
+        }
+
+        // Razorpay payment
+        $api = new Api($this->RAZORPAY_KEY_ID, $this->RAZORPAY_KEY_SECRET);
+        $razorpayOrder = $api->order->create([
+            'receipt' => $txnid,
+            'amount' => $amount_paise,
+            'currency' => 'INR',
+            'payment_capture' => 1
+        ]);
+
+        $data = [
+            "key" => $this->RAZORPAY_KEY_ID,
+            "amount" => $amount_paise,
+            "name" => "Cart Payment",
+            "description" => "Order #$order_id",
+            "image" => base_url('assets/logo.png'),
+            "prefill" => [
+                "name"    => $this->user['gym_name'] ?? 'Guest',
+                "email"   => $this->user['email'] ?? '',
+                "contact" => $this->user['mobile'] ?? ''
+            ],
+            "notes" => [
+                "order_id" => $order_id
+            ],
+            "theme" => [
+                "color" => "#3399cc"
+            ],
+            "order_id" => $razorpayOrder['id'],
+            "txnid" => $txnid
+        ];
+
+        $this->load->view('header');
+        $this->load->view('razorpay_redirect', $data);
+        $this->load->view('footer');
     }
-
-    // Razorpay payment
-    $api = new Api($this->RAZORPAY_KEY_ID, $this->RAZORPAY_KEY_SECRET);
-    $razorpayOrder = $api->order->create([
-        'receipt' => $txnid,
-        'amount' => $amount_paise,
-        'currency' => 'INR',
-        'payment_capture' => 1
-    ]);
-
-    $data = [
-        "key" => $this->RAZORPAY_KEY_ID,
-        "amount" => $amount_paise,
-        "name" => "Cart Payment",
-        "description" => "Order #$order_id",
-        "image" => base_url('assets/logo.png'),
-        "prefill" => [
-            "name" => $this->user['name'] ?? 'Guest',
-            "email" => $this->user['email'] ?? 'test@test.com',
-            "contact" => $this->user['mobile']
-        ],
-        "notes" => [
-            "order_id" => $order_id
-        ],
-        "theme" => [
-            "color" => "#3399cc"
-        ],
-        "order_id" => $razorpayOrder['id'],
-        "txnid" => $txnid
-    ];
-
-    $this->load->view('header');
-    $this->load->view('razorpay_redirect', $data);
-    $this->load->view('footer');
-}
 
 
 
@@ -374,102 +446,139 @@ public function pay()
         $api = new Api($this->RAZORPAY_KEY_ID, $this->RAZORPAY_KEY_SECRET);
 
         $payment_id = $this->input->post('razorpay_payment_id');
-        $order_id = $this->input->post('razorpay_order_id');
-        $signature = $this->input->post('razorpay_signature');
-        $txnid = $this->input->post('txnid');
+        $order_id   = $this->input->post('razorpay_order_id');
+        $signature  = $this->input->post('razorpay_signature');
+        $txnid      = $this->input->post('txnid');
 
         try {
-            
+
             $api->utility->verifyPaymentSignature([
-                'razorpay_order_id' => $order_id,
+                'razorpay_order_id'   => $order_id,
                 'razorpay_payment_id' => $payment_id,
-                'razorpay_signature' => $signature
+                'razorpay_signature'  => $signature
             ]);
 
-            
+            // âœ… Mark order success
             $this->db->where('txnid', $txnid)->update('orders', ['status' => 'success']);
-          $order = $this->db
-    ->get_where('orders', ['txnid' => $txnid])
-    ->row();
 
-if (!$order) {
-    throw new Exception('Order not found');
-}
+            $order = $this->db->get_where('orders', ['txnid' => $txnid])->row();
 
-/* STEP 2: Fetch order items */
-$order_items = $this->db
-    ->get_where('order_items', ['order_id' => $order->id])
-    ->result();
+            if (!$order) {
+                throw new Exception('Order not found');
+            }
 
-/* STEP 3: Insert provider notifications */
-foreach ($order_items as $item) {
+            $order_items = $this->db
+                ->get_where('order_items', ['order_id' => $order->id])
+                ->result();
 
-    $this->db->insert('provider_notifications', [
-        'provider_id' => $item->provider_id,
-        'order_id'    => $order->id,
-        'order_item_id' => $item->id, 
-        'title'       => 'New Booking Received',
-        'message'     => 'You have received a new service booking.',
-        'created_at'  => date('Y-m-d H:i:s')
-    ]);
-}
+            foreach ($order_items as $item) {
+
+                $provider_id = $item->provider_id;
+
+                // âœ… Insert notification
+                $this->db->insert('provider_notifications', [
+                    'provider_id'   => $provider_id,
+                    'order_id'      => $order->id,
+                    'order_item_id' => $item->id,
+                    'title'         => 'New Booking Received',
+                    'message'       => 'You have received a new service booking.',
+                    'created_at'    => date('Y-m-d H:i:s')
+                ]);
+
+                // âœ… Get provider user info
+                $provider = $this->db
+                    ->get_where('provider', ['id' => $provider_id])
+                    ->row();
+
+                if ($provider) {
+
+                    $provider_user = $this->db
+                        ->get_where('users', ['id' => $provider->provider_id])
+                        ->row();
+
+                    if ($provider_user) {
+
+                        // ðŸ”” Push Notification
+                        $this->send_expo_push(
+                            $provider_id,
+                            'New Booking Received',
+                            'You have received a new service booking.',
+                            ['order_id' => $order->id]
+                        );
+
+                        // ðŸ“§ Email
+                        $this->send_provider_email(
+                            $provider_user->email,
+                            'New Booking Received',
+                            'You have received a new service booking.'
+                        );
+
+                        // ðŸ“± SMS
+                        $this->send_sms(
+                            $provider_user->mobile,
+                            'You have received a new booking.'
+                        );
+                    }
+                }
+            }
+
+            // âœ… Commission & Wallet Logic (your existing code remains same)
 
             $payment_setting = $this->db->get('payment_settings')->row();
             $commission_percent = $payment_setting ? floatval($payment_setting->commission) : 0;
 
-            $order = $this->db->get_where('orders', ['txnid' => $txnid])->row();
-            $order_items = $this->db->get_where('order_items', ['order_id' => $order->id])->result();
-
             foreach ($order_items as $item) {
+
                 $provider_id = $item->provider_id;
                 $gross_amount = floatval($item->price) * intval($item->qty);
 
-                
                 $commission_amt = ($gross_amount * $commission_percent) / 100;
                 $net_amount = $gross_amount - $commission_amt;
 
-                
-                $wallet = $this->db->get_where('provider_wallet', ['provider_id' => $provider_id])->row();
+                $wallet = $this->db->get_where('provider_wallet', [
+                    'provider_id' => $provider_id
+                ])->row();
 
                 if ($wallet) {
-                    $new_balance = $wallet->balance + $net_amount;
                     $this->db->where('provider_id', $provider_id)->update('provider_wallet', [
-                        'balance' => $new_balance
+                        'balance' => $wallet->balance + $net_amount
                     ]);
                 } else {
                     $this->db->insert('provider_wallet', [
                         'provider_id' => $provider_id,
-                        'balance' => $net_amount
+                        'balance'     => $net_amount
                     ]);
                 }
 
-                
                 $this->db->insert('commission_log', [
-                    'provider_id' => $provider_id,
-                    'order_id' => $order->id,
-                    'gross_amount' => $gross_amount,
+                    'provider_id'     => $provider_id,
+                    'order_id'        => $order->id,
+                    'gross_amount'    => $gross_amount,
                     'commission_rate' => $commission_percent,
-                    'commission_amt' => $commission_amt,
-                    'net_amount' => $net_amount,
-                    'created_at' => date('Y-m-d H:i:s')
+                    'commission_amt'  => $commission_amt,
+                    'net_amount'      => $net_amount,
+                    'created_at'      => date('Y-m-d H:i:s')
                 ]);
             }
 
-            $this->session->unset_userdata('cart_items');
-            $this->session->set_flashdata('success', 'Payment successful! ID: ' . htmlspecialchars($payment_id));
-            redirect('cart/success?txnid=' . urlencode($txnid));
+            // âœ… Clear cart
+            $this->db->where('user_id', $order->user_id)->delete('cart_items');
 
+            $this->session->set_flashdata(
+                'success',
+                'Payment successful! ID: ' . htmlspecialchars($payment_id)
+            );
+
+            redirect('cart/success?txnid=' . urlencode($txnid));
         } catch (Exception $e) {
+
             $this->db->where('txnid', $txnid)->update('orders', ['status' => 'failed']);
+
             $this->session->set_flashdata('error', 'Payment verification failed!');
+
             redirect('cart/view');
         }
     }
-
-
-
-
-
 
 
 
@@ -511,8 +620,96 @@ foreach ($order_items as $item) {
         $this->load->view('footer');
     }
 
+    private function send_expo_push($provider_id, $title, $message, $data = [])
+    {
+        $tokens = $this->db
+            ->where('provider_id', $provider_id)
+            ->where('is_active', 1)
+            ->get('provider_tokens')
+            ->result();
 
+        if (empty($tokens)) return false;
 
+        foreach ($tokens as $tokenRow) {
 
+            $payload = [
+                'to' => $tokenRow->expo_token,
+                'title' => $title,
+                'body' => $message,
+                'sound' => 'default',
+                'data' => $data
+            ];
 
+            $ch = curl_init('https://exp.host/--/api/v2/push/send');
+
+            curl_setopt_array($ch, [
+                CURLOPT_POST => true,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER => [
+                    'Content-Type: application/json'
+                ],
+                CURLOPT_POSTFIELDS => json_encode($payload),
+            ]);
+
+            curl_exec($ch);
+            curl_close($ch);
+        }
+
+        return true;
+    }
+
+    private function send_provider_email($to, $subject, $message)
+    {
+        $this->load->library('email');
+
+        $config = [
+            'protocol' => 'mail',
+            'mailtype' => 'html',
+            'charset' => 'utf-8'
+        ];
+
+        $this->email->initialize($config);
+        $this->email->from('no-reply@yourdomain.com', 'Your App');
+        $this->email->to($to);
+        $this->email->subject($subject);
+        $this->email->message($message);
+
+        $this->email->send();
+    }
+
+    private function send_sms($mobile, $message)
+    {
+        $params = [
+            'user'     => 'Fitcketsp',
+            'key'      => '81a6b2f99cXX',   // Your working key
+            'mobile'   => '91' . $mobile,
+            'message'  => $message,
+            'senderid' => 'OENTER',
+            'accusage' => '1',
+            'entityid' => '1401487200000053882',
+            'tempid'   => '1407168611506367587' // âš  Must match approved DLT template
+        ];
+
+        $url = 'http://mobicomm.dove-sms.com/submitsms.jsp?' . http_build_query($params);
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+        $response = curl_exec($ch);
+
+        if (curl_errno($ch)) {
+            log_message('error', 'SMS Error: ' . curl_error($ch));
+            curl_close($ch);
+            return false;
+        }
+
+        curl_close($ch);
+
+        log_message('info', "SMS sent to $mobile. Response: $response");
+
+        return $response;
+    }
 }
+
+

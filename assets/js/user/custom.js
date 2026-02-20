@@ -227,8 +227,8 @@ $(document).ready(function () {
 //                     $(this).remove();
 
 //                     // Recalculate totals dynamically
-//                     $("#cartSubtotal").text("₹" + (res.subtotal ?? 0));
-//                     $("#cartTotal").text("₹" + (res.total ?? 0));
+//                     $("#cartSubtotal").text("â‚¹" + (res.subtotal ?? 0));
+//                     $("#cartTotal").text("â‚¹" + (res.total ?? 0));
 
 //                     // If no cart-item-row left, show empty cart
 //                     if ($(".cart-item-row").length === 0) {
@@ -242,7 +242,7 @@ $(document).ready(function () {
 
 //                         // Disable Pay Now button
 //                         $(".pay-now-btn").prop("disabled", true);
-//                         $("#cartSubtotal, #cartTotal").text("₹0");
+//                         $("#cartSubtotal, #cartTotal").text("â‚¹0");
 //                     }
 //                 });
 //             }
@@ -333,7 +333,7 @@ function fetchServices(page = 1) {
     data: { page },
     dataType: "json",
     success: function (response) {
-      // 🔑 Always track the current page explicitly
+      // ðŸ”‘ Always track the current page explicitly
       currentPage = page;
 
       renderServices(response.services);
@@ -391,7 +391,7 @@ function renderServices(services) {
                 </div>
             </div>
             <div class="card-footer">
-                <div class="price">₹${service.month_price} / month</div>
+                <div class="price">â‚¹${service.month_price} / month</div>
                 <button class="btn-book" onclick="redirectToProvider(${
                   service.provider_id
                 })">Book Now</button>
@@ -466,97 +466,90 @@ fetchServices();
 // Function to recalc totals and duration dynamically
 function recalcCart() {
     let subtotal = 0;
-    let durationData = {};
 
     $(".cart-item-row").each(function () {
         let row = $(this);
-        let qty = parseInt(row.find(".qtyInput").val()) || 0;
-        let price = parseFloat(row.find(".itemPrice").first().text().replace("₹", "")) || 0;
+        let qty = parseInt(row.find(".qtyInput").first().val(), 10) || 0;
+        let price = parseFloat(row.find(".itemPrice").first().text().replace(/[^0-9.]/g, "")) || 0;
         let itemTotal = qty * price;
 
-        // Update subtotal for this row
-        row.find(".itemSubtotal").text("₹" + itemTotal.toFixed(2));
-
+        row.find(".itemSubtotal").text("\u20B9" + itemTotal.toFixed(2));
         subtotal += itemTotal;
-
-        // Update duration breakdown
-        let duration = row.find(".itemPrice").siblings("small").text().replace("/", "").trim();
-        let name = row.find(".item-name").text().trim();
-
-        if (!durationData[duration]) durationData[duration] = [];
-        durationData[duration].push({ name: name, qty: qty, subtotal: itemTotal });
     });
 
-    // Update summary
-    $("#cartSubtotal, #cartTotal").text("₹" + subtotal.toFixed(2));
-
-    // Update duration breakdown section
-    let durSection = $(".cart-summary .duration-section");
-    if (durSection.length) {
-        durSection.empty();
-        $.each(durationData, function (dur, items) {
-            durSection.append(`<div class="duration-header">${dur}</div>`);
-            items.forEach(function (item) {
-                durSection.append(`
-                    <div class="d-flex justify-content-between small duration-item">
-                        <span>${item.name} x<span class="durationQty">${item.qty}</span></span>
-                        <span class="durationSubtotal">₹${item.subtotal.toFixed(2)}</span>
-                    </div>
-                `);
-            });
-        });
-    }
+    $("#cartSubtotal, #cartTotal").text("\u20B9" + subtotal.toFixed(2));
+    $(".pay-now-btn").prop("disabled", subtotal <= 0);
 }
 
 // Remove cart item
 $(document).on("click", ".remove-cart-item", function (e) {
     e.preventDefault();
+
     let itemId = $(this).data("id");
-    let $btn = $(this);
+    let $row = $(".cart-item-row[data-id='" + itemId + "']");
 
     $.post(site_url + "cart/remove", { id: itemId }, function (res) {
-        if (res.status === "success") {
-            $(".cart-badge").text(res.count ?? 0);
-
-            $btn.closest(".cart-item-row").fadeOut(300, function () {
+        if (res && res.status === "success") {
+            $row.fadeOut(300, function () {
                 $(this).remove();
-
-                if ($(".cart-item-row").length === 0) {
-                    $(".col-12.col-lg-8").html(`
-                        <div class="empty-cart text-center py-5">
-                            <i class="bi bi-cart-x fs-1 mb-3"></i>
-                            <h4>Your cart is empty</h4>
-                            <p class="mb-0">Add some items to get started!</p>
-                        </div>
-                    `);
-                    $(".pay-now-btn").prop("disabled", true);
-                }
-
-                recalcCart(); // Recalculate totals & duration after removal
+                $(".duration-item[data-id='" + itemId + "']").remove();
+                recalcCart();
             });
+            $(".cart-count, .cart-badge").text((res.count || 0));
         }
     }, "json");
 });
 
 // Increase/Decrease quantity
-$(document).on("click", ".increaseQty, .decreaseQty", function () {
-    let itemId = $(this).data("id");
-    let action = $(this).hasClass("increaseQty") ? "increase" : "decrease";
-    let row = $(this).closest(".cart-item");
-    let input = row.find(".qtyInput");
+$(document).on("click", ".increaseQty, .decreaseQty", function (e) {
+    e.preventDefault();
 
-    $.post(site_url + "/cart/update_quantity", { id: itemId, action: action }, function (res) {
-        if (res.status === "success") {
-            let updatedItem = res.cart.find(i => i.id == itemId);
-            if (updatedItem) {
-                $(".cart-item[data-id='" + itemId + "'] .qtyInput").val(updatedItem.qty);
-            } else {
-                // Item removed
-                row.remove();
-            }
-            recalcCart(); // Recalculate everything dynamically
+    let $btn = $(this);
+    if ($btn.prop("disabled")) return;
+
+    let itemId = $btn.data("id");
+    let action = $btn.hasClass("increaseQty") ? "increase" : "decrease";
+    let $row = $(".cart-item-row[data-id='" + itemId + "']");
+    let $rowButtons = $row.find(".increaseQty, .decreaseQty");
+
+    $rowButtons.prop("disabled", true);
+
+    $.ajax({
+        url: site_url + "cart/update_quantity",
+        type: "POST",
+        dataType: "json",
+        data: { id: itemId, action: action }
+    }).done(function (res) {
+        if (!res || res.status !== "success") return;
+
+        let nextQty = parseInt(res.qty, 10);
+        if (!Number.isFinite(nextQty)) {
+            let currentQty = parseInt($row.find(".qtyInput").first().val(), 10) || 1;
+            nextQty = action === "increase" ? currentQty + 1 : Math.max(1, currentQty - 1);
         }
-    }, "json");
+
+        $row.find(".qtyInput").val(nextQty);
+
+        let rowSubtotal = parseFloat(res.item_subtotal);
+        if (!Number.isFinite(rowSubtotal)) {
+            let price = parseFloat($row.find(".itemPrice").first().text().replace(/[^0-9.]/g, "")) || 0;
+            rowSubtotal = price * nextQty;
+        }
+
+        $row.find(".itemSubtotal").text("\u20B9" + rowSubtotal.toFixed(2));
+
+        let $dur = $(".duration-item[data-id='" + itemId + "']");
+        $dur.find(".durationQty").text(nextQty);
+        $dur.find(".durationSubtotal").text("\u20B9" + rowSubtotal.toFixed(2));
+
+        recalcCart();
+
+        $.getJSON(site_url + "cart/get_cart_count", function (countRes) {
+            $(".cart-count, .cart-badge").text(countRes.count || 0);
+        });
+    }).always(function () {
+        $rowButtons.prop("disabled", false);
+    });
 });
 
 
@@ -697,7 +690,7 @@ $(document).ready(function () {
     });
   });
 
-  // Edit button → Fill form
+  // Edit button â†’ Fill form
   $(document).on("click", ".edit-account", function () {
     let account = $(this).data("account");
     $("#id").val(account.id);
@@ -798,7 +791,7 @@ $(document).on("click", ".pagination-controls .page-btn", function(e) {
     }
 });
 document.addEventListener("DOMContentLoaded", function () {
-    // ✅ Remove recipient
+    // âœ… Remove recipient
     document.querySelectorAll(".remove-btn-reception").forEach(btn => {
     btn.addEventListener("click", function () {
         let recipientId = this.getAttribute("data-id");
@@ -844,7 +837,7 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
-    // ✅ Repay autofill
+    // âœ… Repay autofill
     document.querySelectorAll(".repay-btn").forEach(btn => {
         btn.addEventListener("click", function () {
             let item = this.closest(".recipient-item");
@@ -908,7 +901,7 @@ $(document).ready(function () {
           Swal.fire({
             icon: "success",
             title: "Message Sent!",
-            text: "We’ll get back to you within 24 hours.",
+            text: "Weâ€™ll get back to you within 24 hours.",
             showConfirmButton: false,
             timer: 2500
           });

@@ -810,61 +810,33 @@ class Category extends Admin_Controller
 
     public function ajax_list_city()
     {
-
         $search = $this->input->post('search');
-
-        $page   = $this->input->post('page');
-
+        $page   = $this->input->post('page') ?? 1;
         $limit  = 10;
-
         $offset = ($page - 1) * $limit;
 
-
-
-        $this->db->select('*');
-
+        // Base query
         $this->db->from('cities');
 
         if (!empty($search)) {
-
+            $this->db->group_start();
             $this->db->like('city', $search);
-
             $this->db->or_like('state', $search);
+            $this->db->group_end();
         }
 
+        // Count total rows BEFORE limit
+        $total_rows = $this->db->count_all_results('', false);
+
+        // Apply pagination
         $this->db->limit($limit, $offset);
-
-        $query = $this->db->get();
-
-        $cities = $query->result();
-
-
-
-        // Total rows
-
-        $this->db->from('cities');
-
-        if (!empty($search)) {
-
-            $this->db->like('city', $search);
-
-            $this->db->or_like('state', $search);
-        }
-
-        $total_rows = $this->db->count_all_results();
-
-
+        $cities = $this->db->get()->result();
 
         echo json_encode([
-
             'data'         => $cities,
-
             'total_pages'  => ceil($total_rows / $limit),
-
             'current_page' => $page,
-
             'start'        => $offset
-
         ]);
     }
 
@@ -1005,5 +977,4 @@ class Category extends Admin_Controller
             echo json_encode(['status' => 'error', 'message' => 'Update failed']);
         }
     }
-    
 }

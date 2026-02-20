@@ -9,7 +9,7 @@
         --gradient-primary: linear-gradient(135deg, #6f42c1 0%, #8e44ad 100%);
         --shadow-light: 0 2px 15px rgba(111, 66, 193, 0.1);
         --shadow-medium: 0 4px 25px rgba(111, 66, 193, 0.15);
-        
+
         /* Additional enhanced colors */
         --success-gradient: linear-gradient(135deg, #10ac84, #0fb272);
         --danger-gradient: linear-gradient(135deg, #ff4757, #ff3742);
@@ -33,7 +33,7 @@
         overflow-x: hidden;
     } */
 
-    /* 📱 Enhanced Mobile First Styling (320px - 767px) */
+    /* ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â± Enhanced Mobile First Styling (320px - 767px) */
     @media (max-width: 767.98px) {
         /* html {
             font-size: 14px;
@@ -111,7 +111,8 @@
             padding: 0.35rem 0.5rem;
             font-size: 0.8rem;
             min-width: 28px;
-            min-height: 44px; /* Better touch target */
+            min-height: 44px;
+            /* Better touch target */
             border: none;
             background: var(--primary-color);
             color: white;
@@ -161,7 +162,8 @@
         .remove-btn {
             padding: 0.375rem 0.625rem !important;
             font-size: 0.8rem !important;
-            min-width: 44px; /* Better touch target */
+            min-width: 44px;
+            /* Better touch target */
             min-height: 44px;
             border-radius: var(--border-radius-xl);
             background: var(--danger-gradient);
@@ -255,7 +257,8 @@
             padding: 0.75rem !important;
             font-size: 1.05rem !important;
             font-weight: 600;
-            min-height: 50px; /* Better touch target */
+            min-height: 50px;
+            /* Better touch target */
             border-radius: var(--border-radius-pill);
             background: var(--success-gradient);
             border: none;
@@ -349,7 +352,7 @@
         }
     }
 
-    /* 📱 Extra Small Mobile Devices (320px - 575px) */
+    /* ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â± Extra Small Mobile Devices (320px - 575px) */
     @media (max-width: 575.98px) {
         /* html {
             font-size: 13px;
@@ -405,7 +408,7 @@
         }
     }
 
-    /* 💻 Tablet Landscape and Small Desktop (768px - 991px) */
+    /* ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â» Tablet Landscape and Small Desktop (768px - 991px) */
     @media (min-width: 768px) and (max-width: 991.98px) {
         /* html {
             font-size: 15px;
@@ -425,7 +428,7 @@
         }
     }
 
-    /* 🖥️ Enhanced Desktop Styling (992px+) */
+    /* ÃƒÂ°Ã…Â¸Ã¢â‚¬â€œÃ‚Â¥ÃƒÂ¯Ã‚Â¸Ã‚Â Enhanced Desktop Styling (992px+) */
     @media (min-width: 992px) {
         /* html {
             font-size: 16px;
@@ -494,7 +497,7 @@
         }
     }
 
-    /* 🖥️ Large Desktop Enhancements (1200px+) */
+    /* ÃƒÂ°Ã…Â¸Ã¢â‚¬â€œÃ‚Â¥ÃƒÂ¯Ã‚Â¸Ã‚Â Large Desktop Enhancements (1200px+) */
     @media (min-width: 1200px) {
         .cart-summary {
             padding: 2.5rem;
@@ -514,7 +517,7 @@
         }
     }
 
-    /* 🖥️ Extra Large Desktop (1400px+) */
+    /* ÃƒÂ°Ã…Â¸Ã¢â‚¬â€œÃ‚Â¥ÃƒÂ¯Ã‚Â¸Ã‚Â Extra Large Desktop (1400px+) */
     @media (min-width: 1400px) {
         .container {
             max-width: 1320px;
@@ -530,7 +533,7 @@
         }
     }
 
-    /* 🎨 Enhanced Shared Styles */
+    /* ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â¨ Enhanced Shared Styles */
     .cart-item {
         border: 1px solid rgba(111, 66, 193, 0.1);
         border-radius: var(--border-radius-lg);
@@ -730,11 +733,22 @@
         color: #495057;
     }
 
-    /* 🎭 Enhanced Animations */
+    /* ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â­ Enhanced Animations */
     @keyframes pulse {
-        0% { transform: scale(1); opacity: 0.8; }
-        50% { transform: scale(1.05); opacity: 1; }
-        100% { transform: scale(1); opacity: 0.8; }
+        0% {
+            transform: scale(1);
+            opacity: 0.8;
+        }
+
+        50% {
+            transform: scale(1.05);
+            opacity: 1;
+        }
+
+        100% {
+            transform: scale(1);
+            opacity: 0.8;
+        }
     }
 
     .alert {
@@ -754,20 +768,23 @@
         color: white;
     }
 
-    /* 🔄 Loading states and interactions */
+    /* ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ¢â‚¬Å¾ Loading states and interactions */
     .btn:active {
         transform: scale(0.98);
     }
 
-    /* 📱 Enhanced touch targets for better accessibility */
+    /* ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â± Enhanced touch targets for better accessibility */
     @media (max-width: 767.98px) {
-        .btn, .form-control, .clickable {
+
+        .btn,
+        .form-control,
+        .clickable {
             min-height: 44px;
             min-width: 44px;
         }
     }
 
-    /* 💫 Enhanced focus states for accessibility */
+    /* ÃƒÂ°Ã…Â¸Ã¢â‚¬â„¢Ã‚Â« Enhanced focus states for accessibility */
     .btn:focus,
     .form-control:focus {
         outline: 2px solid var(--primary-color);
@@ -775,12 +792,12 @@
         box-shadow: 0 0 0 3px rgba(111, 66, 193, 0.2);
     }
 
-    /* 🌟 High contrast mode support */
+    /* ÃƒÂ°Ã…Â¸Ã…â€™Ã…Â¸ High contrast mode support */
     @media (prefers-contrast: high) {
         .cart-item {
             border: 2px solid var(--primary-color);
         }
-        
+
         .price-badge,
         .remove-btn,
         .pay-now-btn {
@@ -788,7 +805,7 @@
         }
     }
 
-    /* 🎯 Reduced motion support */
+    /* ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â¯ Reduced motion support */
     @media (prefers-reduced-motion: reduce) {
         * {
             animation-duration: 0.01ms !important;
@@ -797,13 +814,24 @@
         }
     }
 
-    /* 📐 Better spacing utilities */
-    .gap-xs { gap: 0.25rem; }
-    .gap-sm { gap: 0.5rem; }
-    .gap-md { gap: 1rem; }
-    .gap-lg { gap: 1.5rem; }
+    /* ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â Better spacing utilities */
+    .gap-xs {
+        gap: 0.25rem;
+    }
 
-    /* 🎨 Enhanced visual hierarchy */
+    .gap-sm {
+        gap: 0.5rem;
+    }
+
+    .gap-md {
+        gap: 1rem;
+    }
+
+    .gap-lg {
+        gap: 1.5rem;
+    }
+
+    /* ÃƒÂ°Ã…Â¸Ã…Â½Ã‚Â¨ Enhanced visual hierarchy */
     .text-gradient {
         background: var(--gradient-primary);
         -webkit-background-clip: text;
@@ -811,16 +839,16 @@
         background-clip: text;
     }
 
-    /* 📱 Improved landscape mobile support */
+    /* ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â± Improved landscape mobile support */
     @media (max-height: 500px) and (orientation: landscape) {
         .cart-summary {
             margin-top: 1rem;
         }
-        
+
         .empty-cart {
             padding: 2rem 1rem !important;
         }
-        
+
         .empty-cart i {
             font-size: 2.5rem !important;
         }
@@ -854,27 +882,27 @@
         <!-- Cart Items List -->
         <div class="col-12 col-lg-8">
             <?php if (!empty($cart_items)) { ?>
-                <?php
-                $subtotal = 0;
-                $duration_items = [];
-                foreach ($cart_items as $index => $item) {
-                    $item_total = $item['price'] * $item['qty'];
-                    $subtotal += $item_total;
+                <!-- <?php
+                        $subtotal = 0;
+                        $duration_items = [];
+                        foreach ($cart_items as $index => $item) {
+                            $item_total = $item['price'] * $item['qty'];
+                            $subtotal += $item_total;
 
-                    $d = $item['duration'];
-                    if (!isset($duration_items[$d]))
-                        $duration_items[$d] = [];
+                            $d = $item['duration'];
+                            if (!isset($duration_items[$d]))
+                                $duration_items[$d] = [];
 
-                    $duration_items[$d][] = [
-                        'id' => $item['id'],
-                        'name' => $item['name'],
-                        'qty' => $item['qty'],
-                        'price' => $item['price'],
-                        'item_total' => $item_total
-                    ];
-                }
-                $total = $subtotal;
-                ?>
+                            $duration_items[$d][] = [
+                                'id' => $item['id'],
+                                'name' => $item['name'],
+                                'qty' => $item['qty'],
+                                'price' => $item['price'],
+                                'item_total' => $item_total
+                            ];
+                        }
+                        $total = $subtotal;
+                        ?> -->
 
                 <?php foreach ($cart_items as $index => $item) { ?>
                     <div class="card mb-3 cart-item p-3 cart-item-row" data-id="<?= $item['id']; ?>">
@@ -883,13 +911,17 @@
                             <!-- Provider -->
                             <div class="col-md-2 text-center">
                                 <small class="text-muted d-block mb-2">Provider</small>
-                                <img src="<?= $item['image']; ?>" alt="<?= $item['name']; ?>"
+                                <img
+                                    src="<?= !empty($item['provider_image'])
+                                                ? base_url($item['provider_image'])
+                                                : base_url('assets/no-image.png'); ?>"
+                                    alt="Provider"
                                     class="provider-image rounded-circle">
                             </div>
 
                             <!-- Name & Start Date -->
                             <div class="col-md-4">
-                                <div class="item-name"><?= $item['name']; ?></div>
+                                <div class="item-name"><?= $item['provider_name']; ?></div>
                                 <div class="text-muted">
                                     <small><i class="bi bi-calendar-event me-1"></i>Start Date:</small>
                                     <span class="fw-semibold"><?= $item['start_date']; ?></span>
@@ -900,7 +932,7 @@
                             <div class="col-md-2 text-center">
                                 <small class="text-muted d-block mb-2">Price / Duration</small>
                                 <div class="price-badge">
-                                    <span class="itemPrice">₹<?= $item['price']; ?></span>
+                                    <span class="itemPrice">&#8377;<?= number_format((float)($item['price'] ?? 0), 2); ?></span>
                                     <small>/<?= $item['duration']; ?></small>
                                 </div>
                             </div>
@@ -909,12 +941,12 @@
                             <div class="col-md-2 text-center">
                                 <small class="text-muted d-block mb-2">Quantity</small>
                                 <div class="input-group quantity-controls mx-auto" style="width:44%;">
-                                    <button class="btn btn-outline-primary btn-sm decreaseQty" data-id="<?= $item['id']; ?>">
+                                    <button type="button" class="btn btn-outline-primary btn-sm decreaseQty" data-id="<?= $item['id']; ?>">
                                         <i class="bi bi-dash"></i>
                                     </button>
                                     <input type="text" class="form-control text-center qtyInput" value="<?= $item['qty']; ?>"
                                         readonly style="margin-top:10px;margin-bottom:10px">
-                                    <button class="btn btn-outline-primary btn-sm increaseQty" data-id="<?= $item['id']; ?>">
+                                    <button type="button" class="btn btn-outline-primary btn-sm increaseQty" data-id="<?= $item['id']; ?>">
                                         <i class="bi bi-plus"></i>
                                     </button>
                                 </div>
@@ -923,54 +955,58 @@
                             <!-- Subtotal & Remove -->
                             <div class="col-md-2 text-center">
                                 <div class="fw-bold fs-5 text-success mb-2">
-                                    <span class="itemSubtotal">₹<?= $item['price'] * $item['qty']; ?></span>
+                                    <span class="itemSubtotal">&#8377;<?= number_format((float)($item['item_total'] ?? 0), 2); ?></span>
                                 </div>
-                                <button class="btn remove-btn btn-sm remove-cart-item" data-id="<?= $item['id']; ?>">
+                                <button type="button" class="btn remove-btn btn-sm remove-cart-item" data-id="<?= $item['id']; ?>">
                                     <i class="bi bi-trash me-1"></i>Remove
                                 </button>
                             </div>
                         </div>
 
                         <!-- Mobile View -->
-                        <div class="cart-item-mobile d-block d-md-none">
-                            <!-- Header Row -->
-                            <div class="mobile-row">
-                                <div class="mobile-section">
-                                    <img src="<?= $item['image']; ?>" alt="<?= $item['name']; ?>"
-                                        class="provider-image rounded-circle me-2" style="width: 50px; height: 50px;">
-                                    <div>
-                                        <div class="item-name"><?= $item['name']; ?></div>
+                        <div class="d-block d-md-none">
+                            <div class="cart-item-mobile">
+                                <!-- Header Row -->
+                                <div class="mobile-row">
+                                    <div class="mobile-section">
+                                        <img
+                                            src="<?= !empty($item['provider_image'])
+                                                        ? base_url($item['provider_image'])
+                                                        : base_url('assets/no-image.png'); ?>"
+                                            alt="Provider"
+                                            class="provider-image rounded-circle">
+                                        <div class="item-name"><?= $item['provider_name']; ?></div>
                                         <small class="text-muted">
                                             <i class="bi bi-calendar-event me-1"></i><?= $item['start_date']; ?>
                                         </small>
                                     </div>
-                                </div>
-                                <button class="btn remove-btn btn-sm remove-cart-item" data-id="<?= $item['id']; ?>">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-
-                            <!-- Price and Quantity Row -->
-                            <div class="mobile-row">
-                                <div class="price-badge">
-                                    <span class="itemPrice">₹<?= $item['price']; ?></span>
-                                    <small>/<?= $item['duration']; ?></small>
-                                </div>
-                                <div class="input-group quantity-controls" style="width: 54%!important;margin-top: 20px;">
-                                    <button class="btn btn-outline-primary btn-sm decreaseQty" data-id="<?= $item['id']; ?>">
-                                        <i class="bi bi-dash"></i>
-                                    </button>
-                                    <input type="text" class="form-control text-center qtyInput me-2 ms-2" value="<?= $item['qty']; ?>"
-                                        readonly>
-                                    <button class="btn btn-outline-primary btn-sm increaseQty" data-id="<?= $item['id']; ?>">
-                                        <i class="bi bi-plus"></i>
+                                    <button type="button" class="btn remove-btn btn-sm remove-cart-item" data-id="<?= $item['id']; ?>">
+                                        <i class="bi bi-trash"></i>
                                     </button>
                                 </div>
-                            </div>
 
-                            <!-- Total Row -->
-                            <div class="subtotal-row">
-                                <span>Subtotal: <span class="itemSubtotal">₹<?= $item['price'] * $item['qty']; ?></span></span>
+                                <!-- Price and Quantity Row -->
+                                <div class="mobile-row">
+                                    <div class="price-badge">
+                                        <span class="itemPrice">&#8377;<?= number_format((float)($item['price'] ?? 0), 2); ?></span>
+                                        <small>/<?= $item['duration']; ?></small>
+                                    </div>
+                                    <div class="input-group quantity-controls" style="width: 54%!important;margin-top: 20px;">
+                                        <button type="button" class="btn btn-outline-primary btn-sm decreaseQty" data-id="<?= $item['id']; ?>">
+                                            <i class="bi bi-dash"></i>
+                                        </button>
+                                        <input type="text" class="form-control text-center qtyInput me-2 ms-2" value="<?= $item['qty']; ?>"
+                                            readonly>
+                                        <button type="button" class="btn btn-outline-primary btn-sm increaseQty" data-id="<?= $item['id']; ?>">
+                                            <i class="bi bi-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Total Row -->
+                                <div class="subtotal-row">
+                                    <span>Subtotal: <span class="itemSubtotal">&#8377;<?= number_format((float)($item['item_total'] ?? 0), 2); ?></span></span>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -985,72 +1021,173 @@
             <?php } ?>
         </div>
 
-      <!-- Cart Summary -->
-<div class="col-12 col-lg-4 mt-4 mt-lg-0">
-    <div class="cart-summary mb-5">
-        <div class="summary-header">
-            <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Order Summary</h5>
-        </div>
+        <!-- Cart Summary -->
+        <div class="col-12 col-lg-4 mt-4 mt-lg-0">
+            <div class="cart-summary mb-5">
+                <div class="summary-header">
+                    <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Order Summary</h5>
+                </div>
 
-        <!-- Subtotal -->
-        <div class="d-flex justify-content-between mb-3">
-            <span><i class="bi bi-calculator me-2"></i>Subtotal</span>
-            <span class="fw-bold" id="cartSubtotal">₹<?= number_format($subtotal ?? 0, 2); ?></span>
-        </div>
+                <!-- Subtotal -->
+                <div class="d-flex justify-content-between mb-3">
+                    <span><i class="bi bi-calculator me-2"></i>Subtotal</span>
+                    <span class="fw-bold" id="cartSubtotal">&#8377;<?= number_format((float)($subtotal ?? 0), 2); ?></span>
+                </div>
 
-        <!-- Duration Breakdown -->
-        <?php if (!empty($duration_items)) { ?>
-            <div class="mb-3">
-                <h6 class="text-muted mb-2"><i class="bi bi-clock me-2"></i>Duration Breakdown</h6>
-                <?php foreach ($duration_items as $dur => $items): ?>
-                    <div class="duration-section">
-                        <div class="duration-header"><?= ucfirst($dur) ?></div>
-                        <?php foreach ($items as $item): ?>
-                            <div class="d-flex justify-content-between small duration-item" data-id="<?= $item['id']; ?>">
-                                <span>
-                                    <?= $item['name'] ?> x<span class="durationQty"><?= $item['qty'] ?></span>
-                                    <?php if(!empty($item['platform_discount']) && $item['platform_discount'] > 0): ?>
-                                        <span class="badge bg-success ms-2">
-                                            Save ₹<?= number_format($item['platform_discount'], 2); ?>
+                <!-- Duration Breakdown -->
+                <?php if (!empty($duration_items)) { ?>
+                    <div class="mb-3">
+                        <h6 class="text-muted mb-2"><i class="bi bi-clock me-2"></i>Duration Breakdown</h6>
+                        <?php foreach ($duration_items as $dur => $items): ?>
+                            <div class="duration-section">
+                                <div class="duration-header"><?= ucfirst($dur) ?></div>
+                                <?php foreach ($items as $item): ?>
+                                    <div class="d-flex justify-content-between small duration-item" data-id="<?= $item['id']; ?>">
+                                        <span>
+                                            <?= $item['provider_name'] ?? '' ?> x<span class="durationQty"><?= $item['qty'] ?></span>
+                                            <?php if (!empty($item['platform_discount']) && $item['platform_discount'] > 0): ?>
+                                                <span class="badge bg-success ms-2">
+                                                    Save &#8377;<?= number_format($item['platform_discount'], 2); ?>
+                                                </span>
+                                            <?php endif; ?>
                                         </span>
-                                    <?php endif; ?>
-                                </span>
-                                <span class="durationSubtotal">₹<?= number_format($item['item_total'], 2); ?></span>
+                                        <span class="durationSubtotal">&#8377;<?= number_format((float)($item['item_total'] ?? 0), 2); ?></span>
+                                    </div>
+                                <?php endforeach; ?>
                             </div>
                         <?php endforeach; ?>
                     </div>
-                <?php endforeach; ?>
+                <?php } ?>
+
+                <!-- Platform Offer Discount -->
+                <?php if (!empty($discount_amount) && $discount_amount > 0): ?>
+                    <div class="alert alert-success py-1 px-2 mb-3 text-center">
+                        <i class="bi bi-gift me-1"></i> Congratulations! You save &#8377;<?= number_format($discount_amount, 2); ?> (<?= $offer_percent ?>% platform offer)
+                    </div>
+                <?php endif; ?>
+
+                <hr>
+
+                <!-- Total -->
+                <div class="d-flex justify-content-between mb-4">
+                    <strong class="fs-5"><i class="bi bi-currency-rupee me-2"></i>Total</strong>
+                    <strong class="fs-4 text-success" id="cartTotal">&#8377;<?= number_format((float)($total_after_discount ?? $total ?? 0), 2); ?></strong>
+                </div>
+
+                <!-- Pay Now Button -->
+                <button class="btn pay-now-btn w-100" <?= ($subtotal ?? 0) == 0 ? 'disabled' : 'type="button"'; ?>
+                    onclick="window.location.href='<?= site_url('cart/pay'); ?>'">
+                    <i class="bi bi-credit-card me-2"></i>Pay Now
+                </button>
+
+                <?php if (($subtotal ?? 0) == 0): ?>
+                    <small class="text-muted d-block text-center mt-2">
+                        <i class="bi bi-info-circle me-1"></i>Add items to proceed with payment
+                    </small>
+                <?php endif; ?>
             </div>
-        <?php } ?>
-
-        <!-- Platform Offer Discount -->
-        <?php if (!empty($discount_amount) && $discount_amount > 0): ?>
-            <div class="alert alert-success py-1 px-2 mb-3 text-center">
-                <i class="bi bi-gift me-1"></i> Congratulations! You save ₹<?= number_format($discount_amount, 2); ?> (<?= $offer_percent ?>% platform offer)
-            </div>
-        <?php endif; ?>
-
-        <hr>
-
-        <!-- Total -->
-        <div class="d-flex justify-content-between mb-4">
-            <strong class="fs-5"><i class="bi bi-currency-rupee me-2"></i>Total</strong>
-            <strong class="fs-4 text-success" id="cartTotal">₹<?= number_format($total_after_discount ?? $total ?? 0, 2); ?></strong>
         </div>
-
-        <!-- Pay Now Button -->
-        <button class="btn pay-now-btn w-100" <?= ($subtotal ?? 0) == 0 ? 'disabled' : 'type="button"'; ?>
-            onclick="window.location.href='<?= site_url('cart/pay'); ?>'">
-            <i class="bi bi-credit-card me-2"></i>Pay Now
-        </button>
-
-        <?php if (($subtotal ?? 0) == 0): ?>
-            <small class="text-muted d-block text-center mt-2">
-                <i class="bi bi-info-circle me-1"></i>Add items to proceed with payment
-            </small>
-        <?php endif; ?>
     </div>
 </div>
 
-    </div>
-</div>
+<script>
+    $(document).on('click', '.increaseQty, .decreaseQty', function(e) {
+        e.preventDefault();
+
+        var $btn = $(this);
+        if ($btn.prop('disabled')) {
+            return;
+        }
+
+        var id = $btn.data('id');
+        var action = $btn.hasClass('increaseQty') ? 'increase' : 'decrease';
+        var row = $('.cart-item-row[data-id="' + id + '"]');
+        var rowButtons = row.find('.increaseQty, .decreaseQty');
+
+        rowButtons.prop('disabled', true);
+
+        $.ajax({
+            url: "<?= site_url('cart/update_quantity'); ?>",
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                id: id,
+                action: action
+            }
+        }).done(function(response) {
+            if (!response || response.status !== 'success') {
+                return;
+            }
+
+            var qtyInput = row.find('.qtyInput');
+            var currentQty = parseInt(qtyInput.first().val(), 10) || 1;
+            var nextQty = response.qty ? parseInt(response.qty, 10) : (action === 'increase' ? currentQty + 1 : Math.max(1, currentQty - 1));
+
+            qtyInput.val(nextQty);
+
+            var rowSubtotal;
+            if (typeof response.item_subtotal !== 'undefined') {
+                rowSubtotal = parseFloat(response.item_subtotal) || 0;
+            } else {
+                var price = parseFloat(row.find('.itemPrice').first().text().replace(/[^0-9.]/g, '')) || 0;
+                rowSubtotal = price * nextQty;
+            }
+
+            row.find('.itemSubtotal').text('\u20B9' + rowSubtotal.toFixed(2));
+
+            var durationRow = $('.duration-item[data-id="' + id + '"]');
+            durationRow.find('.durationQty').text(nextQty);
+            durationRow.find('.durationSubtotal').text('\u20B9' + rowSubtotal.toFixed(2));
+
+            recalculateCart();
+            updateCartCount();
+        }).always(function() {
+            rowButtons.prop('disabled', false);
+        });
+    });
+</script>
+
+<script>
+    $(document).on('click', '.remove-cart-item', function(e) {
+        e.preventDefault();
+
+        var id = $(this).data('id');
+        var row = $('.cart-item-row[data-id="' + id + '"]');
+
+        $.post("<?= site_url('cart/remove'); ?>", {
+            id: id
+        }, function(response) {
+            if (response.status === 'success') {
+                row.fadeOut(300, function() {
+                    $(this).remove();
+                    $('.duration-item[data-id="' + id + '"]').remove();
+                    recalculateCart();
+                    updateCartCount();
+                });
+            }
+        }, 'json');
+    });
+</script>
+
+<script>
+    function recalculateCart() {
+        var subtotal = 0;
+
+        $('.cart-item-row').each(function() {
+            var value = $(this).find('.itemSubtotal').first().text().replace(/[^0-9.]/g, '');
+            subtotal += parseFloat(value) || 0;
+        });
+
+        $("#cartSubtotal").text("\u20B9" + subtotal.toFixed(2));
+        $("#cartTotal").text("\u20B9" + subtotal.toFixed(2));
+        $('.pay-now-btn').prop('disabled', subtotal <= 0);
+    }
+</script>
+
+<script>
+    function updateCartCount() {
+        $.getJSON("<?= site_url('cart/get_cart_count'); ?>", function(data) {
+            $('.cart-count').text(data.count || 0);
+        });
+    }
+</script>

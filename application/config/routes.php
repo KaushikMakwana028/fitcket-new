@@ -152,6 +152,7 @@ $route['provider/notifications_get/api'] = 'provider/api/notifications_get';
 $route['provider/notification-read/(:num)'] = 'provider/api/notification_read/$1';
 $route['provider/notification-delete/(:num)'] = 'provider/api/notification_delete/$1';
 $route['provider/notification-delete-all']    = 'provider/api/notification_delete_all';
+$route['provider/delete_notification'] = 'provider/dashboard/delete_notification';
 
 
 

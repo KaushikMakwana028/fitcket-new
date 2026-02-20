@@ -1053,7 +1053,7 @@ $(document).ready(function () {
 		fetchCityList();
 
 		// Search input scoped to CityTable
-		$("#CityTable input[type='text']").on("keyup", function () {
+		$("#citySearch").on("keyup", function () {
 			searchKeyword = $(this).val();
 			currentPage = 1;
 			fetchCityList();
@@ -1175,7 +1175,7 @@ $(document).ready(function () {
 					}">Next</a></li>`;
 				}
 			}
-			$("#CityTable .pagination").html(html);
+			$("#cityPagination").html(html);
 		}
 	}
 });
@@ -1499,12 +1499,13 @@ $(document).ready(function () {
 		// ✅ Check if table exists
 		let limit = 5;
 		let currentPage = 1;
+		let currentSearch = "";
 
 		function loadPayouts(page = 1) {
 			$.ajax({
 				url: site_url + "admin/payment/payouts_list",
 				type: "POST",
-				data: { limit: limit, page: page },
+				data: { limit: limit, page: page, search: currentSearch },
 				dataType: "json",
 				success: function (res) {
 					let tbody = "";
@@ -1569,8 +1570,12 @@ $(document).ready(function () {
 			});
 		}
 
-		// Initial load
-		loadPayouts(currentPage);
+		// 🔎 SEARCH INPUT (IMPORTANT)
+		$("#paymentSearch").on("keyup", function () {
+			currentSearch = $(this).val().trim();
+			currentPage = 1;
+			loadPayouts(currentPage);
+		});
 
 		// Handle pagination click
 		$(document).on("click", ".pagination .page-link", function (e) {
@@ -1582,6 +1587,8 @@ $(document).ready(function () {
 				loadPayouts(page);
 			}
 		});
+		// Initial load
+		loadPayouts(currentPage);
 	}
 });
 
