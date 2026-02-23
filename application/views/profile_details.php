@@ -1526,7 +1526,7 @@
                                                 <i class="fa fa-user"></i>
                                             </div>
                                             <div>
-                                                <small>Owner</small>
+                                                <small>Owner : </small>
                                                 <strong><?= $provider->name; ?></strong>
                                             </div>
                                         </div>
@@ -1536,8 +1536,8 @@
                                                 <i class="fa fa-envelope"></i>
                                             </div>
                                             <div>
-                                                <small>Email</small>
-                                                <span><?= $provider->email; ?></span>
+                                                <small>Email : </small>
+                                                <strong><?= $provider->email; ?></strong>
                                             </div>
                                         </div>
 
@@ -1546,8 +1546,8 @@
                                                 <i class="fa fa-phone"></i>
                                             </div>
                                             <div>
-                                                <small>Mobile</small>
-                                                <span><?= $provider->mobile; ?></span>
+                                                <small>Mobile : </small>
+                                                <strong><?= $provider->mobile; ?></strong>
                                             </div>
                                         </div>
 
@@ -1556,8 +1556,8 @@
                                                 <i class="fa fa-map-marker-alt"></i>
                                             </div>
                                             <div>
-                                                <small>Address</small>
-                                                <span><?= $provider->address; ?></span>
+                                                <small>Address : </small>
+                                                <strong><?= $provider->address; ?></strong>
                                             </div>
                                         </div>
 

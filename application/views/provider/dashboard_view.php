@@ -15,6 +15,79 @@
     margin-bottom: 0;
     font-size: 14px;
   }
+
+  .notifications-card {
+    border-radius: 14px;
+  }
+
+  .notification-list {
+    height: 420px;
+    overflow-y: scroll;
+    padding-right: 4px;
+  }
+
+  .notification-item {
+    border: 1px solid #eceff4;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+  }
+
+  .notification-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .notification-empty {
+    height: 100%;
+    min-height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #7a8694;
+    text-align: center;
+    border: 1px dashed #d6dee8;
+    border-radius: 12px;
+    padding: 16px;
+  }
+
+  .notification-item.unread {
+    background: #f8faff;
+    border-color: #d7e7ff;
+  }
+
+  .notification-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #212529;
+    margin-bottom: 4px;
+  }
+
+  .notification-message {
+    font-size: 13px;
+    color: #5b6572;
+    margin-bottom: 8px;
+    line-height: 1.4;
+  }
+
+  .notification-time {
+    font-size: 12px;
+    color: #8c96a3;
+  }
+
+  .notification-actions .btn {
+    min-width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @media (max-width: 576px) {
+    .notification-item {
+      padding: 10px 12px;
+    }
+  }
 </style>
 
 <div class="page-wrapper">
@@ -151,47 +224,44 @@
     <!-- Recent Notifications -->
     <div class="row g-3 mt-3">
       <div class="col-12">
-        <div class="card">
+        <div class="card notifications-card">
           <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <h6>Recent Notifications</h6>
+              <h6 class="mb-0">Recent Notifications</h6>
               <?php if ($unread_count > 0): ?>
-                <span class="badge bg-danger"><?= $unread_count ?> New</span>
+                <span class="badge bg-danger" id="unread-badge"><?= $unread_count ?> New</span>
               <?php endif; ?>
             </div>
 
-            <?php if (!empty($notifications)): ?>
-              <ul class="list-group">
+            <ul class="list-unstyled notification-list mb-0" id="notification-list">
+              <?php if (!empty($notifications)): ?>
                 <?php foreach ($notifications as $note): ?>
-                  <li class="list-group-item d-flex justify-content-between align-items-start <?= $note->is_read ? '' : 'bg-light' ?>" id="notification-<?= $note->id ?>">
-
-                    <div class="w-100">
-                      <div class="d-flex justify-content-between align-items-center">
-                        <strong><?= $note->title ?></strong><br>
-                        <small><?= $note->message ?></small><br>
-                        <small class="text-muted">
-                          <?= date('d M Y h:i A', strtotime($note->created_at)) ?>
-                        </small>
-
-                        <!-- Delete Button -->
-                        <button class="btn btn-sm btn-outline-danger delete-notification"
-                          data-id="<?= $note->id ?>">
+                  <li class="notification-item <?= (int)$note->is_read === 0 ? 'unread' : '' ?>" id="notification-<?= $note->id ?>">
+                    <div class="d-flex justify-content-between gap-3">
+                      <div class="flex-grow-1">
+                        <div class="notification-title"><?= html_escape($note->title) ?></div>
+                        <div class="notification-message"><?= html_escape($note->message) ?></div>
+                        <div class="notification-time">
+                          <i class="bx bx-time-five me-1"></i><?= date('d M Y h:i A', strtotime($note->created_at)) ?>
+                        </div>
+                      </div>
+                      <div class="notification-actions">
+                        <button type="button" class="btn btn-sm btn-outline-danger delete-notification" data-id="<?= $note->id ?>" title="Delete notification">
                           <i class="bx bx-trash"></i>
                         </button>
                       </div>
-
-                      <small><?= $note->message ?></small><br>
-                      <small class="text-muted">
-                        <?= date('d M Y h:i A', strtotime($note->created_at)) ?>
-                      </small>
                     </div>
-
                   </li>
                 <?php endforeach; ?>
-              </ul>
-            <?php else: ?>
-              <p class="text-muted">No notifications found.</p>
-            <?php endif; ?>
+              <?php else: ?>
+                <li class="notification-empty" id="empty-notification">
+                  <div>
+                    <i class="bx bx-bell-off fs-1 d-block mb-2"></i>
+                    No notifications found.
+                  </div>
+                </li>
+              <?php endif; ?>
+            </ul>
           </div>
         </div>
       </div>
@@ -201,20 +271,47 @@
 
 <script src="<?= base_url('assets/js/jquery.min.js') ?>"></script>
 <script>
-  $(document).on('click', '.delete-notification', function() {
+  function getSwal() {
+    return (typeof Swal !== 'undefined') ? Swal : null;
+  }
 
+  function updateUnreadBadgeAfterDelete(wasUnread) {
+    if (!wasUnread) return;
+
+    var $badge = $('#unread-badge');
+    if (!$badge.length) return;
+
+    var currentText = ($badge.text() || '').trim();
+    var current = parseInt(currentText, 10) || 0;
+    var next = Math.max(0, current - 1);
+
+    if (next > 0) {
+      $badge.text(next + ' New');
+    } else {
+      $badge.remove();
+    }
+  }
+
+  $(document).on('click', '.delete-notification', function() {
     var id = $(this).data('id');
+    var $row = $('#notification-' + id);
+    var swal = getSwal();
+    var wasUnread = $row.hasClass('unread');
 
     if (!id) {
-      alert('ID missing');
+      if (swal) {
+        swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Notification ID is missing.'
+        });
+      }
       return;
     }
 
-    if (confirm("Delete this notification?")) {
-
+    var runDelete = function() {
       $.ajax({
-        // Fix the URL to match your controller structure
-        url: "<?= site_url('provider/dashboard/delete_notification'); ?>", // Changed from 'provider/delete_notification'
+        url: "<?= site_url('provider/dashboard/delete_notification'); ?>",
         type: "POST",
         data: {
           id: id
@@ -222,27 +319,66 @@
         dataType: "json",
         success: function(response) {
 
-          console.log(response);
-
           if (response.status === 'success') {
-            $('#notification-' + id).fadeOut(300, function() {
+            $row.fadeOut(250, function() {
               $(this).remove();
-
-              // Optional: Update the unread count badge if needed
-              // You might want to add this logic if you want to update the counter
+              updateUnreadBadgeAfterDelete(wasUnread);
+              if ($('#notification-list .notification-item').length === 0) {
+                if (!$('#empty-notification').length) {
+                  $('#notification-list').append(
+                    '<li class="notification-empty" id="empty-notification"><div><i class="bx bx-bell-off fs-1 d-block mb-2"></i>No notifications found.</div></li>'
+                  );
+                }
+              }
             });
+            if (swal) {
+              swal.fire({
+                icon: 'success',
+                title: 'Deleted',
+                text: 'Notification deleted successfully.',
+                timer: 1200,
+                showConfirmButton: false
+              });
+            }
           } else {
-            alert('Delete failed: ' + (response.message || 'Unknown error'));
+            if (swal) {
+              swal.fire({
+                icon: 'error',
+                title: 'Delete Failed',
+                text: (response.message || 'Unknown error')
+              });
+            }
           }
 
         },
         error: function(xhr) {
-          console.log(xhr.responseText);
-          alert("Server error: " + xhr.status + " " + xhr.statusText);
+          if (swal) {
+            swal.fire({
+              icon: 'error',
+              title: 'Server Error',
+              text: "Server error: " + xhr.status + " " + xhr.statusText
+            });
+          }
         }
       });
+    };
 
+    if (swal) {
+      swal.fire({
+        title: 'Delete Notification?',
+        text: 'This action cannot be undone.',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#6c757d',
+        confirmButtonText: 'Yes, delete it'
+      }).then(function(result) {
+        if (result.isConfirmed) {
+          runDelete();
+        }
+      });
+    } else if (confirm("Delete this notification?")) {
+      runDelete();
     }
-
   });
 </script>

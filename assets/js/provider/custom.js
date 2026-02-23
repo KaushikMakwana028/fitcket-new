@@ -699,7 +699,13 @@ function shareProfile(profileUrl) {
     } else {
         // Fallback for browsers that don't support Web Share API
         navigator.clipboard.writeText(profileUrl).then(() => {
-            alert("Profile link copied to clipboard:\n" + profileUrl);
+            if (typeof Swal !== "undefined") {
+                Swal.fire({
+                    icon: "success",
+                    title: "Copied",
+                    text: "Profile link copied to clipboard."
+                });
+            }
         });
     }
 }

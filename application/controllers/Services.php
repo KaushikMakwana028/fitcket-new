@@ -79,6 +79,7 @@ class Services extends User_Controller
     $this->db->from('service');
     $this->db->join('provider', 'provider.provider_id = service.provider_id', 'left');
     $this->db->join('users', 'users.id = provider.provider_id', 'left');
+    $this->db->order_by('id', 'DESC');
     $this->db->where('service.isActive', 1);
 
     $total = $this->db->count_all_results('', false);

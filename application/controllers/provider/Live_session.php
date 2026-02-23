@@ -91,7 +91,7 @@ class Live_session extends Provider_Controller
             $config['upload_path'] = './uploads/session_thumbnails/';
             $config['allowed_types'] = 'jpg|jpeg|png|webp';
             $config['encrypt_name'] = true;
-            $config['max_size'] = 2048; // 2MB
+            $config['max_size'] = 5120; // 5MB
 
             if (!is_dir($config['upload_path'])) {
                 mkdir($config['upload_path'], 0777, true);
@@ -330,18 +330,40 @@ public function delete($id)
 
     private function getCategories()
     {
-        return [
-            'yoga' => 'Yoga',
-            'fitness' => 'Fitness Training',
-            'meditation' => 'Meditation',
-            'cardio' => 'Cardio Workout',
-            'strength' => 'Strength Training',
-            'hiit' => 'HIIT',
-            'pilates' => 'Pilates',
-            'dance' => 'Dance Fitness',
-            'nutrition' => 'Nutrition Consulting',
-            'other' => 'Other'
-        ];
+        $rows = $this->db
+            ->select('id, name')
+            ->from('categories')
+            ->where('isActive', 1)
+            ->order_by('name', 'ASC')
+            ->get()
+            ->result_array();
+
+        $categories = [];
+        foreach ($rows as $row) {
+            $id = (string)($row['id'] ?? '');
+            $name = trim((string)($row['name'] ?? ''));
+            if ($id !== '' && $name !== '') {
+                $categories[$id] = $name;
+            }
+        }
+
+        // Fallback if categories table is empty/misconfigured
+        if (empty($categories)) {
+            return [
+                'yoga' => 'Yoga',
+                'fitness' => 'Fitness Training',
+                'meditation' => 'Meditation',
+                'cardio' => 'Cardio Workout',
+                'strength' => 'Strength Training',
+                'hiit' => 'HIIT',
+                'pilates' => 'Pilates',
+                'dance' => 'Dance Fitness',
+                'nutrition' => 'Nutrition Consulting',
+                'other' => 'Other'
+            ];
+        }
+
+        return $categories;
     }
 
     // private function processRefund($booking)

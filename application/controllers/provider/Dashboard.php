@@ -114,41 +114,55 @@ class Dashboard extends Provider_Controller
 
     public function delete_notification()
     {
-        // Add debug logging
-        log_message('debug', 'delete_notification called with POST: ' . json_encode($this->input->post()));
+        $this->output->set_content_type('application/json');
 
         if (!$this->provider) {
-            echo json_encode(['status' => 'error', 'message' => 'Not logged in']);
-            return;
+            return $this->output->set_output(json_encode([
+                'status' => 'error',
+                'message' => 'Not logged in'
+            ]));
         }
 
         $id = (int)$this->input->post('id');
 
         if (!$id) {
-            echo json_encode(['status' => 'error', 'message' => 'Invalid ID']);
-            return;
+            return $this->output->set_output(json_encode([
+                'status' => 'error',
+                'message' => 'Invalid ID'
+            ]));
         }
 
-        // Make sure you're using the correct provider ID field
-        $provider_id = $this->provider['id'] ?? $this->provider['user_id'] ?? null;
+        // Accept both possible provider identifiers from session
+        $provider_ids = [];
+        if (!empty($this->provider['id'])) {
+            $provider_ids[] = (int)$this->provider['id'];
+        }
+        if (!empty($this->provider['user_id'])) {
+            $provider_ids[] = (int)$this->provider['user_id'];
+        }
+        $provider_ids = array_values(array_unique(array_filter($provider_ids)));
 
-        if (!$provider_id) {
-            echo json_encode(['status' => 'error', 'message' => 'Provider ID not found']);
-            return;
+        if (empty($provider_ids)) {
+            return $this->output->set_output(json_encode([
+                'status' => 'error',
+                'message' => 'Provider ID not found'
+            ]));
         }
 
         $this->db->where('id', $id);
-        $this->db->where('provider_id', $provider_id);
-        $deleted = $this->db->delete('provider_notifications');
+        $this->db->where_in('provider_id', $provider_ids);
+        $this->db->delete('provider_notifications');
+        $affected = (int)$this->db->affected_rows();
 
-        if ($deleted) {
-            echo json_encode(['status' => 'success']);
-        } else {
-            echo json_encode([
-                'status' => 'error',
-                'message' => 'DB delete failed',
-                'affected_rows' => $this->db->affected_rows()
-            ]);
+        if ($affected > 0) {
+            return $this->output->set_output(json_encode([
+                'status' => 'success'
+            ]));
         }
+
+        return $this->output->set_output(json_encode([
+                'status' => 'error',
+                'message' => 'Notification not found or already deleted'
+            ]));
     }
 }

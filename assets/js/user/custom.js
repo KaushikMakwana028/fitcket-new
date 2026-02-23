@@ -227,8 +227,8 @@ $(document).ready(function () {
 //                     $(this).remove();
 
 //                     // Recalculate totals dynamically
-//                     $("#cartSubtotal").text("â‚¹" + (res.subtotal ?? 0));
-//                     $("#cartTotal").text("â‚¹" + (res.total ?? 0));
+//                     $("#cartSubtotal").text("" + (res.subtotal ?? 0));
+//                     $("#cartTotal").text("" + (res.total ?? 0));
 
 //                     // If no cart-item-row left, show empty cart
 //                     if ($(".cart-item-row").length === 0) {
@@ -242,7 +242,7 @@ $(document).ready(function () {
 
 //                         // Disable Pay Now button
 //                         $(".pay-now-btn").prop("disabled", true);
-//                         $("#cartSubtotal, #cartTotal").text("â‚¹0");
+//                         $("#cartSubtotal, #cartTotal").text("0");
 //                     }
 //                 });
 //             }
@@ -391,7 +391,7 @@ function renderServices(services) {
                 </div>
             </div>
             <div class="card-footer">
-                <div class="price">â‚¹${service.month_price} / month</div>
+                <div class="price">${service.month_price} / month</div>
                 <button class="btn-book" onclick="redirectToProvider(${
                   service.provider_id
                 })">Book Now</button>
@@ -477,8 +477,27 @@ function recalcCart() {
         subtotal += itemTotal;
     });
 
-    $("#cartSubtotal, #cartTotal").text("\u20B9" + subtotal.toFixed(2));
-    $(".pay-now-btn").prop("disabled", subtotal <= 0);
+    let offerPercent = 0;
+    let minOfferAmount = 0;
+
+    if (typeof platformOfferPercent !== "undefined") {
+      offerPercent = parseFloat(platformOfferPercent) || 0;
+    }
+    if (typeof minAmountForOffer !== "undefined") {
+      minOfferAmount = parseFloat(minAmountForOffer) || 0;
+    }
+
+    let discount = 0;
+    if (offerPercent > 0 && (minOfferAmount === 0 || subtotal >= minOfferAmount)) {
+      discount = (subtotal * offerPercent) / 100;
+    }
+    let total = Math.max(0, subtotal - discount);
+
+    $("#cartSubtotal").text("\u20B9" + subtotal.toFixed(2));
+    $("#cartTotal").text("\u20B9" + total.toFixed(2));
+    $("#platformDiscountAmount").text("\u20B9" + discount.toFixed(2));
+    $("#platformDiscountRow").toggleClass("d-none", !(discount > 0));
+    $(".pay-now-btn").prop("disabled", total <= 0);
 }
 
 // Remove cart item

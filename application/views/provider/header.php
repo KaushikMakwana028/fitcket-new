@@ -88,15 +88,13 @@
 	<title><?= isset($this->provider['gym_name']) ? $this->provider['gym_name'] : 'Dashboard'; ?></title>
 
 	<script>
-
-		(function () {
+		(function() {
 
 			var savedTheme = localStorage.getItem('theme') || 'light';
 
 			document.documentElement.setAttribute('data-bs-theme', savedTheme);
 
 		})();
-
 	</script>
 
 	<style>
@@ -202,27 +200,27 @@
 						<li> <a href="<?= base_url('add_service'); ?>"><i class='bx bx-plus'></i>Add Service</a></li>
 
 					</ul>
-					
+
 
 				</li>
 				<li>
-    <a href="javascript:;" class="has-arrow">
-        <div class="parent-icon"><i class="bx bx-image"></i></div>
-        <div class="menu-title">Gym Gallery</div>
-    </a>
-    <ul>
-        <li>
-            <a href="<?= base_url('image'); ?>">
-                <i class='bx bx-list-ul'></i>All Images
-            </a>
-        </li>
-        <li>
-            <a href="<?= base_url('add_image'); ?>">
-                <i class='bx bx-plus'></i>Add Image
-            </a>
-        </li>
-    </ul>
-</li>
+					<a href="javascript:;" class="has-arrow">
+						<div class="parent-icon"><i class="bx bx-image"></i></div>
+						<div class="menu-title">Gym Gallery</div>
+					</a>
+					<ul>
+						<li>
+							<a href="<?= base_url('image'); ?>">
+								<i class='bx bx-list-ul'></i>All Images
+							</a>
+						</li>
+						<li>
+							<a href="<?= base_url('add_image'); ?>">
+								<i class='bx bx-plus'></i>Add Image
+							</a>
+						</li>
+					</ul>
+				</li>
 
 
 
@@ -289,7 +287,7 @@
 
 				</li> -->
 
-<li>
+				<li>
 
 					<a href="<?= base_url('provider/live_session'); ?>" class="">
 
@@ -299,7 +297,7 @@
 
 					</a>
 
-</li>
+				</li>
 
 				<li>
 
@@ -313,21 +311,25 @@
 
 				</li>
 				<li>
-    <a class="dropdown-item d-flex align-items-center" href="<?= base_url('offers'); ?>">
-        <i class="bx bxs-discount fs-5"></i>
-       <div class="menu-title">Offer</div>
-    </a>
-</li>
+					<a class="dropdown-item d-flex align-items-center" href="<?= base_url('offers'); ?>">
+						<i class="bx bxs-discount fs-5"></i>
+						<div class="menu-title">Offer</div>
+					</a>
+				</li>
 
-<li>
-    <a class="dropdown-item d-flex align-items-center" href="<?= base_url('certification'); ?>">
-        <i class="bx bxs-certification fs-5"></i>
-       <div class="menu-title">Certificate</div>
-    </a>
-</li>
+				<li>
+					<a class="dropdown-item d-flex align-items-center" href="<?= base_url('certification'); ?>">
+						<i class="bx bxs-certification fs-5"></i>
+						<div class="menu-title">Certificate</div>
+					</a>
+				</li>
 
-				<li><a class="dropdown-item d-flex align-items-center" href="<?= base_url('bank_details'); ?>"><i
-							class="bx bxs-bank fs-5"></i><span>Bank Details</span></a></li>
+				<li>
+					<a class="dropdown-item d-flex align-items-center" href="<?= base_url('bank_details'); ?>">
+						<i class="bx bxs-bank fs-5"></i>
+						<div class="menu-title">Bank Details</div>
+					</a>
+				</li>
 
 
 
@@ -488,7 +490,7 @@
 
 
 
-														
+
 
 
 
@@ -528,7 +530,7 @@
 
 
 
-														
+
 
 
 
@@ -607,7 +609,7 @@
 
 
 
-														
+
 
 
 
@@ -647,7 +649,7 @@
 
 
 
-														
+
 
 
 
@@ -687,47 +689,7 @@
 
 
 
-														
 
-
-
-														<div class="app-name">
-
-
-
-															<p class="mb-0 mt-1">Stack</p>
-
-
-
-														</div>
-
-
-
-													</div>
-
-
-
-												</a>
-
-
-
-											</div>
-
-
-
-											<div class="col">
-
-
-
-												<a href="javascript:;">
-
-
-
-													<div class="app-box text-center">
-
-
-
-														
 
 
 
@@ -767,7 +729,47 @@
 
 
 
-														
+
+
+
+
+														<div class="app-name">
+
+
+
+															<p class="mb-0 mt-1">Stack</p>
+
+
+
+														</div>
+
+
+
+													</div>
+
+
+
+												</a>
+
+
+
+											</div>
+
+
+
+											<div class="col">
+
+
+
+												<a href="javascript:;">
+
+
+
+													<div class="app-box text-center">
+
+
+
+
 
 
 
@@ -807,7 +809,7 @@
 
 
 
-														
+
 
 
 
@@ -847,7 +849,7 @@
 
 
 
-													
+
 
 														<div class="app-name">
 
@@ -885,47 +887,7 @@
 
 
 
-														
 
-
-
-														<div class="app-name">
-
-
-
-															<p class="mb-0 mt-1">Photos</p>
-
-
-
-														</div>
-
-
-
-													</div>
-
-
-
-												</a>
-
-
-
-											</div>
-
-
-
-											<div class="col">
-
-
-
-												<a href="javascript:;">
-
-
-
-													<div class="app-box text-center">
-
-
-
-														
 
 
 
@@ -965,7 +927,47 @@
 
 
 
-														
+
+
+
+
+														<div class="app-name">
+
+
+
+															<p class="mb-0 mt-1">Photos</p>
+
+
+
+														</div>
+
+
+
+													</div>
+
+
+
+												</a>
+
+
+
+											</div>
+
+
+
+											<div class="col">
+
+
+
+												<a href="javascript:;">
+
+
+
+													<div class="app-box text-center">
+
+
+
+
 
 
 
@@ -1005,7 +1007,7 @@
 
 
 
-														
+
 
 
 
@@ -1045,7 +1047,7 @@
 
 
 
-														
+
 
 
 
@@ -1085,7 +1087,7 @@
 
 
 
-														
+
 
 
 
@@ -1125,7 +1127,7 @@
 
 
 
-														
+
 
 
 
@@ -1165,7 +1167,7 @@
 
 
 
-														
+
 
 
 
@@ -1428,7 +1430,7 @@
 
 
 
-												
+
 
 
 												<div class="flex-grow-1">

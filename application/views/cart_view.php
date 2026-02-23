@@ -1060,11 +1060,11 @@
                 <?php } ?>
 
                 <!-- Platform Offer Discount -->
-                <?php if (!empty($discount_amount) && $discount_amount > 0): ?>
-                    <div class="alert alert-success py-1 px-2 mb-3 text-center">
-                        <i class="bi bi-gift me-1"></i> Congratulations! You save &#8377;<?= number_format($discount_amount, 2); ?> (<?= $offer_percent ?>% platform offer)
-                    </div>
-                <?php endif; ?>
+                <div class="alert alert-success py-1 px-2 mb-3 text-center <?= (!empty($discount_amount) && $discount_amount > 0) ? '' : 'd-none'; ?>" id="platformDiscountRow">
+                    <i class="bi bi-gift me-1"></i> Congratulations! You save
+                    <span id="platformDiscountAmount">&#8377;<?= number_format((float)($discount_amount ?? 0), 2); ?></span>
+                    (<?= (float)($offer_percent ?? 0); ?>% platform offer)
+                </div>
 
                 <hr>
 
@@ -1170,6 +1170,9 @@
 </script>
 
 <script>
+    const platformOfferPercent = parseFloat('<?= (float)($offer_percent ?? 0); ?>') || 0;
+    const minAmountForOffer = parseFloat('<?= (float)($min_amount_for_offer ?? 0); ?>') || 0;
+
     function recalculateCart() {
         var subtotal = 0;
 
@@ -1178,9 +1181,17 @@
             subtotal += parseFloat(value) || 0;
         });
 
+        var discount = 0;
+        if (platformOfferPercent > 0 && (minAmountForOffer === 0 || subtotal >= minAmountForOffer)) {
+            discount = (subtotal * platformOfferPercent) / 100;
+        }
+        var total = Math.max(0, subtotal - discount);
+
         $("#cartSubtotal").text("\u20B9" + subtotal.toFixed(2));
-        $("#cartTotal").text("\u20B9" + subtotal.toFixed(2));
-        $('.pay-now-btn').prop('disabled', subtotal <= 0);
+        $("#cartTotal").text("\u20B9" + total.toFixed(2));
+        $("#platformDiscountAmount").text("\u20B9" + discount.toFixed(2));
+        $("#platformDiscountRow").toggleClass('d-none', !(discount > 0));
+        $('.pay-now-btn').prop('disabled', total <= 0);
     }
 </script>
 

@@ -104,11 +104,16 @@ class Cart extends User_Controller
             'duration' => $duration
         ])->row();
 
+        $cart_item_id = 0;
+        $final_qty = 0;
+
         if ($existing) {
 
             $this->db->where('id', $existing->id)->update('cart_items', [
                 'qty' => $existing->qty + $qty
             ]);
+            $cart_item_id = (int)$existing->id;
+            $final_qty = (int)$existing->qty + $qty;
         } else {
 
             $this->db->insert('cart_items', [
@@ -122,9 +127,15 @@ class Cart extends User_Controller
                 'start_date'     => $start_date,
                 'created_on'     => date('Y-m-d H:i:s')
             ]);
+            $cart_item_id = (int)$this->db->insert_id();
+            $final_qty = $qty;
         }
 
-        $this->send_provider_notification($provider->provider_id, $user_id, 'added');
+        $this->send_provider_notification($provider_id, $user_id, 'added',[
+            'cart_item_id' => $cart_item_id,
+            'quantity' => $final_qty,
+            'duration' => $duration
+        ]);
 
         redirect('cart/view');
     }
@@ -138,7 +149,13 @@ class Cart extends User_Controller
             ->get('cart_items')
             ->result_array();
 
+        // Get admin-configured platform offer settings
+        $offer_setting = $this->db->get('offer_settings')->row();
+        $offer_percent = $offer_setting ? (float)$offer_setting->offer_percent : 0;
+        $min_amount_for_offer = $offer_setting ? (float)$offer_setting->min_amount : 0;
+
         $subtotal = 0;
+        $discount_amount = 0;
         $duration_items = [];
 
         foreach ($cart_items as &$item) {
@@ -149,14 +166,27 @@ class Cart extends User_Controller
 
             $item['item_total'] = $item['price'] * $item['qty'];
             $subtotal += $item['item_total'];
+        }
+        unset($item);
 
+        $is_offer_applicable = $offer_percent > 0 && ($min_amount_for_offer == 0 || $subtotal >= $min_amount_for_offer);
+
+        foreach ($cart_items as &$item) {
+            $item['platform_discount'] = $is_offer_applicable ? (($item['item_total'] * $offer_percent) / 100) : 0;
+            $discount_amount += $item['platform_discount'];
             $duration_items[$item['duration']][] = $item;
         }
+        unset($item);
+
+        $total_after_discount = max(0, $subtotal - $discount_amount);
 
         $data['cart_items'] = $cart_items;
         $data['subtotal'] = $subtotal;
         $data['duration_items'] = $duration_items;
-        $data['total_after_discount'] = $subtotal;
+        $data['offer_percent'] = $offer_percent;
+        $data['min_amount_for_offer'] = $min_amount_for_offer;
+        $data['discount_amount'] = $discount_amount;
+        $data['total_after_discount'] = $total_after_discount;
 
         $this->load->view('header');
         $this->load->view('cart_view', $data);
@@ -180,7 +210,12 @@ class Cart extends User_Controller
             $this->send_provider_notification(
                 $cart->provider_id,
                 $this->user['id'],
-                'removed'
+                'removed',
+                [
+                    'cart_item_id' => (int)$id,
+                    'quantity' => (int)$cart->qty,
+                    'duration' => $cart->duration
+                ]
             );
         }
 
@@ -250,27 +285,15 @@ class Cart extends User_Controller
 
         echo json_encode(['count' => $count]);
     }
-    private function send_provider_notification($provider_id, $user_id, $action)
+    private function send_provider_notification($provider_id, $user_id, $action, $meta = [])
     {
         $provider_id = (int)$provider_id;
 
-        // Resolve provider as users.id (role=2). If provider_id is provider table id,
-        // map it to provider.provider_id first.
+        // Get provider (users table)
         $provider = $this->db->get_where('users', [
-            'id' => $provider_id,
+            'id'   => $provider_id,
             'role' => 2
         ])->row();
-
-        if (!$provider) {
-            $provider_row = $this->db->get_where('provider', ['id' => $provider_id])->row();
-            if ($provider_row) {
-                $provider_id = (int)$provider_row->provider_id;
-                $provider = $this->db->get_where('users', [
-                    'id' => $provider_id,
-                    'role' => 2
-                ])->row();
-            }
-        }
 
         $user = $this->db->get_where('users', [
             'id' => $user_id
@@ -278,36 +301,46 @@ class Cart extends User_Controller
 
         if (!$provider || !$user) return;
 
-        if ($action == 'added') {
+        $username = $user->gym_name ?? $user->name ?? 'User';
+
+        if ($action === 'added') {
             $title = "New Cart Added";
-            $message = $user->gym_name . " added your service to cart.";
+            $message = $username . " added your service to cart.";
         } else {
             $title = "Cart Removed";
-            $message = $user->gym_name . " removed your service from cart.";
+            $message = $username . " removed your service from cart.";
         }
 
-        // 1) Insert in DB for Provider Dashboard
+        // ✅ NOW USING TYPE = CART
         $this->db->insert('provider_notifications', [
             'provider_id' => $provider_id,
-            'title' => $title,
-            'message' => $message,
-            'is_read' => 0,
-            'created_at' => date('Y-m-d H:i:s')
+            'type'        => 'cart',   // 🔥 THIS IS THE ONLY CHANGE
+            'title'       => $title,
+            'message'     => $message,
+            'is_read'     => 0,
+            'created_at'  => date('Y-m-d H:i:s')
         ]);
 
         $notification_id = $this->db->insert_id();
 
-        // 2) Push Notification
+        // Push
         $this->send_expo_push($provider_id, $title, $message, [
-            'notification_id' => $notification_id
+            'type' => 'cart',
+            'notification_id' => $notification_id,
+            'provider_id' => $provider_id,
+            'user_id' => $user_id,
+            'cart_item_id' => $meta['cart_item_id'] ?? 0,
+            'quantity' => $meta['quantity'] ?? 0,
+            'duration' => $meta['duration'] ?? ''
         ]);
 
-        // 3) Email
+        // Email
         $this->send_provider_email($provider->email, $title, $message);
 
-        // 4) SMS
+        // SMS
         $this->send_sms($provider->mobile, $message);
     }
+
     public function pay()
     {
 
@@ -478,42 +511,59 @@ class Cart extends User_Controller
                 // âœ… Insert notification
                 $this->db->insert('provider_notifications', [
                     'provider_id'   => $provider_id,
+                    'type'          => 'service',
                     'order_id'      => $order->id,
                     'order_item_id' => $item->id,
                     'title'         => 'New Booking Received',
                     'message'       => 'You have received a new service booking.',
                     'created_at'    => date('Y-m-d H:i:s')
                 ]);
+                $notification_id = (int)$this->db->insert_id();
 
                 // âœ… Get provider user info
-                $provider = $this->db
-                    ->get_where('provider', ['id' => $provider_id])
+                $provider_user = $this->db
+                    ->get_where('users', [
+                        'id'   => $provider_id,
+                        'role' => 2
+                    ])
                     ->row();
 
-                if ($provider) {
+                if ($provider_user) {
 
                     $provider_user = $this->db
-                        ->get_where('users', ['id' => $provider->provider_id])
+                        ->get_where('users', [
+                            'id'   => $provider_id,
+                            'role' => 2
+                        ])
                         ->row();
 
                     if ($provider_user) {
 
-                        // ðŸ”” Push Notification
-                        $this->send_expo_push(
-                            $provider_id,
-                            'New Booking Received',
-                            'You have received a new service booking.',
-                            ['order_id' => $order->id]
-                        );
+                        // 🔔 Push Notification
+                        try {
+                            $this->send_expo_push(
+                                $provider_id, // users.id
+                                'New Booking Received',
+                                'You have received a new service booking.',
+                                [
+                                    'type' => 'service',
+                                    'notification_id' => $notification_id,
+                                    'order_id' => $order->id,
+                                    'order_item_id' => $item->id
+                                ]
+                            );
+                        } catch (Exception $e) {
+                            log_message('error', 'Push failed: ' . $e->getMessage());
+                        }
 
-                        // ðŸ“§ Email
+                        // 📧 Email
                         $this->send_provider_email(
                             $provider_user->email,
                             'New Booking Received',
                             'You have received a new service booking.'
                         );
 
-                        // ðŸ“± SMS
+                        // 📱 SMS
                         $this->send_sms(
                             $provider_user->mobile,
                             'You have received a new booking.'
@@ -622,22 +672,27 @@ class Cart extends User_Controller
 
     private function send_expo_push($provider_id, $title, $message, $data = [])
     {
+        log_message('error', 'Push Attempt Provider ID: ' . $provider_id);
+
         $tokens = $this->db
-            ->where('provider_id', $provider_id)
+            ->where('provider_id', (int)$provider_id)
             ->where('is_active', 1)
             ->get('provider_tokens')
             ->result();
 
-        if (empty($tokens)) return false;
+        if (empty($tokens)) {
+            log_message('error', 'No active Expo tokens found.');
+            return false;
+        }
 
         foreach ($tokens as $tokenRow) {
 
             $payload = [
-                'to' => $tokenRow->expo_token,
+                'to'    => $tokenRow->expo_token,
                 'title' => $title,
-                'body' => $message,
+                'body'  => $message,
                 'sound' => 'default',
-                'data' => $data
+                'data'  => $data
             ];
 
             $ch = curl_init('https://exp.host/--/api/v2/push/send');
@@ -651,7 +706,14 @@ class Cart extends User_Controller
                 CURLOPT_POSTFIELDS => json_encode($payload),
             ]);
 
-            curl_exec($ch);
+            $response = curl_exec($ch);
+
+            if (curl_errno($ch)) {
+                log_message('error', 'Expo Push Error: ' . curl_error($ch));
+            } else {
+                log_message('error', 'Expo Response: ' . $response);
+            }
+
             curl_close($ch);
         }
 
@@ -711,5 +773,3 @@ class Cart extends User_Controller
         return $response;
     }
 }
-
-
