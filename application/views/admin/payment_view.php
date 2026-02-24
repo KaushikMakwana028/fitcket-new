@@ -84,7 +84,7 @@
 
 			<nav aria-label="Page navigation example">
 
-				<ul id="pagination" class="pagination round-pagination justify-content-center">
+				<ul id="paymentPagination" class="pagination round-pagination justify-content-center">
 
 				</ul>
 

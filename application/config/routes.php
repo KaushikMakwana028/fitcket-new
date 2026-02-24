@@ -84,6 +84,14 @@ $route['inquries'] = 'admin/page/inquries';
 $route['pay_out/(:num)'] = 'admin/pay_out/index/$1';
 $route['payment_setting'] = 'admin/payment/payment_setting';
 $route['offer'] = 'admin/dashboard/offer';
+$route['admin/reviews'] = 'admin/Reviews/review_list';
+$route['admin/reviews/review_list'] = 'admin/Reviews/review_list';
+$route['admin/session'] = 'admin/session/session_list';
+$route['admin/session_list'] = 'admin/session/session_list';
+$route['admin/live_sessions'] = 'admin/session/live_sessions';
+
+
+
 
 //provider route
 $route['wallet'] = 'provider/wallet';
@@ -104,6 +112,7 @@ $route['bank_details'] = 'provider/profile/bank_details';
 $route['image'] = 'provider/profile/image';
 $route['add_image'] = 'provider/profile/add_image';
 $route['certification'] = 'provider/profile/certification';
+$route['provider/reviews'] = 'provider/Reviews/review_list';
 
 
 // provider api
@@ -153,6 +162,7 @@ $route['provider/notification-read/(:num)'] = 'provider/api/notification_read/$1
 $route['provider/notification-delete/(:num)'] = 'provider/api/notification_delete/$1';
 $route['provider/notification-delete-all']    = 'provider/api/notification_delete_all';
 $route['provider/delete_notification'] = 'provider/dashboard/delete_notification';
+$route['provider/dashboard/get_notifications'] = 'provider/dashboard/get_notifications';
 
 
 

@@ -30,6 +30,7 @@ class Dashboard extends Provider_Controller
     public function index()
     {
         $provider_id = $this->provider['id'] ?? $this->provider['user_id'];
+        $provider_ids_for_notifications = $this->getProviderIdsForNotifications();
 
         // -------- Total Customers ----------
         $this->db->select('COUNT(DISTINCT o.user_id) as total_customers');
@@ -82,7 +83,7 @@ class Dashboard extends Provider_Controller
         // die;
 
         // -------- Provider Notifications ----------
-        $this->db->where('provider_id', $provider_id);
+        $this->db->where_in('provider_id', $provider_ids_for_notifications);
         $this->db->order_by('id', 'DESC');
         $this->db->limit(5); // show latest 5
         $notifications = $this->db->get('provider_notifications')->result();
@@ -90,9 +91,22 @@ class Dashboard extends Provider_Controller
         $data['notifications'] = $notifications;
 
         // Unread count
-        $this->db->where('provider_id', $provider_id);
+        $this->db->where_in('provider_id', $provider_ids_for_notifications);
         $this->db->where('is_read', 0);
         $data['unread_count'] = $this->db->count_all_results('provider_notifications');
+
+        // ================== REVIEW DATA ==================
+        $provider_id = $this->provider['id'] ?? null;
+
+        // Total Reviews
+        $this->db->where('provider_id', $provider_id);
+        $data['total_reviews'] = $this->db->count_all_results('reviews');
+
+        // Average Rating
+        $this->db->select_avg('rating');
+        $this->db->where('provider_id', $provider_id);
+        $avg = $this->db->get('reviews')->row();
+        $data['average_rating'] = round($avg->rating ?? 0, 1);
         // -------- Load Views ----------
         $this->load->view('provider/header');
         $this->load->view('provider/dashboard_view', $data);
@@ -132,15 +146,7 @@ class Dashboard extends Provider_Controller
             ]));
         }
 
-        // Accept both possible provider identifiers from session
-        $provider_ids = [];
-        if (!empty($this->provider['id'])) {
-            $provider_ids[] = (int)$this->provider['id'];
-        }
-        if (!empty($this->provider['user_id'])) {
-            $provider_ids[] = (int)$this->provider['user_id'];
-        }
-        $provider_ids = array_values(array_unique(array_filter($provider_ids)));
+        $provider_ids = $this->getProviderIdsForNotifications();
 
         if (empty($provider_ids)) {
             return $this->output->set_output(json_encode([
@@ -161,8 +167,78 @@ class Dashboard extends Provider_Controller
         }
 
         return $this->output->set_output(json_encode([
+            'status' => 'error',
+            'message' => 'Notification not found or already deleted'
+        ]));
+    }
+
+    public function get_notifications()
+    {
+        $this->output->set_content_type('application/json');
+
+        if (!$this->provider) {
+            return $this->output->set_output(json_encode([
                 'status' => 'error',
-                'message' => 'Notification not found or already deleted'
+                'message' => 'Not logged in',
             ]));
+        }
+
+        $provider_ids = $this->getProviderIdsForNotifications();
+
+        $this->db->select('id, title, message, created_at, is_read');
+        $this->db->from('provider_notifications');
+        $this->db->where_in('provider_id', $provider_ids);
+        $this->db->order_by('id', 'DESC');
+        $this->db->limit(5);
+        $notifications = $this->db->get()->result_array();
+
+        $this->db->from('provider_notifications');
+        $this->db->where_in('provider_id', $provider_ids);
+        $this->db->where('is_read', 0);
+        $unread_count = (int) $this->db->count_all_results();
+
+        return $this->output->set_output(json_encode([
+            'status' => 'success',
+            'notifications' => $notifications,
+            'unread_count' => $unread_count,
+        ]));
+    }
+
+    private function getProviderIdsForNotifications()
+    {
+        $ids = [];
+
+        if (!empty($this->provider['id'])) {
+            $ids[] = (int) $this->provider['id'];
+        }
+        if (!empty($this->provider['user_id'])) {
+            $ids[] = (int) $this->provider['user_id'];
+        }
+
+        $ids = array_values(array_unique(array_filter($ids)));
+        if (empty($ids)) {
+            return [0];
+        }
+
+        // Expand mapping through provider table in both directions.
+        $this->db->select('id, provider_id');
+        $this->db->from('provider');
+        $this->db->group_start();
+        $this->db->where_in('id', $ids);
+        $this->db->or_where_in('provider_id', $ids);
+        $this->db->group_end();
+        $rows = $this->db->get()->result();
+
+        foreach ($rows as $row) {
+            if (!empty($row->id)) {
+                $ids[] = (int) $row->id;
+            }
+            if (!empty($row->provider_id)) {
+                $ids[] = (int) $row->provider_id;
+            }
+        }
+
+        $ids = array_values(array_unique(array_filter($ids)));
+        return !empty($ids) ? $ids : [0];
     }
 }

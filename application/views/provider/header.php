@@ -325,6 +325,13 @@
 				</li>
 
 				<li>
+					<a class="dropdown-item d-flex align-items-center" href="<?= base_url('provider/reviews'); ?>">
+						<i class="bx bx-star"></i>
+						<div class="menu-title">Reviews</div>
+					</a>
+				</li>
+
+				<li>
 					<a class="dropdown-item d-flex align-items-center" href="<?= base_url('bank_details'); ?>">
 						<i class="bx bxs-bank fs-5"></i>
 						<div class="menu-title">Bank Details</div>

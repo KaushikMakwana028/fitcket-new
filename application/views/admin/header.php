@@ -84,15 +84,13 @@
 	<title>FITCKET-ADMIN</title>
 
 	<script>
-
-		(function () {
+		(function() {
 
 			var savedTheme = localStorage.getItem('theme') || 'light';
 
 			document.documentElement.setAttribute('data-bs-theme', savedTheme);
 
 		})();
-
 	</script>
 
 </head>
@@ -302,6 +300,26 @@
 					</ul>
 				</li>
 
+				<li class="">
+					<a href="javascript:;" class="has-arrow">
+						<div class="parent-icon"><i class="bx bx-video"></i></div>
+						<div class="menu-title">Session</div>
+					</a>
+					<ul>
+						<li>
+							<a href="<?= base_url('admin/session_list') ?>">
+								<i class="bx bx-list-ul"></i> Session List
+							</a>
+						</li>
+
+						<li>
+							<a href="<?= base_url('admin/live_sessions') ?>">
+								<i class="bx bx-broadcast"></i> Live Sessions
+							</a>
+						</li>
+					</ul>
+				</li>
+
 
 				<li class="">
 
@@ -375,6 +393,15 @@
 
 					</a>
 
+				</li>
+
+				<li>
+					<a href="<?= base_url('admin/reviews'); ?>">
+						<div class="parent-icon">
+							<i class="bx bx-star"></i>
+						</div>
+						<div class="menu-title">Review</div>
+					</a>
 				</li>
 
 				<li>

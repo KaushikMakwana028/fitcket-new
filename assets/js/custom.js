@@ -895,7 +895,7 @@ if ($("#sliderTable").length > 0) {
 			success: function (res) {
 				if (res.status) {
 					$("#sliderTableBody").html(res.html);
-					$(".pagination").html(res.pagination);
+					$("#sliderPagination").html(res.pagination);
 					currentPage = page;
 				} else {
 					$("#sliderTableBody").html(
@@ -1565,7 +1565,7 @@ $(document).ready(function () {
 
 					// Build pagination
 
-					$(".pagination").html(res.pagination);
+					$("#paymentPagination").html(res.pagination);
 				},
 			});
 		}
@@ -1578,7 +1578,7 @@ $(document).ready(function () {
 		});
 
 		// Handle pagination click
-		$(document).on("click", ".pagination .page-link", function (e) {
+		$(document).on("click", "#paymentPagination .page-link", function (e) {
 			e.preventDefault();
 
 			let page = $(this).data("page");

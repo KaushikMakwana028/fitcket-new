@@ -14,7 +14,7 @@
 
     <!--favicon-->
 
-    <link rel="icon" href="<?= base_url(''); ?>" type="image/png">
+	<link rel="icon" href="<?= base_url('assets/images/dumbbell_8729453.png') ?>" type="image/png">
 
     <!--plugins-->
 
