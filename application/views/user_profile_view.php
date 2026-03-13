@@ -25,8 +25,9 @@
   }
 
   .profile-section {
-background: var(--gradient-primary);
-    color: #fff;    padding: 30px 20px;
+    background: var(--gradient-primary);
+    color: #fff;
+    padding: 30px 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -135,8 +136,9 @@ background: var(--gradient-primary);
   .category-icon {
     width: 38px;
     height: 38px;
-background: var(--gradient-primary);
-    color: #fff;    border-radius: 8px;
+    background: var(--gradient-primary);
+    color: #fff;
+    border-radius: 8px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -213,9 +215,9 @@ background: var(--gradient-primary);
 <div class="container mt-5 mb-5">
   <div class="profile-grid">
     <div class="profile-section">
-      <img src="<?= !empty($user->profile_image) ? base_url($user->profile_image) : base_url('assets/images/9334234.jpg') ?>" 
-     alt="Profile Picture" 
-     class="profile-avatar">
+      <img src="<?= !empty($user->profile_image) ? base_url($user->profile_image) : base_url('assets/images/9334234.jpg') ?>"
+        alt="Profile Picture"
+        class="profile-avatar">
 
       <h1 class="profile-name"><?= isset($user->name) ? $user->name : 'No Name' ?></h1>
       <p class="profile-email"><?= isset($user->email) ? $user->email : 'No Email' ?></p>
@@ -228,18 +230,18 @@ background: var(--gradient-primary);
                         <div class="stat-label">Active Bookings</div>
                     </div> -->
         <div class="stat-item">
-    <div class="stat-number">
-        <?= isset($bank_account_count) ? $bank_account_count : 0 ?>
-    </div>
-    <div class="stat-label">Bank Accounts</div>
-</div>
+          <div class="stat-number">
+            <?= isset($bank_account_count) ? $bank_account_count : 0 ?>
+          </div>
+          <div class="stat-label">Bank Accounts</div>
+        </div>
 
-<div class="stat-item">
-    <div class="stat-number">
-        <?= isset($booking_count) ? $booking_count : 0 ?>
-    </div>
-    <div class="stat-label">Total Bookings</div>
-</div>
+        <div class="stat-item">
+          <div class="stat-number">
+            <?= isset($booking_count) ? $booking_count : 0 ?>
+          </div>
+          <div class="stat-label">Total Bookings</div>
+        </div>
 
         <!-- <div class="stat-item">
                         <div class="stat-number">2.5k</div>
@@ -260,10 +262,10 @@ background: var(--gradient-primary);
           Profile Settings
         </div>
         <div class="action-links">
-          <a href="<?= base_url('edit_user/'.$user->id); ?>" class="action-button">
-    <div class="action-icon"><i class="bi bi-pencil-square"></i></div>
-    <div>Edit Profile</div>
-</a>
+          <a href="<?= base_url('edit_user/' . $user->id); ?>" class="action-button">
+            <div class="action-icon"><i class="bi bi-pencil-square"></i></div>
+            <div>Edit Profile</div>
+          </a>
 
         </div>
       </div>
@@ -274,7 +276,7 @@ background: var(--gradient-primary);
           Banking & Payments
         </div>
         <div class="action-links">
-          <a href="<?= base_url('manage_bank_account/'.$user->id);?>" class="action-button">
+          <a href="<?= base_url('manage_bank_account/' . $user->id); ?>" class="action-button">
             <div class="action-icon"><i class="bi bi-credit-card"></i></div>
             <div>Manage Bank Accounts</div>
           </a>
@@ -287,35 +289,53 @@ background: var(--gradient-primary);
           Bookings & Reservations
         </div>
         <div class="action-links">
-          <a href="<?= base_url('bookings/'.$user->id);?>" class="action-button">
+          <a href="<?= base_url('bookings/' . $user->id); ?>" class="action-button">
             <div class="action-icon"><i class="bi bi-list-ul"></i></div>
             <div>View My Bookings</div>
           </a>
         </div>
       </div>
-      
-<div class="action-category">
-    <div class="category-title">
-        <div class="category-icon">
-            <i class="bi bi-camera-video-fill"></i>
-        </div>
-        My Live Sessions
-    </div>
 
-    <div class="action-links">
-        <a href="<?= base_url('session_booking/my_sessions'); ?>" class="action-button">
+      <div class="action-category">
+        <div class="category-title">
+          <div class="category-icon">
+            <i class="bi bi-camera-video-fill"></i>
+          </div>
+          My Live Sessions
+        </div>
+
+        <div class="action-links">
+          <a href="<?= base_url('session_booking/my_sessions'); ?>" class="action-button">
             <div class="action-icon">
-                <i class="bi bi-play-circle"></i>
+              <i class="bi bi-play-circle"></i>
             </div>
             <div>View Booked Sessions</div>
-        </a>
-    </div>
-</div>
+          </a>
+        </div>
+      </div>
+
+      <div class="action-category">
+        <div class="category-title">
+          <div class="category-icon" style="background: linear-gradient(135deg, #e50914, #b81d24);">
+            <i class="bi bi-collection-play-fill"></i>
+          </div>
+          FITTV EXCLUSIVE
+        </div>
+
+        <div class="action-links">
+          <a href="<?= base_url('fittv'); ?>" class="action-button">
+            <div class="action-icon" style="background: #fee2e2; color: #ef4444;">
+              <i class="bi bi-play-btn-fill"></i>
+            </div>
+            <div>Watch Premium Workouts</div>
+          </a>
+        </div>
+      </div>
 
       <div class="logout-section mb-5">
-       <a class="logout-btn" style="text-decoration: none;" href="<?= base_url('logout'); ?>">
-  <i class="bi bi-box-arrow-right"></i> Sign Out Securely
-</a>
+        <a class="logout-btn" style="text-decoration: none;" href="<?= base_url('logout'); ?>">
+          <i class="bi bi-box-arrow-right"></i> Sign Out Securely
+        </a>
 
       </div>
     </div>

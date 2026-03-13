@@ -1,5 +1,4 @@
-
- <style>
+<style>
         :root {
             --primary-color: #6c5ce7;
             --primary-dark: #5a4fcf;

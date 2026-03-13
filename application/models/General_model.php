@@ -72,6 +72,11 @@ class General_model extends CI_Model
 
     }
 
+    public function delete($table, $where)
+    {
+        return $this->db->delete($table, $where);
+    }
+
     public function getCount($table, $where = [], $isActive = null)
 
     {

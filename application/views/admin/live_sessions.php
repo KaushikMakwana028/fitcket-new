@@ -83,9 +83,9 @@ if (!function_exists('admin_live_session_page_url')) {
                         Showing <?= (int) ($start_index ?? 0) ?> to <?= (int) ($end_index ?? 0) ?> of <?= (int) ($total_rows ?? 0) ?> entries
                     </div>
                     <?php if (($total_pages ?? 1) > 1): ?>
-                        <ul class="pagination pagination-sm mb-0">
+                        <ul class="pagination round-pagination justify-content-center mb-0">
                             <li class="page-item <?= ((int) $page <= 1) ? 'disabled' : '' ?>">
-                                <a class="page-link" href="<?= ((int) $page <= 1) ? '#' : admin_live_session_page_url(((int) $page - 1), $queryParams) ?>">&laquo;</a>
+                                <a class="page-link" href="<?= ((int) $page <= 1) ? '#' : admin_live_session_page_url(((int) $page - 1), $queryParams) ?>">Previous</a>
                             </li>
                             <?php
                             $currentPage = (int) $page;
@@ -99,7 +99,7 @@ if (!function_exists('admin_live_session_page_url')) {
                                 </li>
                             <?php endfor; ?>
                             <li class="page-item <?= ($currentPage >= $pages) ? 'disabled' : '' ?>">
-                                <a class="page-link" href="<?= ($currentPage >= $pages) ? '#' : admin_live_session_page_url($currentPage + 1, $queryParams) ?>">&raquo;</a>
+                                <a class="page-link" href="<?= ($currentPage >= $pages) ? '#' : admin_live_session_page_url($currentPage + 1, $queryParams) ?>">Next</a>
                             </li>
                         </ul>
                     <?php endif; ?>
@@ -205,14 +205,20 @@ if (!function_exists('admin_live_session_page_url')) {
         padding: 10px 12px;
     }
 
-    .pagination .page-link {
-        border-radius: 7px;
-        margin: 0 2px;
+    .page-item.disabled .page-link {
+        pointer-events: none;
+        opacity: 0.6;
     }
 
-    .pagination .page-item.active .page-link {
-        background: #198754;
-        border-color: #198754;
+    .page-item.active .page-link {
+        background: linear-gradient(135deg, #4f46e5, #6366f1);
+        border: none;
+        color: #fff;
+    }
+
+    .pagination .page-link {
+        border-radius: 8px;
+        margin: 0 3px;
     }
 
     [data-bs-theme="dark"] .admin-live-page {

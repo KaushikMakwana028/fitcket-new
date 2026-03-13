@@ -808,27 +808,26 @@ $("#editCategoryForm").on("submit", function (e) {
 $(document).ready(function () {
 	$("#SliderForm").on("submit", function (e) {
 		e.preventDefault();
-		// alert('h');
-		// return;
-		// Clear validation styles
-		$("#SliderForm").find(".is-invalid").removeClass("is-invalid");
+		const $form = $(this);
+		const formMode = $form.data("mode") || "create";
+		const actionUrl = $form.data("action") || site_url + "admin/category/create";
+		const $submitBtn = $("#sliderSubmitBtn");
+
+		$form.find(".is-invalid").removeClass("is-invalid");
 
 		let isValid = true;
 
-		// Validate title
 		if ($("#sliderTitle").val().trim() === "") {
 			$("#sliderTitle").addClass("is-invalid");
 			isValid = false;
 		}
 
-		// Validate image (only if creating new; skip if editing and image already exists)
 		const imageFile = $("#slider_image")[0].files[0];
-		if (!imageFile) {
-			// $('#slider_image').addClass('is-invalid');
+		if (formMode === "create" && !imageFile) {
+			$("#slider_image").addClass("is-invalid");
 			isValid = false;
 		}
 
-		// Validate display order
 		if ($("#displayOrder").val() === "") {
 			$("#displayOrder").addClass("is-invalid");
 			isValid = false;
@@ -836,21 +835,24 @@ $(document).ready(function () {
 
 		if (!isValid) return;
 
-		// Prepare FormData
 		var formData = new FormData(this);
 
 		$.ajax({
-			url: site_url + "admin/category/create",
+			url: actionUrl,
 			type: "POST",
 			data: formData,
 			dataType: "json",
 			contentType: false,
 			processData: false,
 			beforeSend: function () {
-				$(".btn-success").prop("disabled", true).text("Submitting...");
+				$submitBtn.prop("disabled", true).text(
+					formMode === "edit" ? "Updating..." : "Submitting...",
+				);
 			},
 			success: function (response) {
-				$(".btn-success").prop("disabled", false).text("Submit");
+				$submitBtn
+					.prop("disabled", false)
+					.text(formMode === "edit" ? "Update Slider" : "Submit");
 
 				if (response.status) {
 					Swal.fire({
@@ -871,7 +873,9 @@ $(document).ready(function () {
 				}
 			},
 			error: function () {
-				$(".btn-success").prop("disabled", false).text("Submit");
+				$submitBtn
+					.prop("disabled", false)
+					.text(formMode === "edit" ? "Update Slider" : "Submit");
 				Swal.fire(
 					"Error",
 					"Something went wrong while submitting the form.",

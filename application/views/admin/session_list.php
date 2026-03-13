@@ -122,9 +122,9 @@ $totalCount = $liveCount + $scheduledCount;
                         Showing <?= (int) ($start_index ?? 0) ?> to <?= (int) ($end_index ?? 0) ?> of <?= (int) ($total_rows ?? 0) ?> entries
                     </div>
                     <?php if (($total_pages ?? 1) > 1): ?>
-                        <ul class="pagination pagination-sm mb-0">
+                        <ul class="pagination round-pagination justify-content-center mb-0">
                             <li class="page-item <?= ((int) $page <= 1) ? 'disabled' : '' ?>">
-                                <a class="page-link" href="<?= ((int) $page <= 1) ? '#' : admin_session_page_url(((int) $page - 1), $queryParams) ?>">&laquo;</a>
+                                <a class="page-link" href="<?= ((int) $page <= 1) ? '#' : admin_session_page_url(((int) $page - 1), $queryParams) ?>">Previous</a>
                             </li>
                             <?php
                             $currentPage = (int) $page;
@@ -138,7 +138,7 @@ $totalCount = $liveCount + $scheduledCount;
                                 </li>
                             <?php endfor; ?>
                             <li class="page-item <?= ($currentPage >= $pages) ? 'disabled' : '' ?>">
-                                <a class="page-link" href="<?= ($currentPage >= $pages) ? '#' : admin_session_page_url($currentPage + 1, $queryParams) ?>">&raquo;</a>
+                                <a class="page-link" href="<?= ($currentPage >= $pages) ? '#' : admin_session_page_url($currentPage + 1, $queryParams) ?>">Next</a>
                             </li>
                         </ul>
                     <?php endif; ?>
@@ -291,9 +291,20 @@ $totalCount = $liveCount + $scheduledCount;
         padding: 10px 12px;
     }
 
+    .page-item.disabled .page-link {
+        pointer-events: none;
+        opacity: 0.6;
+    }
+
+    .page-item.active .page-link {
+        background: linear-gradient(135deg, #4f46e5, #6366f1);
+        border: none;
+        color: #fff;
+    }
+
     .pagination .page-link {
-        border-radius: 7px;
-        margin: 0 2px;
+        border-radius: 8px;
+        margin: 0 3px;
     }
 
     [data-bs-theme="dark"] .admin-session-page {

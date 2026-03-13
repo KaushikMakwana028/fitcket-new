@@ -58,13 +58,18 @@
       left: -100%;
       width: 100%;
       height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
       animation: shimmer 3s infinite;
     }
 
     @keyframes shimmer {
-      0% { left: -100%; }
-      100% { left: 100%; }
+      0% {
+        left: -100%;
+      }
+
+      100% {
+        left: 100%;
+      }
     }
 
     .top-bar .container {
@@ -83,14 +88,14 @@
       transition: all 0.3s ease;
       padding: 8px 16px;
       border-radius: 25px;
-      background: rgba(255,255,255,0.1);
+      background: rgba(255, 255, 255, 0.1);
       backdrop-filter: blur(10px);
     }
 
     .top-bar a:hover {
-      background: rgba(255,255,255,0.2);
+      background: rgba(255, 255, 255, 0.2);
       transform: translateY(-1px);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
 
     .top-bar a i {
@@ -220,12 +225,15 @@
     }
 
     @keyframes pulse {
-      0%, 100% { 
-        transform: scale(1); 
+
+      0%,
+      100% {
+        transform: scale(1);
         box-shadow: 0 3px 12px rgba(255, 107, 107, 0.5);
       }
-      50% { 
-        transform: scale(1.15); 
+
+      50% {
+        transform: scale(1.15);
         box-shadow: 0 5px 20px rgba(255, 107, 107, 0.7);
       }
     }
@@ -297,7 +305,7 @@
     .offcanvas-header {
       background: var(--gradient-primary);
       color: #fff;
-      border-bottom: 1px solid rgba(255,255,255,0.1);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
       padding: 20px;
     }
 
@@ -350,7 +358,8 @@
       background: rgba(255, 255, 255, 0.98);
       border-top: 1px solid rgba(111, 66, 193, 0.15);
       box-shadow: 0 -5px 30px rgba(111, 66, 193, 0.15);
-      display: none; /* Hidden by default */
+      display: none;
+      /* Hidden by default */
       justify-content: space-around;
       align-items: center;
       padding: 8px 5px max(8px, env(safe-area-inset-bottom));
@@ -399,7 +408,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
     }
 
     .mobile-bottom-menu a span {
@@ -441,6 +450,7 @@
         opacity: 0;
         transform: translateY(-10px);
       }
+
       to {
         opacity: 1;
         transform: translateY(0);
@@ -474,7 +484,7 @@
     /* ==============================================
        RESPONSIVE BREAKPOINTS - FIXED TABLET VIEW
        ============================================== */
-    
+
     /* Mobile: 0px - 767px (Show bottom menu) */
     @media (max-width: 767px) {
       .top-bar {
@@ -511,7 +521,8 @@
       }
 
       body {
-        padding-bottom: 80px; /* Space for bottom menu */
+        padding-bottom: 80px;
+        /* Space for bottom menu */
       }
     }
 
@@ -564,7 +575,8 @@
       }
 
       body {
-        padding-bottom: 90px; /* Space for bottom menu */
+        padding-bottom: 90px;
+        /* Space for bottom menu */
       }
 
       .mobile-menu-btn {
@@ -928,6 +940,11 @@
             <a class="nav-link <?= ($segment == 'session_booking' ? 'active' : '') ?>" href="<?= base_url('session_booking'); ?>">Session</a>
           </li>
           <li class="nav-item">
+            <a class="nav-link <?= ($segment == 'fittv' ? 'active' : '') ?>" href="<?= base_url('fittv'); ?>">
+              FITTV
+            </a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link <?= ($segment == 'about-us' ? 'active' : '') ?>" href="<?= base_url('about-us'); ?>">About Us</a>
           </li>
           <li class="nav-item">
@@ -955,7 +972,9 @@
               <ul class="dropdown-menu dropdown-menu-end">
                 <li><a class="dropdown-item" href="<?= base_url('profile'); ?>"><i class="fas fa-user-circle me-2"></i>Profile</a></li>
                 <li><a class="dropdown-item" href="<?= base_url('bookings/' . $this->user['id']); ?>"><i class="fas fa-calendar-check me-2"></i>My Bookings</a></li>
-                <li><hr class="dropdown-divider"></li>
+                <li>
+                  <hr class="dropdown-divider">
+                </li>
                 <li><a class="dropdown-item" href="<?= base_url('logout'); ?>"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
               </ul>
             <?php else: ?>
@@ -981,6 +1000,11 @@
       <ul class="navbar-nav">
         <li class="nav-item">
           <a class="nav-link" href="<?= base_url(); ?>"><i class="fas fa-home me-2"></i>Home</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="<?= base_url('fittv'); ?>">
+            <i class="fas fa-play-circle me-2"></i>FITTV
+          </a>
         </li>
         <li class="nav-item">
           <a class="nav-link" href="<?= base_url('about-us'); ?>"><i class="fas fa-info-circle me-2"></i>About Us</a>
@@ -1019,9 +1043,13 @@
       <i class="fas fa-cogs"></i>
       <span>Services</span>
     </a>
+
+    <a href="<?= base_url('fittv'); ?>" class="<?= ($segment == 'fittv' ? 'active' : '') ?>">
+      <i class="fas fa-play-circle"></i>
+      <span>FITTV</span>
+    </a>
     <a href="<?= $is_logged_in ? base_url('profile') : base_url('login'); ?>" class="<?= ($segment == 'profile' ? 'active' : '') ?>">
       <i class="fas fa-user"></i>
       <span>Profile</span>
     </a>
   </div>
-

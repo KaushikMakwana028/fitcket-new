@@ -75,6 +75,45 @@
         align-items: center;
     }
 
+    /* FITTV Slider */
+
+    .fittv-slider {
+        display: flex;
+        gap: 15px;
+        overflow-x: auto;
+        padding-bottom: 10px;
+        scrollbar-width: none;
+    }
+
+    .fittv-slider::-webkit-scrollbar {
+        display: none;
+    }
+
+    .fittv-card {
+        min-width: 220px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+
+    .fittv-card:hover {
+        transform: scale(1.1);
+        z-index: 5;
+    }
+
+    .fittv-card video {
+        width: 100%;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .fittv-title {
+        font-size: 14px;
+        font-weight: 600;
+        margin-top: 8px;
+        color: #333;
+        text-align: center;
+    }
+
     @media (min-width: 576px) {
         .breadcrumb-container {
             margin: 1rem;
@@ -1205,6 +1244,14 @@
                         <i class="fa fa-dumbbell me-2"></i>Services
                     </button>
                 </li>
+
+                <li class="nav-item flex-fill text-center">
+                    <button class="nav-link w-100" id="fittv-tab"
+                        data-bs-toggle="pill" data-bs-target="#fittv"
+                        type="button">
+                        <i class="fa-solid fa-play-circle me-2"></i>FITTV
+                    </button>
+                </li>
                 <li class="nav-item flex-fill text-center">
                     <button class="nav-link w-100" id="about-tab" data-bs-toggle="pill" data-bs-target="#about"
                         type="button">
@@ -1383,6 +1430,72 @@
                     <nav class="mt-3 mb-5">
                         <ul class="pagination justify-content-center" id="service-pagination"></ul>
                     </nav>
+                </div>
+
+                <!-- FITTV TAB -->
+                <div class="tab-pane fade" id="fittv" role="tabpanel" aria-labelledby="fittv-tab">
+
+                    <div class="container py-3">
+
+                        <div class="card shadow-sm border-0">
+
+                            <div class="card-body p-4">
+
+                                <h5 class="fw-bold mb-4">
+                                    <i class="fa fa-play-circle me-2 text-primary"></i>Workout Videos
+                                </h5>
+
+                                <?php if (!empty($fittv_categories)): ?>
+
+                                    <?php foreach ($fittv_categories as $cat): ?>
+
+                                        <h6 class="fw-bold mt-4 mb-3 text-primary">
+                                            <?= $cat->name ?>
+                                        </h6>
+
+                                        <div class="fittv-slider">
+
+                                            <?php foreach ($cat->videos as $video): ?>
+
+                                                <div class="fittv-card">
+
+                                                    <a href="<?= base_url('fittv/watch/' . $video->id) ?>">
+
+                                                        <video muted loop
+                                                            onmouseover="this.play()"
+                                                            onmouseout="this.pause();this.currentTime=0">
+
+                                                            <source src="<?= base_url('uploads/videos/' . $video->video) ?>">
+
+                                                        </video>
+
+                                                    </a>
+
+                                                    <p class="fittv-title">
+                                                        <?= $video->title ?>
+                                                    </p>
+
+                                                </div>
+
+                                            <?php endforeach; ?>
+
+                                        </div>
+
+                                    <?php endforeach; ?>
+
+                                <?php else: ?>
+
+                                    <p class="text-danger text-center fw-bold">
+                                        No Workout Videos Available
+                                    </p>
+
+                                <?php endif; ?>
+
+                            </div>
+                        </div>
+
+                    </div>
+
                 </div>
 
                 <!-- About -->

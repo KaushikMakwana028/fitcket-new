@@ -64,6 +64,9 @@ $route['edit/(:num)'] = 'admin/category/edit/$1';
 $route['edit_main/(:num)'] = 'admin/category/edit_main/$1';
 $route['slider'] = 'admin/category/slider';
 $route['add_slider'] = 'admin/category/add_slider';
+$route['edit_slider/(:num)'] = 'admin/category/edit_slider/$1';
+$route['admin/slider/edit_main/(:num)'] = 'admin/category/edit_slider/$1';
+$route['update_slider'] = 'admin/category/update_slider';
 $route['ads_banner'] = 'admin/category/ads_banner';
 $route['add_ads_banner'] = 'admin/category/add_ads_banner';
 $route['settlement'] = 'admin/settlement';
@@ -89,6 +92,20 @@ $route['admin/reviews/review_list'] = 'admin/Reviews/review_list';
 $route['admin/session'] = 'admin/session/session_list';
 $route['admin/session_list'] = 'admin/session/session_list';
 $route['admin/live_sessions'] = 'admin/session/live_sessions';
+$route['admin/fittv_category'] = 'admin/fittv/category';
+$route['admin/add_fittv_category'] = 'admin/fittv/add_category';
+$route['admin/save_fittv_category'] = 'admin/fittv/save_category';
+$route['admin/edit_fittv_category/(:num)'] = 'admin/fittv/edit_category/$1';
+$route['admin/update_fittv_category'] = 'admin/fittv/update_category';
+$route['admin/delete_fittv_category/(:num)'] = 'admin/fittv/delete_category/$1';
+
+$route['admin/fittv_videos'] = 'admin/fittv/videos';
+$route['admin/fittv_videos/(:num)'] = 'admin/fittv/videos/$1';
+$route['admin/add_fittv_video'] = 'admin/fittv/add_video';
+$route['admin/save_fittv_video'] = 'admin/fittv/save_video';
+$route['admin/edit_fittv_video/(:num)'] = 'admin/fittv/edit_video/$1';
+$route['admin/update_fittv_video'] = 'admin/fittv/update_video';
+$route['admin/delete_fittv_video/(:num)'] = 'admin/fittv/delete_video/$1';
 
 
 
@@ -255,6 +272,9 @@ $route['user/notifications']                   = 'api/user_notifications_get';
 $route['user/notification/read/(:num)']        = 'api/user_notification_read/$1';
 $route['user/notification/delete/(:num)']      = 'api/user_notification_delete/$1';
 $route['user/notifications/delete-all']        = 'api/user_notification_delete_all';
+$route['fittv'] = 'fittv/index';
+$route['fittv/(:any)'] = 'fittv/gender/$1';
+$route['fittv/videos/(:num)'] = 'fittv/videos/$1';
 
 
 

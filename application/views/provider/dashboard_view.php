@@ -163,11 +163,11 @@
   }
 
   [data-bs-theme="dark"] .page-content {
-    background: #111827;
+    background: #212529;
   }
 
   [data-bs-theme="dark"] .card {
-    background: #0f172a;
+    background: #212529;
     border: 1px solid #263244;
     box-shadow: none;
   }
@@ -186,22 +186,22 @@
 
   [data-bs-theme="dark"] .qr-card img,
   [data-bs-theme="dark"] .payment-box {
-    background: #111827;
+    background: #212529;
     border-color: #334155;
   }
 
   [data-bs-theme="dark"] .notification-item {
-    background: #0b1220;
+    background: #212529;
     border-color: #334155;
   }
 
   [data-bs-theme="dark"] .notification-item.unread {
-    background: #1e293b;
+    background: #212529;
     border-left-color: #3b82f6;
   }
 
   [data-bs-theme="dark"] .notification-item:hover {
-    background: #182235;
+    background: #212529;
   }
 
   [data-bs-theme="dark"] .notification-title {

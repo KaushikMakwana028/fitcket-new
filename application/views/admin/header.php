@@ -239,6 +239,46 @@
 
 				<li>
 
+					<a href="javascript:;" class="has-arrow">
+
+						<div class="parent-icon"><i class="bx bx-tv"></i></div>
+
+						<div class="menu-title">FITTV</div>
+
+					</a>
+
+					<ul>
+
+						<li>
+							<a href="<?= base_url('admin/fittv_category') ?>">
+								<i class='bx bx-radio-circle'></i>View Category
+							</a>
+						</li>
+
+						<li>
+							<a href="<?= base_url('admin/add_fittv_category') ?>">
+								<i class='bx bx-radio-circle'></i>Add Category
+							</a>
+						</li>
+
+						<li>
+							<a href="<?= base_url('admin/fittv_videos') ?>">
+								<i class='bx bx-radio-circle'></i>View Videos
+							</a>
+						</li>
+
+						<li>
+							<a href="<?= base_url('admin/add_fittv_video') ?>">
+								<i class='bx bx-radio-circle'></i>Add Video
+							</a>
+						</li>
+
+					</ul>
+
+				</li>
+
+				<li>
+
 					<a href="<?= base_url('partner'); ?>" class="">
 
 						<div class="parent-icon"><i class="bx bx-user-circle"></i>

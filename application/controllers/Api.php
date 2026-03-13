@@ -5369,4 +5369,92 @@ class Api extends CI_Controller
 
         return $httpCode === 200;
     }
+
+    public function get_fittv_categories()
+    {
+        header('Content-Type: application/json');
+        $input_data = json_decode($this->input->raw_input_stream, true);
+        $gender = $this->input->get('gender') ?? $this->input->post('gender') ?? ($input_data['gender'] ?? null);
+
+        if (!$gender || !in_array($gender, ['Boy', 'Girl'])) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Valid gender parameter is required (Boy or Girl).',
+                'data' => null
+            ]));
+        }
+
+        $categories = $this->db
+            ->where('gender', $gender)
+            ->where('isActive', 1)
+            ->get('fittv_categories')
+            ->result();
+
+        foreach ($categories as &$cat) {
+            if (!empty($cat->image)) {
+                $cat->image = base_url($cat->image); 
+            }
+        }
+
+        return $this->output->set_status_header(200)->set_output(json_encode([
+            'status' => true,
+            'code' => 200,
+            'message' => 'FitTV categories fetched successfully.',
+            'data' => $categories
+        ]));
+    }
+
+    public function get_fittv_videos()
+    {
+        header('Content-Type: application/json');
+        $category_id = intval($this->input->get('category_id'));
+
+        if (!$category_id) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Category ID is required.',
+                'data' => null
+            ]));
+        }
+
+        $category = $this->db->get_where('fittv_categories', ['id' => $category_id])->row();
+        
+        if (!$category) {
+            return $this->output->set_status_header(404)->set_output(json_encode([
+                'status' => false,
+                'code' => 404,
+                'message' => 'Category not found.',
+                'data' => null
+            ]));
+        }
+
+        $videos = $this->db
+            ->where('category_id', $category_id)
+            ->where('isActive', 1)
+            ->get('fittv_videos')
+            ->result();
+
+        foreach ($videos as &$vid) {
+            if (!empty($vid->video)) {
+                $vid->video = base_url('uploads/videos/' . $vid->video); 
+            }
+            if (!empty($vid->thumbnail)) {
+                $vid->thumbnail = base_url('uploads/thumbnails/' . $vid->thumbnail); 
+            }
+        }
+
+        return $this->output->set_status_header(200)->set_output(json_encode([
+            'status' => true,
+            'code' => 200,
+            'message' => 'FitTV videos fetched successfully.',
+            'category_info' => [
+                'id' => $category->id,
+                'name' => $category->name,
+                'gender' => $category->gender
+            ],
+            'data' => $videos
+        ]));
+    }
 }

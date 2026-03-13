@@ -498,7 +498,7 @@ class Category extends Admin_Controller
 
         <div class="d-flex order-actions align-items-center">
 
-            <a href="' . site_url('admin/slider/edit_main/' . $slider['id']) . '" class="me-2">
+            <a href="' . site_url('edit_slider/' . $slider['id']) . '" class="me-2">
 
                 <i class="bx bxs-edit"></i>
 
@@ -615,6 +615,21 @@ class Category extends Admin_Controller
 
         $this->load->view('admin/footer');
     }
+
+    public function edit_slider($id)
+    {
+        $slider = $this->general_model->getOne('slider', ['id' => $id]);
+
+        if (!$slider) {
+            show_404();
+        }
+
+        $data['slider'] = $slider;
+
+        $this->load->view('admin/header');
+        $this->load->view('admin/slider_edit_form', $data);
+        $this->load->view('admin/footer');
+    }
     public function ads_banner()
     {
         $this->load->view('admin/header');
@@ -714,6 +729,72 @@ class Category extends Admin_Controller
         } else {
 
             echo json_encode(['status' => false, 'message' => 'Failed to add slider']);
+        }
+    }
+
+    public function update_slider()
+    {
+        $id = (int) $this->input->post('id');
+
+        if (!$id) {
+            echo json_encode(['status' => false, 'message' => 'Invalid slider ID']);
+            return;
+        }
+
+        $slider = $this->general_model->getOne('slider', ['id' => $id]);
+
+        if (!$slider) {
+            echo json_encode(['status' => false, 'message' => 'Slider not found']);
+            return;
+        }
+
+        $title = trim((string) $this->input->post('title', true));
+        $displayOrder = $this->input->post('display_order', true);
+
+        if ($title === '') {
+            echo json_encode(['status' => false, 'message' => 'Title is required']);
+            return;
+        }
+
+        if ($displayOrder === '' || $displayOrder === null) {
+            echo json_encode(['status' => false, 'message' => 'Display order is required']);
+            return;
+        }
+
+        $data = [
+            'slider_title' => $title,
+            'sub_title' => $this->input->post('sub_title', true),
+            'page_link' => $this->input->post('page_link', true),
+            'display_order' => $displayOrder,
+        ];
+
+        if (!empty($_FILES['slider_image']['name'])) {
+            $config['upload_path'] = './uploads/slider/';
+            $config['allowed_types'] = 'jpg|jpeg|png|webp';
+            $config['file_name'] = time() . '_' . $_FILES['slider_image']['name'];
+
+            $this->load->library('upload', $config);
+
+            if (!$this->upload->do_upload('slider_image')) {
+                echo json_encode(['status' => false, 'message' => strip_tags($this->upload->display_errors())]);
+                return;
+            }
+
+            $uploadData = $this->upload->data();
+            $data['slider_image'] = $uploadData['file_name'];
+
+            $oldImagePath = FCPATH . 'uploads/slider/' . $slider->slider_image;
+            if (!empty($slider->slider_image) && file_exists($oldImagePath)) {
+                @unlink($oldImagePath);
+            }
+        }
+
+        $updated = $this->general_model->update('slider', ['id' => $id], $data);
+
+        if ($updated) {
+            echo json_encode(['status' => true, 'message' => 'Slider updated successfully']);
+        } else {
+            echo json_encode(['status' => false, 'message' => 'Failed to update slider']);
         }
     }
 
