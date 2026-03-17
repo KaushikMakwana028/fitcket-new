@@ -10,6 +10,12 @@ class Fittv extends User_Controller
     {
         parent::__construct();
         $this->load->model('general_model');
+
+        $user = $this->session->userdata('user');
+        if (!$user || !isset($user['is_logged_in']) || $user['is_logged_in'] !== true) {
+            $current_url = current_url();
+            redirect('login?redirect=' . urlencode($current_url));
+        }
     }
 
     public function index()
