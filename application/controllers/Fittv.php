@@ -10,6 +10,7 @@ class Fittv extends User_Controller
 {
     private $RAZORPAY_KEY_ID = "rzp_live_RCge2Oz6kUJE74";
     private $RAZORPAY_KEY_SECRET = "Pw0gRqzQkzjl5pYW10pXXZeq";
+    private $fittvPaymentColumns = null;
 
     public function __construct()
     {
@@ -55,6 +56,143 @@ class Fittv extends User_Controller
             ->count_all_results('fittv_payments') > 0;
     }
 
+    private function getFittvPaymentColumns()
+    {
+        if ($this->fittvPaymentColumns === null) {
+            $this->fittvPaymentColumns = $this->db->list_fields('fittv_payments');
+        }
+
+        return $this->fittvPaymentColumns;
+    }
+
+    private function sanitizeFittvPaymentPayload(array $payload)
+    {
+        $columns = $this->getFittvPaymentColumns();
+
+        if (empty($columns)) {
+            return $payload;
+        }
+
+        return array_intersect_key($payload, array_flip($columns));
+    }
+
+    private function insertFittvPayment(array $payload)
+    {
+        $payload = $this->sanitizeFittvPaymentPayload($payload);
+        $result = $this->db->insert('fittv_payments', $payload);
+
+        if (!$result) {
+            $error = $this->db->error();
+            log_message('error', 'FITTV payment insert failed: ' . json_encode($error));
+        }
+
+        return $result;
+    }
+
+    private function updateFittvPaymentBy(array $where, array $payload)
+    {
+        $payload = $this->sanitizeFittvPaymentPayload($payload);
+
+        foreach ($where as $key => $value) {
+            $this->db->where($key, $value);
+        }
+
+        $result = $this->db->update('fittv_payments', $payload);
+
+        if (!$result) {
+            $error = $this->db->error();
+            log_message('error', 'FITTV payment update failed: ' . json_encode($error));
+        }
+
+        return $result;
+    }
+
+    private function ensureFittvSuccessPayment(array $paymentData)
+    {
+        $existing = $this->db->get_where('fittv_payments', [
+            'user_id' => (int) $paymentData['user_id'],
+            'status' => 'success'
+        ])->row_array();
+
+        if ($existing) {
+            return true;
+        }
+
+        $updatePayload = [
+            'amount' => (float) $paymentData['amount'],
+            'course_price' => (float) $paymentData['course_price'],
+            'payment_method' => 'razorpay',
+            'razorpay_order_id' => $paymentData['razorpay_order_id'],
+            'razorpay_payment_id' => $paymentData['razorpay_payment_id'],
+            'razorpay_signature' => $paymentData['razorpay_signature'],
+            'status' => 'success',
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        $updated = $this->updateFittvPaymentBy(['txnid' => $paymentData['txnid']], $updatePayload);
+
+        if ($updated && $this->db->affected_rows() > 0) {
+            return true;
+        }
+
+        $insertPayload = array_merge($updatePayload, [
+            'user_id' => (int) $paymentData['user_id'],
+            'txnid' => $paymentData['txnid'],
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
+
+        return $this->insertFittvPayment($insertPayload);
+    }
+
+    private function upsertPendingFittvPayment($user, $settings, $txnid, $amount, $orderId = null)
+    {
+        $payload = [
+            'user_id' => (int) $user['id'],
+            'amount' => (float) $amount,
+            'course_price' => (float) $amount,
+            'payment_method' => 'razorpay',
+            'txnid' => $txnid,
+            'razorpay_order_id' => $orderId,
+            'razorpay_payment_id' => null,
+            'razorpay_signature' => null,
+            'status' => 'pending',
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        $existing = $this->db->get_where('fittv_payments', [
+            'user_id' => (int) $user['id'],
+            'status' => 'pending'
+        ])->row_array();
+
+        if ($existing) {
+            $where = !empty($existing['txnid'])
+                ? ['txnid' => $existing['txnid']]
+                : [
+                    'user_id' => (int) $user['id'],
+                    'status' => 'pending'
+                ];
+
+            $this->updateFittvPaymentBy($where, $payload);
+            return !empty($existing['id']) ? (int) $existing['id'] : 0;
+        }
+
+        $payload['created_at'] = date('Y-m-d H:i:s');
+        $this->insertFittvPayment($payload);
+        return (int) $this->db->insert_id();
+    }
+
+    private function deletePendingFittvPaymentByTxnid($txnid = '')
+    {
+        if (empty($txnid)) {
+            return;
+        }
+
+        $this->db
+            ->where('txnid', $txnid)
+            ->where('status', 'pending')
+            ->delete('fittv_payments');
+    }
+
     private function requireFittvAccess()
     {
         $user = $this->getCurrentUser();
@@ -76,7 +214,7 @@ class Fittv extends User_Controller
         ])->row_array();
 
         if (!$existing) {
-            $this->db->insert('fittv_payments', [
+            $this->insertFittvPayment([
                 'user_id' => (int) $user['id'],
                 'amount' => 0,
                 'course_price' => 0,
@@ -140,22 +278,29 @@ class Fittv extends User_Controller
 
         $txnid = 'FITTV' . uniqid();
         $amountPaise = (int) round($amount * 100);
+        $this->upsertPendingFittvPayment($user, $settings, $txnid, $amount);
 
-        $api = new Api($this->RAZORPAY_KEY_ID, $this->RAZORPAY_KEY_SECRET);
-        $razorpayOrder = $api->order->create([
-            'receipt' => $txnid,
-            'amount' => $amountPaise,
-            'currency' => 'INR',
-            'payment_capture' => 1
-        ]);
+        try {
+            $api = new Api($this->RAZORPAY_KEY_ID, $this->RAZORPAY_KEY_SECRET);
+            $razorpayOrder = $api->order->create([
+                'receipt' => $txnid,
+                'amount' => $amountPaise,
+                'currency' => 'INR',
+                'payment_capture' => 1
+            ]);
+        } catch (Exception $e) {
+            log_message('error', 'FITTV payment initialization failed: ' . $e->getMessage());
+            $this->session->set_flashdata('error', 'Unable to start FITTV payment right now. Please try again in a moment.');
+            redirect('fittv');
+            return;
+        }
 
-        $this->session->set_userdata('pending_fittv_payment', [
+        $this->updateFittvPaymentBy([
             'txnid' => $txnid,
-            'user_id' => (int) $user['id'],
-            'amount' => $amount,
-            'order_id' => $razorpayOrder['id'],
-            'course_price' => $amount,
-            'created_at' => date('Y-m-d H:i:s')
+            'status' => 'pending'
+        ], [
+            'razorpay_order_id' => $razorpayOrder['id'],
+            'updated_at' => date('Y-m-d H:i:s')
         ]);
 
         $data = [
@@ -202,51 +347,67 @@ class Fittv extends User_Controller
                 'razorpay_signature' => $signature
             ]);
 
-            $pending = $this->session->userdata('pending_fittv_payment');
+            $pending = $this->db->get_where('fittv_payments', ['txnid' => $txnid])->row_array();
+
+            if (!$pending) {
+                $user = $this->getCurrentUser();
+                $settings = $this->getCourseSettings();
+
+                if (!$user) {
+                    throw new Exception('Pending FITTV payment not found and user session missing.');
+                }
+
+                $pending = [
+                    'user_id' => (int) $user['id'],
+                    'amount' => (float) ($settings['price'] ?? 0),
+                    'course_price' => (float) ($settings['price'] ?? 0),
+                    'txnid' => $txnid,
+                    'status' => 'pending'
+                ];
+            }
 
             if (
-                !$pending ||
-                empty($pending['txnid']) ||
-                $pending['txnid'] !== $txnid ||
-                $pending['order_id'] !== $orderId
+                !empty($pending['razorpay_order_id']) &&
+                $pending['razorpay_order_id'] !== $orderId
             ) {
-                throw new Exception('Pending FITTV payment not found.');
+                throw new Exception('FITTV payment order mismatch.');
             }
 
-            $alreadyPaid = $this->db->get_where('fittv_payments', [
+            if ($pending['status'] === 'success') {
+                $this->session->set_flashdata('success', 'FITTV payment already verified. Access granted.');
+                redirect('fittv/access');
+                return;
+            }
+
+            $saved = $this->ensureFittvSuccessPayment([
                 'user_id' => (int) $pending['user_id'],
-                'status' => 'success'
-            ])->row_array();
+                'amount' => (float) $pending['amount'],
+                'course_price' => (float) $pending['course_price'],
+                'txnid' => $txnid,
+                'razorpay_order_id' => $orderId,
+                'razorpay_payment_id' => $paymentId,
+                'razorpay_signature' => $signature
+            ]);
 
-            if (!$alreadyPaid) {
-                $this->db->insert('fittv_payments', [
-                    'user_id' => (int) $pending['user_id'],
-                    'amount' => (float) $pending['amount'],
-                    'course_price' => (float) $pending['course_price'],
-                    'payment_method' => 'razorpay',
-                    'txnid' => $txnid,
-                    'razorpay_order_id' => $orderId,
-                    'razorpay_payment_id' => $paymentId,
-                    'razorpay_signature' => $signature,
-                    'status' => 'success',
-                    'created_at' => date('Y-m-d H:i:s'),
-                    'updated_at' => date('Y-m-d H:i:s')
-                ]);
+            if (!$saved) {
+                throw new Exception('Unable to save FITTV payment success record.');
             }
 
-            $this->session->unset_userdata('pending_fittv_payment');
             $this->session->set_flashdata('success', 'FITTV payment successful. Access granted.');
             redirect('fittv/access');
         } catch (Exception $e) {
-            $this->session->unset_userdata('pending_fittv_payment');
+            log_message('error', 'FITTV payment verification failed: ' . $e->getMessage());
+            if (!empty($txnid)) {
+                $this->deletePendingFittvPaymentByTxnid($txnid);
+            }
             $this->session->set_flashdata('error', 'FITTV payment verification failed. Please try again.');
             redirect('fittv');
         }
     }
 
-    public function payment_cancel()
+    public function payment_cancel($txnid = '')
     {
-        $this->session->unset_userdata('pending_fittv_payment');
+        $this->deletePendingFittvPaymentByTxnid($txnid);
         $this->session->set_flashdata('error', 'FITTV payment was cancelled.');
         redirect('fittv');
     }

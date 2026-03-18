@@ -1,841 +1,626 @@
 <style>
-    .fittv-access-page {
+    .fittv-page {
         min-height: 100vh;
-        padding: 32px 0 48px;
+        padding: 36px 0 52px;
         background:
-            radial-gradient(circle at top left, rgba(226, 74, 107, 0.14), transparent 28%),
-            radial-gradient(circle at top right, rgba(79, 70, 229, 0.14), transparent 24%),
-            linear-gradient(180deg, #f8f9fc 0%, #eef2ff 100%);
+            radial-gradient(circle at top left, rgba(168, 85, 247, 0.16), transparent 28%),
+            radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 30%),
+            linear-gradient(180deg, #f3f0ff 0%, #e8f0ff 100%);
     }
 
-    .fittv-access-card {
-        max-width: 980px;
+    .fittv-shell {
+        max-width: 1040px;
         margin: 0 auto;
-        background: #fff;
-        border-radius: 28px;
-        box-shadow: 0 20px 50px rgba(31, 41, 55, 0.12);
-        overflow: hidden;
-        border: 1px solid rgba(99, 102, 241, 0.08);
     }
 
-    .fittv-access-page .fittv-hero {
-        padding: 52px 48px 48px;
-        background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 40%, #4c1d95 75%, #be185d 120%);
-        color: #fff;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .fittv-access-page .fittv-hero::before {
-        content: '';
-        position: absolute;
-        top: -80px;
-        right: -80px;
-        width: 320px;
-        height: 320px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(236, 72, 153, 0.2), transparent 70%);
-        pointer-events: none;
-    }
-
-    .fittv-access-page .fittv-hero::after {
-        content: '';
-        position: absolute;
-        bottom: -60px;
-        left: 30%;
-        width: 250px;
-        height: 250px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(99, 102, 241, 0.15), transparent 70%);
-        pointer-events: none;
-    }
-
-    .fittv-access-page .fittv-hero-content {
-        position: relative;
-        z-index: 2;
-    }
-
-    .fittv-access-page .fittv-hero-grid {
+    .fittv-alert {
         display: flex;
         align-items: center;
-        justify-content: space-between;
-        gap: 32px;
+        gap: 12px;
+        margin-bottom: 20px;
+        padding: 16px 18px;
+        border-radius: 18px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
     }
 
-    .fittv-access-page .fittv-hero-text {
-        flex: 1;
-    }
-
-    .fittv-access-page .fittv-hero-visual {
+    .fittv-alert svg {
+        width: 18px;
+        height: 18px;
         flex-shrink: 0;
     }
 
-    .fittv-access-page .fittv-hero-icon-wrap {
-        width: 110px;
-        height: 110px;
-        border-radius: 28px;
-        background: rgba(255, 255, 255, 0.08);
-        backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        animation: fittvFloat 4s ease-in-out infinite;
+    .fittv-alert-success {
+        color: #166534;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
     }
 
-    @keyframes fittvFloat {
-
-        0%,
-        100% {
-            transform: translateY(0);
-        }
-
-        50% {
-            transform: translateY(-8px);
-        }
+    .fittv-alert-error {
+        color: #b91c1c;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
     }
 
-    .fittv-access-page .fittv-hero-icon-wrap svg {
-        width: 52px;
-        height: 52px;
-        opacity: 0.9;
+    .fittv-card {
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.88), rgba(245, 247, 255, 0.96));
+        border: 1px solid rgba(196, 181, 253, 0.7);
+        border-radius: 30px;
+        overflow: hidden;
+        box-shadow: 0 24px 60px rgba(99, 102, 241, 0.16);
+        backdrop-filter: blur(8px);
     }
 
-    .fittv-access-page .fittv-kicker {
+    .fittv-hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+        gap: 28px;
+        padding: 42px;
+        background: linear-gradient(135deg, #f6edff 0%, #efe9ff 42%, #e0ecff 100%);
+        color: #1e293b;
+        position: relative;
+    }
+
+    .fittv-hero::before {
+        content: '';
+        position: absolute;
+        top: -40px;
+        right: -30px;
+        width: 220px;
+        height: 220px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(168, 85, 247, 0.18), transparent 68%);
+        pointer-events: none;
+    }
+
+    .fittv-hero::after {
+        content: '';
+        position: absolute;
+        bottom: -80px;
+        left: 45%;
+        width: 240px;
+        height: 240px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(59, 130, 246, 0.20), transparent 70%);
+        pointer-events: none;
+    }
+
+    .fittv-badge {
         display: inline-flex;
         align-items: center;
         gap: 8px;
-        padding: 8px 16px;
+        padding: 8px 14px;
         border-radius: 999px;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        font-size: 0.72rem;
+        background: rgba(255, 255, 255, 0.64);
+        border: 1px solid rgba(124, 58, 237, 0.16);
+        font-size: 0.76rem;
         font-weight: 700;
-        letter-spacing: 0.12em;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
-        margin-bottom: 20px;
-        color: rgba(255, 255, 255, 0.95);
+        margin-bottom: 18px;
+        color: #7c3aed;
+        position: relative;
+        z-index: 1;
     }
 
-    .fittv-access-page .fittv-kicker-dot {
-        width: 7px;
-        height: 7px;
+    .fittv-badge-dot {
+        width: 8px;
+        height: 8px;
         border-radius: 50%;
-        background: #34d399;
-        animation: fittvPulse 2s ease-in-out infinite;
+        background: #22c55e;
     }
 
-    @keyframes fittvPulse {
-
-        0%,
-        100% {
-            opacity: 1;
-            transform: scale(1);
-        }
-
-        50% {
-            opacity: 0.5;
-            transform: scale(1.4);
-        }
-    }
-
-    .fittv-access-page .fittv-hero h1 {
-        font-size: 2.6rem;
-        font-weight: 900;
-        margin: 0 0 16px 0;
-        padding: 0;
+    .fittv-hero h1 {
+        margin: 0 0 14px;
+        color: #0f172a;
+        font-size: 2.55rem;
+        font-weight: 800;
         line-height: 1.08;
         letter-spacing: -0.03em;
-        color: #fff;
         background: none;
-        -webkit-text-fill-color: #fff;
         border: none;
         text-transform: none;
+        -webkit-text-fill-color: #0f172a;
+        position: relative;
+        z-index: 1;
     }
 
-    .fittv-access-page .fittv-hero p {
-        max-width: 520px;
-        font-size: 1.05rem;
-        color: rgba(255, 255, 255, 0.72);
+    .fittv-hero p {
         margin: 0;
-        line-height: 1.65;
+        max-width: 620px;
+        color: #4b5563;
+        font-size: 1rem;
+        line-height: 1.7;
+        position: relative;
+        z-index: 1;
     }
 
-    .fittv-access-page .fittv-stats-row {
+    .fittv-pill-row {
         display: flex;
-        gap: 24px;
-        margin-top: 26px;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 24px;
+        position: relative;
+        z-index: 1;
     }
 
-    .fittv-access-page .fittv-stat {
-        display: flex;
+    .fittv-pill {
+        display: inline-flex;
         align-items: center;
         gap: 10px;
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.74), rgba(244, 240, 255, 0.82));
+        border: 1px solid rgba(167, 139, 250, 0.18);
+        font-size: 0.88rem;
+        color: #334155;
+        box-shadow: 0 10px 24px rgba(124, 58, 237, 0.10);
     }
 
-    .fittv-access-page .fittv-stat-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        background: rgba(255, 255, 255, 0.08);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .fittv-access-page .fittv-stat-icon svg {
+    .fittv-pill svg {
         width: 18px;
         height: 18px;
-        stroke: rgba(255, 255, 255, 0.7);
+        stroke: #7c3aed;
+        flex-shrink: 0;
     }
 
-    .fittv-access-page .fittv-stat-text {
-        font-size: 0.82rem;
-        color: rgba(255, 255, 255, 0.65);
-        line-height: 1.3;
-    }
-
-    .fittv-access-page .fittv-stat-text strong {
-        display: block;
-        color: #fff;
-        font-size: 0.92rem;
-        font-weight: 700;
-    }
-
-    .fittv-access-page .fittv-access-body {
-        padding: 40px 48px 48px;
-    }
-
-    .fittv-access-page .fittv-section-label {
-        font-size: 0.72rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.12em;
-        color: #6366f1;
-        margin-bottom: 16px;
+    .fittv-price-card {
+        height: 100%;
         display: flex;
-        align-items: center;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 18px;
+        padding: 26px;
+        border-radius: 24px;
+        background: linear-gradient(180deg, rgba(126, 34, 206, 0.10), rgba(59, 130, 246, 0.08), rgba(255, 255, 255, 0.72));
+        border: 1px solid rgba(147, 197, 253, 0.42);
+        box-shadow: 0 18px 36px rgba(99, 102, 241, 0.14);
+        position: relative;
+        z-index: 1;
+    }
+
+    .fittv-price-label {
+        color: #6d28d9;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .fittv-price-value {
+        display: flex;
+        align-items: baseline;
         gap: 8px;
+        margin-top: 8px;
+        font-size: 2.8rem;
+        font-weight: 800;
+        line-height: 1;
+        color: #0f172a;
     }
 
-    .fittv-access-page .fittv-section-label::after {
-        content: '';
-        flex: 1;
-        height: 1px;
-        background: linear-gradient(90deg, rgba(99, 102, 241, 0.2), transparent);
+    .fittv-price-value span {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #64748b;
     }
 
-    .fittv-access-page .fittv-feature-grid {
+    .fittv-price-note {
+        margin: 0;
+        color: #475569;
+        font-size: 0.92rem;
+        line-height: 1.7;
+    }
+
+    .fittv-content {
+        padding: 34px 42px 40px;
+    }
+
+    .fittv-grid {
         display: grid;
         grid-template-columns: repeat(3, minmax(0, 1fr));
-        gap: 16px;
-        margin-bottom: 36px;
+        gap: 18px;
+        margin-bottom: 30px;
     }
 
-    .fittv-access-page .fittv-feature {
-        background: #fafbff;
-        border: 1px solid rgba(99, 102, 241, 0.08);
-        border-radius: 20px;
-        padding: 24px;
-        position: relative;
-        overflow: hidden;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    .fittv-feature {
+        padding: 22px;
+        border-radius: 22px;
+        background: linear-gradient(180deg, #ffffff 0%, #f6f4ff 100%);
+        border: 1px solid #ddd6fe;
+        box-shadow: 0 12px 28px rgba(124, 58, 237, 0.08);
     }
 
-    .fittv-access-page .fittv-feature::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #6366f1, #ec4899);
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .fittv-access-page .fittv-feature:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 12px 32px rgba(99, 102, 241, 0.1);
-    }
-
-    .fittv-access-page .fittv-feature:hover::before {
-        opacity: 1;
-    }
-
-    .fittv-access-page .fittv-feature-icon {
-        width: 44px;
-        height: 44px;
-        border-radius: 14px;
-        display: flex;
+    .fittv-feature-icon {
+        width: 48px;
+        height: 48px;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 16px;
+        margin-bottom: 14px;
+        border-radius: 14px;
+        background: linear-gradient(135deg, #ddd6fe, #e0e7ff);
     }
 
-    .fittv-access-page .fittv-feature:nth-child(1) .fittv-feature-icon {
-        background: linear-gradient(135deg, #ede9fe, #e0e7ff);
+    .fittv-feature:nth-child(2) .fittv-feature-icon {
+        background: linear-gradient(135deg, #fde2ff, #ffe4f1);
     }
 
-    .fittv-access-page .fittv-feature:nth-child(2) .fittv-feature-icon {
-        background: linear-gradient(135deg, #fce7f3, #fce4ec);
+    .fittv-feature:nth-child(3) .fittv-feature-icon {
+        background: linear-gradient(135deg, #dbeafe, #ecfeff);
     }
 
-    .fittv-access-page .fittv-feature:nth-child(3) .fittv-feature-icon {
-        background: linear-gradient(135deg, #d1fae5, #e0f2fe);
-    }
-
-    .fittv-access-page .fittv-feature-icon svg {
+    .fittv-feature-icon svg {
         width: 22px;
         height: 22px;
     }
 
-    .fittv-access-page .fittv-feature h3 {
-        font-size: 1rem;
-        font-weight: 800;
-        margin: 0 0 8px 0;
-        padding: 0;
-        color: #111827;
-        border: none;
+    .fittv-feature h3 {
+        margin: 0 0 8px;
+        color: #0f172a;
+        font-size: 1.02rem;
+        font-weight: 700;
         background: none;
-        -webkit-text-fill-color: #111827;
+        border: none;
         text-transform: none;
-        letter-spacing: normal;
-        line-height: 1.3;
+        -webkit-text-fill-color: #0f172a;
     }
 
-    .fittv-access-page .fittv-feature p {
+    .fittv-feature p {
         margin: 0;
-        color: #6b7280;
-        font-size: 0.88rem;
-        line-height: 1.6;
+        color: #64748b;
+        font-size: 0.92rem;
+        line-height: 1.65;
     }
 
-    .fittv-access-page .fittv-summary {
-        display: flex;
+    .fittv-summary {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 22px;
         align-items: center;
-        justify-content: space-between;
-        gap: 28px;
-        padding: 28px 32px;
+        padding: 24px 26px;
         border-radius: 24px;
-        background: linear-gradient(135deg, #f5f3ff 0%, #fdf2f8 50%, #fff7ed 100%);
-        border: 1px solid rgba(99, 102, 241, 0.1);
-        margin-bottom: 32px;
-        position: relative;
-        overflow: hidden;
+        background: linear-gradient(135deg, #ede9fe 0%, #fdf4ff 48%, #e0ecff 100%);
+        border: 1px solid #c4b5fd;
+        box-shadow: 0 14px 34px rgba(99, 102, 241, 0.10);
     }
 
-    .fittv-access-page .fittv-summary::before {
-        content: '';
-        position: absolute;
-        top: -40px;
-        right: -40px;
-        width: 140px;
-        height: 140px;
-        border-radius: 50%;
-        background: radial-gradient(circle, rgba(236, 72, 153, 0.08), transparent 70%);
-        pointer-events: none;
-    }
-
-    .fittv-access-page .fittv-price-wrap {
-        position: relative;
-        z-index: 1;
-    }
-
-    .fittv-access-page .fittv-price-wrap small {
-        display: block;
-        color: #6b7280;
-        text-transform: uppercase;
-        letter-spacing: 0.1em;
-        margin-bottom: 8px;
-        font-size: 0.72rem;
+    .fittv-summary h2 {
+        margin: 0 0 8px;
+        color: #0f172a;
+        font-size: 1.12rem;
         font-weight: 700;
     }
 
-    .fittv-access-page .fittv-price {
-        font-size: 2.4rem;
-        font-weight: 900;
-        color: #111827;
-        line-height: 1;
-        letter-spacing: -0.03em;
-        display: flex;
-        align-items: baseline;
-        gap: 6px;
+    .fittv-summary p {
+        margin: 0;
+        color: #475569;
+        font-size: 0.94rem;
+        line-height: 1.7;
     }
 
-    .fittv-access-page .fittv-price-currency {
-        font-size: 1.4rem;
-        font-weight: 700;
-        color: #6366f1;
-    }
-
-    .fittv-access-page .fittv-price-period {
-        font-size: 0.85rem;
-        font-weight: 500;
-        color: #9ca3af;
-        margin-left: 4px;
-    }
-
-    .fittv-access-page .fittv-price-note {
-        color: #6b7280;
-        font-size: 0.9rem;
-        max-width: 400px;
-        line-height: 1.6;
-        position: relative;
-        z-index: 1;
-    }
-
-    .fittv-access-page .fittv-guarantee {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        margin-top: 10px;
-        font-size: 0.8rem;
-        color: #059669;
-        font-weight: 600;
-    }
-
-    .fittv-access-page .fittv-guarantee svg {
-        width: 16px;
-        height: 16px;
-    }
-
-    .fittv-access-page .fittv-actions {
+    .fittv-actions {
         display: flex;
         justify-content: flex-end;
         gap: 14px;
         flex-wrap: wrap;
+        margin-top: 28px;
     }
 
-    .fittv-access-page .fittv-btn {
-        border: none;
-        border-radius: 16px;
-        padding: 16px 28px;
-        font-weight: 700;
-        font-size: 0.95rem;
-        text-decoration: none;
+    .fittv-btn,
+    .fittv-btn:focus {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         gap: 10px;
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        min-width: 188px;
+        padding: 15px 24px;
+        border: 0;
+        border-radius: 16px;
+        font-size: 0.96rem;
+        font-weight: 700;
+        text-decoration: none;
+        transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
         cursor: pointer;
-        position: relative;
-        overflow: hidden;
-        line-height: 1.2;
     }
 
-    .fittv-access-page .fittv-btn:hover {
+    .fittv-btn:hover {
         transform: translateY(-2px);
         text-decoration: none;
     }
 
-    .fittv-access-page .fittv-btn-cancel {
-        background: #f3f4f6;
-        color: #4b5563;
-        border: 1px solid #e5e7eb;
+    .fittv-btn-light {
+        color: #334155;
+        background: #f8fafc;
+        border: 1px solid #cbd5e1;
     }
 
-    .fittv-access-page .fittv-btn-cancel:hover {
-        background: #e5e7eb;
-        color: #374151;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+    .fittv-btn-light:hover {
+        color: #0f172a;
+        background: #f1f5f9;
     }
 
-    .fittv-access-page .fittv-btn-pay {
-        background: linear-gradient(135deg, #6366f1, #a855f7, #ec4899);
+    .fittv-btn-primary {
         color: #fff;
-        box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);
-        min-width: 200px;
+        background: linear-gradient(135deg, #ef4444, #2563eb);
+        box-shadow: 0 16px 30px rgba(37, 99, 235, 0.20);
     }
 
-    .fittv-access-page .fittv-btn-pay:hover {
-        box-shadow: 0 12px 36px rgba(99, 102, 241, 0.4);
+    .fittv-btn-primary:hover {
         color: #fff;
+        box-shadow: 0 20px 36px rgba(37, 99, 235, 0.26);
     }
 
-    .fittv-access-page .fittv-btn-access {
-        background: linear-gradient(135deg, #059669, #10b981, #34d399);
+    .fittv-btn-success {
         color: #fff;
-        box-shadow: 0 8px 24px rgba(5, 150, 105, 0.25);
-        min-width: 200px;
+        background: linear-gradient(135deg, #059669, #10b981);
+        box-shadow: 0 16px 30px rgba(5, 150, 105, 0.18);
     }
 
-    .fittv-access-page .fittv-btn-access:hover {
-        box-shadow: 0 12px 36px rgba(5, 150, 105, 0.35);
+    .fittv-btn-success:hover {
         color: #fff;
     }
 
-    .fittv-access-page .fittv-btn-icon {
-        display: flex;
-        align-items: center;
-    }
-
-    .fittv-access-page .fittv-btn-icon svg {
+    .fittv-btn svg {
         width: 18px;
         height: 18px;
-    }
-
-    .fittv-access-page .fittv-trust-row {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 28px;
-        margin-top: 28px;
-        padding-top: 24px;
-        border-top: 1px solid #f3f4f6;
-    }
-
-    .fittv-access-page .fittv-trust-badge {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.78rem;
-        color: #9ca3af;
-        font-weight: 500;
-    }
-
-    .fittv-access-page .fittv-trust-badge svg {
-        width: 16px;
-        height: 16px;
-        stroke: #d1d5db;
-    }
-
-    .fittv-access-page .fittv-alert {
-        max-width: 980px;
-        margin: 0 auto 20px;
-        padding: 16px 24px;
-        border-radius: 16px;
-        font-weight: 600;
-        font-size: 0.92rem;
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        animation: fittvSlideDown 0.4s ease;
-    }
-
-    .fittv-access-page .fittv-alert-success {
-        background: linear-gradient(135deg, #ecfdf5, #d1fae5);
-        border: 1px solid rgba(16, 185, 129, 0.3);
-        color: #065f46;
-    }
-
-    .fittv-access-page .fittv-alert-error {
-        background: linear-gradient(135deg, #fef2f2, #fecaca);
-        border: 1px solid rgba(239, 68, 68, 0.3);
-        color: #991b1b;
-    }
-
-    .fittv-access-page .fittv-alert-icon {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
         flex-shrink: 0;
     }
 
-    .fittv-access-page .fittv-alert-success .fittv-alert-icon {
-        background: rgba(16, 185, 129, 0.15);
+    .fittv-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 18px;
+        margin-top: 22px;
+        padding-top: 22px;
+        border-top: 1px solid #e2e8f0;
+        color: #64748b;
+        font-size: 0.84rem;
+        font-weight: 600;
     }
 
-    .fittv-access-page .fittv-alert-error .fittv-alert-icon {
-        background: rgba(239, 68, 68, 0.15);
+    .fittv-meta span {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
     }
 
-    @keyframes fittvSlideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-12px);
-        }
-
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+    .fittv-meta svg {
+        width: 16px;
+        height: 16px;
+        stroke: #2563eb;
     }
 
-    @media (max-width: 768px) {
-        .fittv-access-page {
-            padding: 20px 0 40px;
-        }
-
-        .fittv-access-page .fittv-access-card {
-            margin: 0 8px;
-            border-radius: 24px;
-        }
-
-        .fittv-access-page .fittv-hero {
-            padding: 32px 24px;
-        }
-
-        .fittv-access-page .fittv-hero-grid {
-            flex-direction: column-reverse;
-            gap: 20px;
-        }
-
-        .fittv-access-page .fittv-hero-icon-wrap {
-            width: 80px;
-            height: 80px;
-            border-radius: 20px;
-        }
-
-        .fittv-access-page .fittv-hero-icon-wrap svg {
-            width: 38px;
-            height: 38px;
-        }
-
-        .fittv-access-page .fittv-hero h1 {
-            font-size: 1.85rem;
-        }
-
-        .fittv-access-page .fittv-stats-row {
-            flex-wrap: wrap;
-            gap: 16px;
-        }
-
-        .fittv-access-page .fittv-access-body {
-            padding: 28px 24px 32px;
-        }
-
-        .fittv-access-page .fittv-feature-grid {
+    @media (max-width: 991px) {
+        .fittv-hero {
             grid-template-columns: 1fr;
         }
 
-        .fittv-access-page .fittv-summary {
-            flex-direction: column;
-            align-items: flex-start;
+        .fittv-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .fittv-summary {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 767px) {
+        .fittv-page {
+            padding: 22px 0 38px;
+        }
+
+        .fittv-hero,
+        .fittv-content {
             padding: 24px;
         }
 
-        .fittv-access-page .fittv-actions {
+        .fittv-hero h1 {
+            font-size: 1.9rem;
+        }
+
+        .fittv-price-value {
+            font-size: 2.2rem;
+        }
+
+        .fittv-actions {
             justify-content: stretch;
         }
 
-        .fittv-access-page .fittv-btn {
+        .fittv-btn,
+        .fittv-pay-form {
             width: 100%;
-        }
-
-        .fittv-access-page .fittv-trust-row {
-            flex-wrap: wrap;
-            gap: 16px;
         }
     }
 </style>
 
-<div class="fittv-access-page">
+<div class="fittv-page">
     <div class="container">
-        <?php if ($this->session->flashdata('success')): ?>
-            <div class="fittv-alert fittv-alert-success">
-                <span class="fittv-alert-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <div class="fittv-shell">
+            <?php if ($this->session->flashdata('success')): ?>
+                <div class="fittv-alert fittv-alert-success">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="20 6 9 17 4 12"></polyline>
                     </svg>
-                </span>
-                <?= $this->session->flashdata('success') ?>
-            </div>
-        <?php endif; ?>
+                    <span><?= $this->session->flashdata('success') ?></span>
+                </div>
+            <?php endif; ?>
 
-        <?php if ($this->session->flashdata('error')): ?>
-            <div class="fittv-alert fittv-alert-error">
-                <span class="fittv-alert-icon">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <?php if ($this->session->flashdata('error')): ?>
+                <div class="fittv-alert fittv-alert-error">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="12" cy="12" r="10"></circle>
                         <line x1="15" y1="9" x2="9" y2="15"></line>
                         <line x1="9" y1="9" x2="15" y2="15"></line>
                     </svg>
-                </span>
-                <?= $this->session->flashdata('error') ?>
-            </div>
-        <?php endif; ?>
+                    <span><?= $this->session->flashdata('error') ?></span>
+                </div>
+            <?php endif; ?>
 
-        <div class="fittv-access-card">
-            <!-- Hero -->
-            <div class="fittv-hero">
-                <div class="fittv-hero-content">
-                    <div class="fittv-hero-grid">
-                        <div class="fittv-hero-text">
-                            <div class="fittv-kicker">
-                                <span class="fittv-kicker-dot"></span>
-                                FITTV Premium
+            <div class="fittv-card">
+                <div class="fittv-hero">
+                    <div>
+                        <div class="fittv-badge">
+                            <span class="fittv-badge-dot"></span>
+                            FITTV Premium Access
+                        </div>
+                        <h1><?= htmlspecialchars($settings['title'] ?? 'FITTV Premium Access') ?></h1>
+                        <p><?= nl2br(htmlspecialchars($settings['description'] ?? 'Unlock full FITTV access to explore all workout categories and videos.')) ?></p>
+
+                        <div class="fittv-pill-row">
+                            <div class="fittv-pill">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polygon points="23 7 16 12 23 17 23 7"></polygon>
+                                    <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                                </svg>
+                                Full workout library
                             </div>
-                            <h1><?= htmlspecialchars($settings['title'] ?? 'FITTV Premium Access') ?></h1>
-                            <p><?= nl2br(htmlspecialchars($settings['description'] ?? 'Unlock full FITTV access to explore all workout categories and videos.')) ?></p>
+                            <div class="fittv-pill">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                </svg>
+                                Verified secure payment
+                            </div>
+                            <div class="fittv-pill">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10"></circle>
+                                    <polyline points="12 6 12 12 16 14"></polyline>
+                                </svg>
+                                Instant access after success
+                            </div>
+                        </div>
+                    </div>
 
-                            <div class="fittv-stats-row">
-                                <div class="fittv-stat">
-                                    <div class="fittv-stat-icon">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <polygon points="23 7 16 12 23 17 23 7"></polygon>
-                                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
-                                        </svg>
-                                    </div>
-                                    <div class="fittv-stat-text">
-                                        <strong>HD Videos</strong>
-                                        Full library access
-                                    </div>
-                                </div>
-                                <div class="fittv-stat">
-                                    <div class="fittv-stat-icon">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                                        </svg>
-                                    </div>
-                                    <div class="fittv-stat-text">
-                                        <strong>Secure</strong>
-                                        Verified payment
-                                    </div>
-                                </div>
-                                <div class="fittv-stat">
-                                    <div class="fittv-stat-icon">
-                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <circle cx="12" cy="12" r="10"></circle>
-                                            <polyline points="12 6 12 12 16 14"></polyline>
-                                        </svg>
-                                    </div>
-                                    <div class="fittv-stat-text">
-                                        <strong>Instant</strong>
-                                        Immediate access
-                                    </div>
-                                </div>
+                    <div class="fittv-price-card">
+                        <div>
+                            <div class="fittv-price-label">One-time plan</div>
+                            <div class="fittv-price-value">
+                                <?php if ((float) ($settings['price'] ?? 0) > 0): ?>
+                                    &#8377;<?= number_format((float) $settings['price'], 0) ?>
+                                    <span>one-time</span>
+                                <?php else: ?>
+                                    FREE
+                                <?php endif; ?>
                             </div>
                         </div>
 
-                        <div class="fittv-hero-visual">
-                            <div class="fittv-hero-icon-wrap">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-                                    <polygon points="5 3 19 12 5 21 5 3" fill="rgba(255,255,255,0.15)"></polygon>
+                        <p class="fittv-price-note">
+                            <?= $has_access
+                                ? 'Your account already has FITTV access. You can continue directly to the video library.'
+                                : 'Complete the payment once and the FITTV library will be unlocked for your account.' ?>
+                        </p>
+                    </div>
+                </div>
+
+                <div class="fittv-content">
+                    <div class="fittv-grid">
+                        <div class="fittv-feature">
+                            <div class="fittv-feature-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="14" width="7" height="7"></rect>
+                                    <rect x="3" y="14" width="7" height="7"></rect>
                                 </svg>
                             </div>
+                            <h3>Simple Categories</h3>
+                            <p>Open a clean library of workout categories and browse videos quickly without extra steps.</p>
                         </div>
-                    </div>
-                </div>
-            </div>
 
-            <!-- Body -->
-            <div class="fittv-access-body">
-                <div class="fittv-section-label">What you get</div>
+                        <div class="fittv-feature">
+                            <div class="fittv-feature-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M12 1v22"></path>
+                                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14.5a3.5 3.5 0 0 1 0 7H6"></path>
+                                </svg>
+                            </div>
+                            <h3>One-Time Payment</h3>
+                            <p>Pay once for FITTV access and avoid repeated checkout each time you want to watch content.</p>
+                        </div>
 
-                <div class="fittv-feature-grid">
-                    <div class="fittv-feature">
-                        <div class="fittv-feature-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="3" y="3" width="7" height="7"></rect>
-                                <rect x="14" y="3" width="7" height="7"></rect>
-                                <rect x="14" y="14" width="7" height="7"></rect>
-                                <rect x="3" y="14" width="7" height="7"></rect>
-                            </svg>
+                        <div class="fittv-feature">
+                            <div class="fittv-feature-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M9 12l2 2 4-4"></path>
+                                    <path d="M12 3l7 4v5c0 5-3.5 8.5-7 9-3.5-.5-7-4-7-9V7l7-4z"></path>
+                                </svg>
+                            </div>
+                            <h3>Reliable Checkout</h3>
+                            <p>The payment handoff now includes a clearer fallback so users can still open checkout if the browser blocks auto-launch.</p>
                         </div>
-                        <h3>Structured Library</h3>
-                        <p>Browse fitness content by gender and category, then open the videos that match your goals.</p>
                     </div>
-                    <div class="fittv-feature">
-                        <div class="fittv-feature-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="#ec4899" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                                <polyline points="9 12 11 14 15 10" stroke="#ec4899"></polyline>
-                            </svg>
-                        </div>
-                        <h3>One Payment Access</h3>
-                        <p>Pay once and unlock FITTV access. After success, the videos are available to your account.</p>
-                    </div>
-                    <div class="fittv-feature">
-                        <div class="fittv-feature-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                                <line x1="1" y1="10" x2="23" y2="10"></line>
-                            </svg>
-                        </div>
-                        <h3>Easy Checkout</h3>
-                        <p>Payment uses the same Razorpay flow already used in the project, so access is granted after verified success only.</p>
-                    </div>
-                </div>
 
-                <div class="fittv-section-label">Pricing</div>
-
-                <div class="fittv-summary">
-                    <div class="fittv-price-wrap">
-                        <small>Course Price</small>
-                        <div class="fittv-price">
-                            <?php if ((float)($settings['price'] ?? 0) > 0): ?>
-                                <span class="fittv-price-currency">₹</span><?= number_format((float)$settings['price'], 0) ?>
-                                <span class="fittv-price-period">one-time</span>
-                            <?php else: ?>
-                                FREE
-                            <?php endif; ?>
+                    <div class="fittv-summary">
+                        <div>
+                            <h2><?= $has_access ? 'Access ready' : 'Ready to unlock FITTV?' ?></h2>
+                            <p>
+                                <?= $has_access
+                                    ? 'Your account has an active FITTV purchase, so you can go straight to the content.'
+                                    : 'After a successful payment, access is granted immediately. If checkout cannot open automatically, the next page now gives a clear manual payment button.' ?>
+                            </p>
+                        </div>
+                        <div>
+                            <strong style="color:#0f172a; font-size:1.55rem;">
+                                <?php if ((float) ($settings['price'] ?? 0) > 0): ?>
+                                    &#8377;<?= number_format((float) $settings['price'], 0) ?>
+                                <?php else: ?>
+                                    FREE
+                                <?php endif; ?>
+                            </strong>
                         </div>
                     </div>
-                    <div>
-                        <div class="fittv-price-note">
-                            <?= $has_access
-                                ? 'Your account already has FITTV access. You can continue directly to the content.'
-                                : 'Access is enabled only after successful payment verification. If you cancel, no payment record is stored.' ?>
-                        </div>
-                        <div class="fittv-guarantee">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                            </svg>
-                            Secure payment &bull; Instant activation
-                        </div>
-                    </div>
-                </div>
 
-                <div class="fittv-actions">
-                    <a href="<?= base_url() ?>" class="fittv-btn fittv-btn-cancel">
-                        <span class="fittv-btn-icon">
+                    <div class="fittv-actions">
+                        <a href="<?= base_url() ?>" class="fittv-btn fittv-btn-light">
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <line x1="19" y1="12" x2="5" y2="12"></line>
                                 <polyline points="12 19 5 12 12 5"></polyline>
                             </svg>
-                        </span>
-                        Cancel
-                    </a>
+                            Back to Home
+                        </a>
 
-                    <?php if ($has_access): ?>
-                        <a href="<?= base_url('fittv/access') ?>" class="fittv-btn fittv-btn-access">
-                            Access FITTV
-                            <span class="fittv-btn-icon">
+                        <?php if ($has_access): ?>
+                            <a href="<?= base_url('fittv/access') ?>" class="fittv-btn fittv-btn-success">
+                                Access FITTV
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <line x1="5" y1="12" x2="19" y2="12"></line>
                                     <polyline points="12 5 19 12 12 19"></polyline>
                                 </svg>
-                            </span>
-                        </a>
-                    <?php else: ?>
-                        <a href="<?= base_url('fittv/pay') ?>" class="fittv-btn fittv-btn-pay">
-                            Proceed to Payment
-                            <span class="fittv-btn-icon">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                                    <line x1="1" y1="10" x2="23" y2="10"></line>
-                                </svg>
-                            </span>
-                        </a>
-                    <?php endif; ?>
-                </div>
+                            </a>
+                        <?php else: ?>
+                            <form method="get" action="<?= base_url('fittv/pay') ?>" class="fittv-pay-form mb-0">
+                                <button type="submit" class="fittv-btn fittv-btn-primary">
+                                    Proceed to Payment
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                                        <line x1="1" y1="10" x2="23" y2="10"></line>
+                                    </svg>
+                                </button>
+                            </form>
+                        <?php endif; ?>
+                    </div>
 
-                <div class="fittv-trust-row">
-                    <div class="fittv-trust-badge">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                        </svg>
-                        SSL Encrypted
-                    </div>
-                    <div class="fittv-trust-badge">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                        </svg>
-                        Secure Payments
-                    </div>
-                    <div class="fittv-trust-badge">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                        </svg>
-                        Verified Access
+                    <div class="fittv-meta">
+                        <span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                            </svg>
+                            SSL encrypted
+                        </span>
+                        <span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                            </svg>
+                            Verified payment flow
+                        </span>
+                        <span>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 4L12 14.01l-3-3"></path>
+                                <path d="M5 12v7h14v-7"></path>
+                            </svg>
+                            Instant activation after success
+                        </span>
                     </div>
                 </div>
             </div>

@@ -285,6 +285,7 @@ $route['fittv/access'] = 'fittv/access';
 $route['fittv/pay'] = 'fittv/pay';
 $route['fittv/razorpay_callback'] = 'fittv/razorpay_callback';
 $route['fittv/payment_cancel'] = 'fittv/payment_cancel';
+$route['fittv/payment_cancel/(:any)'] = 'fittv/payment_cancel/$1';
 $route['fittv/(:any)'] = 'fittv/gender/$1';
 $route['fittv/videos/(:num)'] = 'fittv/videos/$1';
 
