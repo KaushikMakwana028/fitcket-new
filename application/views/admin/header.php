@@ -267,9 +267,15 @@
 							</a>
 						</li>
 
+						
 						<li>
 							<a href="<?= base_url('admin/add_fittv_video') ?>">
 								<i class='bx bx-radio-circle'></i>Add Video
+							</a>
+						</li>
+						<li>
+							<a href="<?= base_url('admin/fittv_course_settings') ?>">
+								<i class='bx bx-radio-circle'></i>Course Price
 							</a>
 						</li>
 
@@ -441,6 +447,15 @@
 							<i class="bx bx-star"></i>
 						</div>
 						<div class="menu-title">Review</div>
+					</a>
+				</li>
+
+				<li>
+					<a href="<?= base_url('admin/host_requests'); ?>">
+						<div class="parent-icon">
+							<i class="bx bx-user-check"></i>
+						</div>
+						<div class="menu-title">Host Requests</div>
 					</a>
 				</li>
 

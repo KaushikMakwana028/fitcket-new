@@ -11,6 +11,49 @@ class Fittv extends Admin_Controller
         $this->load->model('general_model');
     }
 
+    public function course_settings()
+    {
+        $data['settings'] = $this->db->get_where('fittv_course_settings', ['id' => 1])->row_array();
+
+        if (!$data['settings']) {
+            $data['settings'] = [
+                'id' => 1,
+                'title' => 'FITTV Premium Access',
+                'description' => 'Unlock full FITTV access to explore all workout categories and videos.',
+                'price' => 0,
+                'is_active' => 1
+            ];
+        }
+
+        $this->load->view('admin/header');
+        $this->load->view('admin/fittv_course_settings', $data);
+        $this->load->view('admin/footer');
+    }
+
+    public function update_course_settings()
+    {
+        $payload = [
+            'id' => 1,
+            'title' => trim((string) $this->input->post('title')),
+            'description' => trim((string) $this->input->post('description')),
+            'price' => (float) $this->input->post('price'),
+            'is_active' => (int) $this->input->post('is_active'),
+            'updated_at' => date('Y-m-d H:i:s')
+        ];
+
+        $existing = $this->db->get_where('fittv_course_settings', ['id' => 1])->row_array();
+
+        if ($existing) {
+            $this->db->where('id', 1)->update('fittv_course_settings', $payload);
+        } else {
+            $payload['created_at'] = date('Y-m-d H:i:s');
+            $this->db->insert('fittv_course_settings', $payload);
+        }
+
+        $this->session->set_flashdata('success', 'FITTV course settings updated successfully.');
+        redirect('admin/fittv_course_settings');
+    }
+
 
     /* CATEGORY LIST */
 

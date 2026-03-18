@@ -940,8 +940,8 @@
             <a class="nav-link <?= ($segment == 'session_booking' ? 'active' : '') ?>" href="<?= base_url('session_booking'); ?>">Session</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link <?= ($segment == 'fittv' ? 'active' : '') ?>" href="<?= base_url('fittv'); ?>">
-              FITTV
+            <a class="nav-link <?= ($segment == 'cricket' ? 'active' : '') ?>" href="<?= base_url('cricket'); ?>">
+              Cricket
             </a>
           </li>
           <li class="nav-item">
@@ -1002,8 +1002,8 @@
           <a class="nav-link" href="<?= base_url(); ?>"><i class="fas fa-home me-2"></i>Home</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="<?= base_url('fittv'); ?>">
-            <i class="fas fa-play-circle me-2"></i>FITTV
+          <a class="nav-link" href="<?= base_url('cricket'); ?>">
+            <i class="fas fa-baseball-ball me-2"></i>Cricket
           </a>
         </li>
         <li class="nav-item">
