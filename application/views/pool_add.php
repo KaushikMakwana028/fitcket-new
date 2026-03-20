@@ -324,6 +324,10 @@
         width: 100%;
     }
 
+    .create-pool-page .pool-limit-legacy {
+        display: none !important;
+    }
+
     /* ========== FORM SECTION DIVIDERS ========== */
     .form-section {
         margin-bottom: 26px;
@@ -408,6 +412,10 @@
 
     .label-icon.desc {
         background: linear-gradient(135deg, #9b59b6, #8e44ad);
+    }
+
+    .label-icon.time {
+        background: linear-gradient(135deg, #0ea5e9, #2563eb);
     }
 
     .form-label .required {
@@ -557,6 +565,16 @@
         font-size: 0.66rem;
         color: var(--text-muted);
         margin-top: 4px;
+        font-weight: 500;
+    }
+
+    .schedule-note {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: #eef5ff;
+        color: var(--primary);
+        font-size: 0.74rem;
         font-weight: 500;
     }
 
@@ -1242,7 +1260,7 @@
                         </div>
                         <div class="step-item">
                             <div class="step-circle" id="step2Circle">2</div>
-                            <span class="step-label" id="step2Label">Capacity</span>
+                            <span class="step-label" id="step2Label">Type</span>
                         </div>
                         <div class="step-line" id="line2">
                             <div class="step-line-fill"></div>
@@ -1251,7 +1269,20 @@
                             <div class="step-circle" id="step3Circle">3</div>
                             <span class="step-label" id="step3Label">Pricing</span>
                         </div>
+                        <div class="step-line" id="line3">
+                            <div class="step-line-fill"></div>
+                        </div>
+                        <div class="step-item">
+                            <div class="step-circle" id="step4Circle">4</div>
+                            <span class="step-label" id="step4Label">Schedule</span>
+                        </div>
                     </div>
+
+                    <?php if (empty($pool_schedule_ready)) : ?>
+                        <div class="alert alert-warning mb-4">
+                           <i class="fas fa-exclamation-triangle"></i> Pool schedule is not ready!
+                        </div>
+                    <?php endif; ?>
 
                     <form method="post" action="<?= base_url('pool/store') ?>" id="poolForm" novalidate>
 
@@ -1312,14 +1343,13 @@
                                 Pool Settings
                             </div>
 
-                            <!-- USER LIMIT -->
                             <div class="form-group">
                                 <div class="form-label-row">
                                     <label class="form-label">
                                         <span class="label-icon limit"><i class="fas fa-users"></i></span>
-                                        Player Limit <span class="required">*</span>
+                                        Players
                                     </label>
-                                    <span class="form-hint">2 – 1000</span>
+                                    <span class="form-hint">2 – 1000000000</span>
                                 </div>
                                 <div class="input-wrapper">
                                     <input type="number"
@@ -1327,13 +1357,14 @@
                                         class="form-input"
                                         id="userLimit"
                                         placeholder="e.g. 50"
-                                        min="2"
-                                        max="1000"
-                                        required
+                                        min="0"
+                                        step="1"
                                         oninput="updatePreview(); validateField('limit')">
                                     <span class="input-suffix">players</span>
                                 </div>
+                                <div class="form-hint" style="margin-top: 8px;">Use 0 for unlimited players, or enter any number from 2 upward.</div>
                                 <div class="quick-btns">
+                                    <button type="button" class="quick-btn orange" onclick="setLimit(0)">Unlimited</button>
                                     <button type="button" class="quick-btn orange" onclick="setLimit(10)">10</button>
                                     <button type="button" class="quick-btn orange" onclick="setLimit(20)">20</button>
                                     <button type="button" class="quick-btn orange" onclick="setLimit(50)">50</button>
@@ -1389,6 +1420,59 @@
                             </div>
                         </div>
 
+                        <div class="form-section">
+                            <div class="form-section-title">
+                                <span class="section-num">4</span>
+                                Match Schedule
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <div class="form-label-row">
+                                            <label class="form-label">
+                                                <span class="label-icon time"><i class="fas fa-calendar-alt"></i></span>
+                                                Match Date <span class="required">*</span>
+                                            </label>
+                                            <span class="form-hint">Required</span>
+                                        </div>
+                                        <input type="date"
+                                            name="match_date"
+                                            class="form-input"
+                                            id="matchDate"
+                                            min="<?= date('Y-m-d') ?>"
+                                            required
+                                            oninput="updatePreview(); validateField('schedule')">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <div class="form-label-row">
+                                            <label class="form-label">
+                                                <span class="label-icon time"><i class="fas fa-clock"></i></span>
+                                                Match Start Time <span class="required">*</span>
+                                            </label>
+                                            <span class="form-hint">Example 8:00 PM</span>
+                                        </div>
+                                        <input type="time"
+                                            name="match_time"
+                                            class="form-input"
+                                            id="matchTime"
+                                            required
+                                            oninput="updatePreview(); validateField('schedule')">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="schedule-note">
+                                Joining will close automatically 30 minutes before match start time.
+                                Close time: <strong id="previewCloseText">Select date and time</strong>
+                            </div>
+                            <div class="validation-msg" id="scheduleValidation">
+                                <i class="fas fa-info-circle"></i>
+                                <span></span>
+                            </div>
+                        </div>
+
                         <div class="form-divider"></div>
 
                         <!-- SUBMIT -->
@@ -1434,7 +1518,7 @@
                                 <div class="mini-stats">
                                     <div class="mini-stat">
                                         <div class="ms-val" id="previewLimit">—</div>
-                                        <div class="ms-lbl">Limit</div>
+                                        <div class="ms-lbl">Entry Type</div>
                                     </div>
                                     <div class="mini-stat">
                                         <div class="ms-val">0</div>
@@ -1449,6 +1533,10 @@
                                     <div class="mini-progress-bar">
                                         <div class="mini-progress-fill"></div>
                                     </div>
+                                </div>
+                                <div class="mini-progress-info" style="margin-top:10px;">
+                                    <span id="previewStartText">Match start: Not set</span>
+                                    <span id="previewCloseMini">Join close: Not set</span>
                                 </div>
                                 <div class="mini-join-btn">
                                     <i class="fas fa-sign-in-alt"></i> Join Pool
@@ -1467,7 +1555,7 @@
                             </div>
                             <div class="tip-item">
                                 <div class="tip-icon warn"><i class="fas fa-exclamation"></i></div>
-                                <span class="tip-text">Player limit cannot be changed once someone joins the pool</span>
+                                <span class="tip-text">Set match date and time carefully because joining closes automatically 30 minutes before the match starts</span>
                             </div>
                             <div class="tip-item">
                                 <div class="tip-icon good"><i class="fas fa-check"></i></div>
@@ -1488,8 +1576,10 @@
     // ========== LIVE PREVIEW ==========
     function updatePreview() {
         const name = document.getElementById('poolName').value.trim();
-        const limit = document.getElementById('userLimit').value;
         const price = document.getElementById('poolPrice').value;
+        const limitRaw = document.getElementById('userLimit').value.trim();
+        const matchDate = document.getElementById('matchDate').value;
+        const matchTime = document.getElementById('matchTime').value;
 
         // Name
         const previewName = document.getElementById('previewName');
@@ -1501,10 +1591,14 @@
             previewName.classList.add('placeholder');
         }
 
-        // Limit
-        const limitVal = parseInt(limit) || 0;
-        document.getElementById('previewLimit').textContent = limitVal || '—';
-        document.getElementById('previewLimitLabel').textContent = limitVal ? limitVal + ' slots' : '— slots';
+        const limitVal = parseInt(limitRaw, 10);
+        if (!limitRaw || Number.isNaN(limitVal) || limitVal <= 0) {
+            document.getElementById('previewLimit').textContent = 'Unlimited';
+            document.getElementById('previewLimitLabel').textContent = 'Unlimited spots';
+        } else {
+            document.getElementById('previewLimit').textContent = limitVal;
+            document.getElementById('previewLimitLabel').textContent = limitVal + ' spots';
+        }
 
         // Price
         const previewPrice = document.getElementById('previewPrice');
@@ -1520,24 +1614,68 @@
         // Name hint
         document.getElementById('nameHint').textContent = (name.length || 0) + '/50';
 
+        const schedule = getScheduleDetails(matchDate, matchTime);
+        document.getElementById('previewStartText').textContent = 'Match start: ' + (schedule.startLabel || 'Not set');
+        document.getElementById('previewCloseMini').textContent = 'Join close: ' + (schedule.closeLabel || 'Not set');
+        document.getElementById('previewCloseText').textContent = schedule.closeLabel || 'Select date and time';
+
         // Update steps
         updateSteps();
+    }
+
+    function getScheduleDetails(matchDate, matchTime) {
+        if (!matchDate || !matchTime) {
+            return {
+                startLabel: '',
+                closeLabel: '',
+                valid: false
+            };
+        }
+
+        const startDate = new Date(matchDate + 'T' + matchTime);
+
+        if (Number.isNaN(startDate.getTime())) {
+            return {
+                startLabel: '',
+                closeLabel: '',
+                valid: false
+            };
+        }
+
+        const closeDate = new Date(startDate.getTime() - (30 * 60 * 1000));
+        const formatOptions = {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit'
+        };
+
+        return {
+            startLabel: startDate.toLocaleString('en-IN', formatOptions),
+            closeLabel: closeDate.toLocaleString('en-IN', formatOptions),
+            valid: closeDate.getTime() > Date.now()
+        };
     }
 
     // ========== STEP INDICATOR ==========
     function updateSteps() {
         const name = document.getElementById('poolName').value.trim();
-        const limit = document.getElementById('userLimit').value;
         const price = document.getElementById('poolPrice').value;
+        const matchDate = document.getElementById('matchDate').value;
+        const matchTime = document.getElementById('matchTime').value;
 
         const s1 = document.getElementById('step1Circle');
         const s2 = document.getElementById('step2Circle');
         const s3 = document.getElementById('step3Circle');
+        const s4 = document.getElementById('step4Circle');
         const l1 = document.getElementById('step1Label');
         const l2 = document.getElementById('step2Label');
         const l3 = document.getElementById('step3Label');
+        const l4 = document.getElementById('step4Label');
         const line1 = document.getElementById('line1');
         const line2 = document.getElementById('line2');
+        const line3 = document.getElementById('line3');
 
         // Step 1: Name
         if (name.length >= 3) {
@@ -1556,8 +1694,8 @@
             l2.className = 'step-label';
         }
 
-        // Step 2: Limit
-        if (name.length >= 3 && limit >= 2) {
+        // Step 2: Pool type
+        if (name.length >= 3) {
             s2.className = 'step-circle done';
             s2.innerHTML = '<i class="fas fa-check" style="font-size:0.65rem"></i>';
             l2.className = 'step-label done';
@@ -1581,18 +1719,40 @@
         }
 
         // Step 3: Price
-        if (name.length >= 3 && limit >= 2 && price !== '') {
+        if (name.length >= 3 && price !== '') {
             s3.className = 'step-circle done';
             s3.innerHTML = '<i class="fas fa-check" style="font-size:0.65rem"></i>';
             l3.className = 'step-label done';
-        } else if (name.length >= 3 && limit >= 2) {
+            line3.classList.add('done');
+            s4.className = 'step-circle active';
+            l4.className = 'step-label active';
+        } else if (name.length >= 3) {
             s3.className = 'step-circle active';
             s3.textContent = '3';
             l3.className = 'step-label active';
+            line3.classList.remove('done');
+            s4.className = 'step-circle';
+            s4.textContent = '4';
+            l4.className = 'step-label';
         } else {
             s3.className = 'step-circle';
             s3.textContent = '3';
             l3.className = 'step-label';
+            line3.classList.remove('done');
+            s4.className = 'step-circle';
+            s4.textContent = '4';
+            l4.className = 'step-label';
+        }
+
+        const schedule = getScheduleDetails(matchDate, matchTime);
+        if (name.length >= 3 && price !== '' && schedule.valid) {
+            s4.className = 'step-circle done';
+            s4.innerHTML = '<i class="fas fa-check" style="font-size:0.65rem"></i>';
+            l4.className = 'step-label done';
+        } else if (name.length >= 3 && price !== '') {
+            s4.className = 'step-circle active';
+            s4.textContent = '4';
+            l4.className = 'step-label active';
         }
     }
 
@@ -1630,21 +1790,27 @@
             const msgText = msg.querySelector('span');
             const msgIcon = msg.querySelector('i');
 
-            if (!val && val !== 0) {
+            if (!input.value.trim()) {
                 input.classList.remove('valid', 'error');
                 msg.classList.remove('show');
+            } else if (val === 0) {
+                input.classList.add('valid');
+                input.classList.remove('error');
+                msg.className = 'validation-msg show success';
+                msgIcon.className = 'fas fa-check-circle';
+                msgText.textContent = 'Unlimited players allowed';
+            } else if (Number.isNaN(val) || val < 0) {
+                input.classList.add('error');
+                input.classList.remove('valid');
+                msg.className = 'validation-msg show error';
+                msgIcon.className = 'fas fa-exclamation-circle';
+                msgText.textContent = 'Enter a valid player count';
             } else if (val < 2) {
                 input.classList.add('error');
                 input.classList.remove('valid');
                 msg.className = 'validation-msg show error';
                 msgIcon.className = 'fas fa-exclamation-circle';
-                msgText.textContent = 'Minimum 2 players required';
-            } else if (val > 1000) {
-                input.classList.add('error');
-                input.classList.remove('valid');
-                msg.className = 'validation-msg show error';
-                msgIcon.className = 'fas fa-exclamation-circle';
-                msgText.textContent = 'Maximum 1000 players allowed';
+                msgText.textContent = 'Minimum 2 players required, or use 0 for unlimited';
             } else {
                 input.classList.add('valid');
                 input.classList.remove('error');
@@ -1678,6 +1844,36 @@
                 msgText.textContent = val === 0 ? 'Free pool — great for casual play!' : '₹' + val.toLocaleString('en-IN') + ' per player';
             }
         }
+        if (field === 'schedule') {
+            const dateInput = document.getElementById('matchDate');
+            const timeInput = document.getElementById('matchTime');
+            const msg = document.getElementById('scheduleValidation');
+            const msgText = msg.querySelector('span');
+            const msgIcon = msg.querySelector('i');
+            const schedule = getScheduleDetails(dateInput.value, timeInput.value);
+
+            if (!dateInput.value || !timeInput.value) {
+                dateInput.classList.remove('valid', 'error');
+                timeInput.classList.remove('valid', 'error');
+                msg.classList.remove('show');
+            } else if (!schedule.valid) {
+                dateInput.classList.add('error');
+                timeInput.classList.add('error');
+                dateInput.classList.remove('valid');
+                timeInput.classList.remove('valid');
+                msg.className = 'validation-msg show error';
+                msgIcon.className = 'fas fa-exclamation-circle';
+                msgText.textContent = 'Match start must be at least 30 minutes from now.';
+            } else {
+                dateInput.classList.add('valid');
+                timeInput.classList.add('valid');
+                dateInput.classList.remove('error');
+                timeInput.classList.remove('error');
+                msg.className = 'validation-msg show success';
+                msgIcon.className = 'fas fa-check-circle';
+                msgText.textContent = 'Joining closes at ' + schedule.closeLabel;
+            }
+        }
     }
 
     // ========== QUICK SET HELPERS ==========
@@ -1686,7 +1882,7 @@
         input.value = val;
         updatePreview();
         validateField('price');
-        document.querySelectorAll('.form-section:last-of-type .quick-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.form-section:nth-of-type(3) .quick-btn').forEach(b => b.classList.remove('active'));
         event.target.classList.add('active');
     }
 
@@ -1708,20 +1904,21 @@
     // ========== FORM SUBMIT ==========
     document.getElementById('poolForm')?.addEventListener('submit', function(e) {
         const name = document.getElementById('poolName').value.trim();
-        const limit = parseInt(document.getElementById('userLimit').value);
         const price = document.getElementById('poolPrice').value;
+        const matchDate = document.getElementById('matchDate').value;
+        const matchTime = document.getElementById('matchTime').value;
         let hasError = false;
 
         if (name.length < 3) {
             validateField('name');
             hasError = true;
         }
-        if (!limit || limit < 2 || limit > 1000) {
-            validateField('limit');
-            hasError = true;
-        }
         if (price === '' || parseFloat(price) < 0) {
             validateField('price');
+            hasError = true;
+        }
+        if (!getScheduleDetails(matchDate, matchTime).valid) {
+            validateField('schedule');
             hasError = true;
         }
 
@@ -1759,3 +1956,4 @@
         }, 50);
     }
 </script>
+

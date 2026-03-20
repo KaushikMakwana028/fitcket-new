@@ -1,60 +1,332 @@
+<?php
+$poolCount = count($pools ?? []);
+$fullQuestionPools = 0;
+$openQuestionPools = 0;
+
+foreach (($pools ?? []) as $poolItem) {
+    if ((int) $poolItem['question_count'] >= (int) $max_questions) {
+        $fullQuestionPools++;
+    } else {
+        $openQuestionPools++;
+    }
+}
+?>
+
+<style>
+    .admin-pool-list {
+        --pool-bg: #f4f7fb;
+        --pool-card: #ffffff;
+        --pool-border: #dce5f0;
+        --pool-text: #17324d;
+        --pool-muted: #6d7f92;
+        --pool-primary: #1f6feb;
+        --pool-dark: #173d67;
+        --pool-accent: #35b7ff;
+        background: linear-gradient(180deg, #f8fbff 0%, var(--pool-bg) 100%);
+        min-height: calc(100vh - 70px);
+        padding: 24px;
+        border-radius: 28px;
+    }
+
+    .admin-pool-list .pool-hero {
+        background: linear-gradient(135deg, var(--pool-dark), var(--pool-primary));
+        border-radius: 24px;
+        color: #fff;
+        padding: 28px;
+        box-shadow: 0 18px 40px rgba(23, 61, 103, 0.18);
+    }
+
+    .admin-pool-list .pool-stat {
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 18px;
+        padding: 18px 20px;
+        height: 100%;
+    }
+
+    .admin-pool-list .pool-stat-label {
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        opacity: .78;
+        margin-bottom: 6px;
+    }
+
+    .admin-pool-list .pool-stat-value {
+        font-size: 28px;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+
+    .admin-pool-list .pool-panel {
+        background: var(--pool-card);
+        border: 1px solid var(--pool-border);
+        border-radius: 24px;
+        box-shadow: 0 12px 28px rgba(23, 50, 77, 0.06);
+    }
+
+    .admin-pool-list .pool-table {
+        min-width: 980px;
+    }
+
+    .admin-pool-list .pool-table thead th {
+        background: #f8fbff;
+        color: var(--pool-muted);
+        text-transform: uppercase;
+        letter-spacing: .08em;
+        font-size: 12px;
+        border: 0;
+        padding: 16px;
+    }
+
+    .admin-pool-list .pool-table tbody td {
+        padding: 18px 16px;
+        border-color: #edf2f7;
+        vertical-align: middle;
+    }
+
+    .admin-pool-list .pool-row-id {
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: #eef5ff;
+        color: var(--pool-primary);
+        font-weight: 700;
+    }
+
+    .admin-pool-list .pool-name {
+        font-weight: 700;
+        color: var(--pool-text);
+    }
+
+    .admin-pool-list .pool-subtext {
+        color: var(--pool-muted);
+        font-size: 13px;
+    }
+
+    .admin-pool-list .question-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-weight: 700;
+    }
+
+    .admin-pool-list .question-pill.good {
+        background: #eafaf1;
+        color: #16784d;
+    }
+
+    .admin-pool-list .question-pill.warn {
+        background: #fff5dd;
+        color: #9a6700;
+    }
+
+    .admin-pool-list .action-stack {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .admin-pool-list .action-btn {
+        width: 40px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        padding: 0;
+        font-weight: 600;
+        line-height: 1;
+        white-space: nowrap;
+        position: relative;
+        box-shadow: 0 10px 18px rgba(23, 50, 77, 0.08);
+    }
+
+    .admin-pool-list .action-btn i {
+        font-size: 18px;
+        margin: 0;
+    }
+
+    .admin-pool-list .action-btn.manage {
+        background: linear-gradient(135deg, var(--pool-primary), var(--pool-accent));
+        border-color: transparent;
+        color: #fff;
+    }
+
+    .admin-pool-list .action-btn.board {
+        background: #1f2937;
+        border-color: #1f2937;
+        color: #fff;
+    }
+
+    .admin-pool-list .action-btn::after {
+        content: attr(data-label);
+        position: absolute;
+        left: 50%;
+        bottom: calc(100% + 8px);
+        transform: translateX(-50%);
+        background: #17324d;
+        color: #fff;
+        font-size: 11px;
+        line-height: 1;
+        padding: 7px 9px;
+        border-radius: 8px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .2s ease, transform .2s ease;
+        white-space: nowrap;
+    }
+
+    .admin-pool-list .action-btn:hover::after {
+        opacity: 1;
+        transform: translateX(-50%) translateY(-2px);
+    }
+
+    .admin-pool-list .action-note {
+        color: var(--pool-muted);
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    @media (max-width: 767.98px) {
+        .admin-pool-list {
+            padding: 16px;
+        }
+
+        .admin-pool-list .pool-hero {
+            padding: 22px;
+        }
+
+        .admin-pool-list .hero-actions .btn {
+            width: 100%;
+        }
+
+        .admin-pool-list .action-stack {
+            align-items: center;
+        }
+
+        .admin-pool-list .action-btn {
+            width: 38px;
+            height: 38px;
+        }
+    }
+</style>
+
 <div class="page-wrapper p-4">
-    <div class="page-content">
-        <div class="card shadow-sm">
-            <div class="card-header d-flex justify-content-between align-items-center">
+    <div class="page-content admin-pool-list">
+        <div class="pool-hero mb-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                 <div>
-                    <h5 class="mb-0">All Pools</h5>
-                    <small class="text-muted">Select a pool to manage up to <?= (int) $max_questions ?> questions.</small>
+                    <div class="text-uppercase fw-semibold mb-2" style="letter-spacing:.12em; opacity:.78;">Pool Management</div>
+                    <h3 class="mb-2 text-white">All Pools</h3>
+                    <p class="mb-0 opacity-75">Manage questions here and use one combined leaderboard for all pools, users, and winners.</p>
                 </div>
-                <span class="badge bg-primary"><?= count($pools ?? []) ?> Pools</span>
+                <div class="hero-actions d-flex gap-2 flex-wrap">
+                    <a href="<?= base_url('admin/pool/leaderboard') ?>" class="btn btn-light">
+                        <i class="bx bx-bar-chart-alt-2"></i> View Leaderboard
+                    </a>
+                </div>
             </div>
 
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped align-middle">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Pool Name</th>
-                                <th>Host</th>
-                                <th>Entry Price</th>
-                                <th>User Limit</th>
-                                <th>Questions</th>
-                                <th width="260">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php if (!empty($pools)) : ?>
-                                <?php foreach ($pools as $index => $pool) : ?>
-                                    <tr>
-                                        <td><?= $index + 1 ?></td>
-                                        <td><?= html_escape($pool['pool_name']) ?></td>
-                                        <td><?= html_escape($pool['host_name']) ?></td>
-                                        <td>Rs. <?= number_format((float) $pool['price'], 2) ?></td>
-                                        <td><?= (int) $pool['user_limit'] ?></td>
-                                        <td>
-                                            <span class="badge <?= ((int) $pool['question_count'] >= (int) $max_questions) ? 'bg-success' : 'bg-warning text-dark' ?>">
-                                                <?= (int) $pool['question_count'] ?>/<?= (int) $max_questions ?>
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <a href="<?= base_url('admin/pool/' . (int) $pool['id']) ?>" class="btn btn-primary btn-sm">
-                                                <i class="bx bx-edit"></i> Manage Questions
-                                            </a>
-                                            <a href="<?= base_url('admin/pool/' . (int) $pool['id'] . '/leaderboard') ?>" class="btn btn-dark btn-sm ms-1">
-                                                <i class="bx bx-bar-chart-alt-2"></i> Leaderboard
-                                            </a>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            <?php else : ?>
-                                <tr>
-                                    <td colspan="7" class="text-center text-danger">No pools found.</td>
-                                </tr>
-                            <?php endif; ?>
-                        </tbody>
-                    </table>
+            <div class="row g-3">
+                <div class="col-md-4">
+                    <div class="pool-stat">
+                        <div class="pool-stat-label">Total Pools</div>
+                        <div class="pool-stat-value"><?= (int) $poolCount ?></div>
+                    </div>
                 </div>
+                <div class="col-md-4">
+                    <div class="pool-stat">
+                        <div class="pool-stat-label">Question Ready</div>
+                        <div class="pool-stat-value"><?= (int) $fullQuestionPools ?></div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="pool-stat">
+                        <div class="pool-stat-label">Need Questions</div>
+                        <div class="pool-stat-value"><?= (int) $openQuestionPools ?></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="pool-panel p-3 p-md-4">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                <div>
+                    <h4 class="mb-1 text-dark">Pool List</h4>
+                    <div class="text-muted">Select a pool to manage up to <?= (int) $max_questions ?> questions. Leaderboard is now one global page for all pools.</div>
+                </div>
+                <span class="badge bg-primary fs-6"><?= (int) $poolCount ?> Pools</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table pool-table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Pool Details</th>
+                            <th>Host</th>
+                            <th>Entry Price</th>
+                            <th>User Limit</th>
+                            <th>Questions</th>
+                            <th width="290">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if (!empty($pools)) : ?>
+                            <?php foreach ($pools as $index => $pool) : ?>
+                                <?php $isReady = (int) $pool['question_count'] >= (int) $max_questions; ?>
+                                <tr>
+                                    <td><span class="pool-row-id"><?= $index + 1 ?></span></td>
+                                    <td>
+                                        <div class="pool-name"><?= html_escape($pool['pool_name']) ?></div>
+                                        <!-- <div class="pool-subtext">Pool ID: #<?= (int) $pool['id'] ?></div> -->
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold"><?= html_escape($pool['host_name']) ?></div>
+                                        <div class="pool-subtext">Host Name</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">Rs. <?= number_format((float) $pool['price'], 2) ?></div>
+                                        <div class="pool-subtext">Entry amount</div>
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold"><?= (int) $pool['user_limit'] ?></div>
+                                        <div class="pool-subtext">Maximum users</div>
+                                    </td>
+                                    <td>
+                                        <span class="question-pill <?= $isReady ? 'good' : 'warn' ?>">
+                                            <i class="bx <?= $isReady ? 'bx-check-circle' : 'bx-time-five' ?>"></i>
+                                            <?= (int) $pool['question_count'] ?>/<?= (int) $max_questions ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="action-stack">
+                                            <a href="<?= base_url('admin/pool/' . (int) $pool['id']) ?>" class="btn btn-sm action-btn manage" data-label="Manage Questions" title="Manage Questions">
+                                                <i class="bx bx-edit"></i>
+                                            </a>
+                                            <a href="<?= base_url('admin/pool/leaderboard') ?>" class="btn btn-sm action-btn board" data-label="Global Leaderboard" title="Global Leaderboard">
+                                                <i class="bx bx-bar-chart-alt-2"></i>
+                                            </a>
+                                            <!-- <span class="action-note">Quick actions</span> -->
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php else : ?>
+                            <tr>
+                                <td colspan="7" class="text-center text-danger py-5">No pools found.</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

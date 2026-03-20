@@ -1,3 +1,14 @@
+<?php
+$renderCricketTeamAvatar = function ($logoUrl, $teamName) {
+    $fallback = html_escape(strtoupper(substr(trim((string) $teamName), 0, 1) ?: 'T'));
+
+    if (!empty($logoUrl)) {
+        return '<img src="' . html_escape($logoUrl) . '" alt="' . html_escape($teamName) . '" onerror="this.onerror=null; this.parentNode.innerHTML=\'<span>' . $fallback . '</span>\';">';
+    }
+
+    return '<span>' . $fallback . '</span>';
+};
+?>
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
@@ -159,96 +170,197 @@
         padding-bottom: 30px;
     }
 
-    /* ========== CAROUSEL / BANNER ========== */
+    /* ========== FEATURED BANNER ========== */
     .banner-section {
         position: relative;
         margin-top: 0;
         overflow: hidden;
+        border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+        background:
+            radial-gradient(circle at top right, rgba(233, 69, 96, 0.16), transparent 20%),
+            radial-gradient(circle at bottom left, rgba(46, 204, 113, 0.12), transparent 20%),
+            linear-gradient(135deg, #0f1531 0%, #17244a 45%, #0e1837 100%);
+        padding: 34px 0 28px;
+        box-shadow: var(--shadow-lg);
     }
 
-    .banner-section .carousel-inner {
-        border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    .banner-shell {
+        position: relative;
         overflow: hidden;
+        border-radius: 28px;
+        padding: 28px 28px 24px;
+        background:
+            linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02)),
+            rgba(255, 255, 255, 0.02);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(14px);
     }
 
-    .banner-section .carousel-item img {
-        width: 100%;
-        height: 260px;
-        object-fit: cover;
-        display: block;
-    }
-
-    .banner-section .carousel-overlay {
+    .banner-shell::before,
+    .banner-shell::after {
+        content: '';
         position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        height: 100px;
-        background: linear-gradient(transparent, rgba(0, 0, 0, 0.5));
-        border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+        border-radius: 50%;
         pointer-events: none;
-        z-index: 2;
     }
 
-    .banner-section .carousel-indicators {
-        bottom: 14px;
-        z-index: 3;
-        margin: 0;
-        padding: 0;
-        gap: 6px;
+    .banner-shell::before {
+        width: 220px;
+        height: 220px;
+        top: -80px;
+        right: -90px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.08), transparent 65%);
+    }
+
+    .banner-shell::after {
+        width: 170px;
+        height: 170px;
+        left: -50px;
+        bottom: -70px;
+        background: radial-gradient(circle, rgba(241, 196, 15, 0.12), transparent 65%);
+    }
+
+    .banner-topbar {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 14px;
+        margin-bottom: 24px;
+    }
+
+    .banner-kicker {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .banner-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        text-transform: uppercase;
+    }
+
+    .banner-status.live {
+        background: rgba(255, 95, 109, 0.18);
+        color: #ffd7dd;
+    }
+
+    .banner-status.today {
+        background: rgba(255, 176, 32, 0.16);
+        color: #ffe6b0;
+    }
+
+    .banner-status.upcoming {
+        background: rgba(22, 131, 255, 0.16);
+        color: #d7ebff;
+    }
+
+    .banner-match {
+        position: relative;
+        z-index: 1;
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        align-items: center;
+        gap: 18px;
+    }
+
+    .banner-team {
+        text-align: center;
+    }
+
+    .banner-logo {
+        width: 110px;
+        height: 110px;
+        margin: 0 auto 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 28px;
+        background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .banner-logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .banner-team-name {
+        color: #fff;
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+    }
+
+    .banner-center {
+        text-align: center;
+    }
+
+    .banner-vs {
+        width: 62px;
+        height: 62px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #ff5f6d, #ff8a65);
+        color: #fff;
+        font-size: 1.1rem;
+        font-weight: 800;
+        box-shadow: 0 18px 28px rgba(255, 95, 109, 0.26);
+    }
+
+    .banner-time {
+        margin-top: 16px;
+        color: var(--gold);
+        font-size: 1.55rem;
+        font-weight: 800;
+    }
+
+    .banner-subtime {
+        margin-top: 6px;
+        color: rgba(255, 255, 255, 0.62);
+        font-size: 0.84rem;
+    }
+
+    .banner-meta {
+        position: relative;
+        z-index: 1;
+        margin-top: 24px;
         display: flex;
         justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
     }
 
-    .banner-section .carousel-indicators [data-bs-target] {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        border: none;
-        background: rgba(255, 255, 255, 0.45);
-        transition: all 0.3s ease;
-        margin: 0;
-        padding: 0;
-    }
-
-    .banner-section .carousel-indicators .active {
-        background: var(--accent);
-        width: 24px;
-        border-radius: 4px;
-    }
-
-    .banner-section .carousel-control-prev,
-    .banner-section .carousel-control-next {
-        z-index: 4;
-        width: 40px;
-        height: 40px;
-        top: 50%;
-        transform: translateY(-50%);
-        bottom: auto;
-        opacity: 0;
-        transition: opacity 0.3s ease;
-    }
-
-    .banner-section:hover .carousel-control-prev,
-    .banner-section:hover .carousel-control-next {
-        opacity: 1;
-    }
-
-    .banner-section .carousel-control-prev {
-        left: 12px;
-    }
-
-    .banner-section .carousel-control-next {
-        right: 12px;
-    }
-
-    .banner-section .carousel-control-prev-icon,
-    .banner-section .carousel-control-next-icon {
-        width: 36px;
-        height: 36px;
-        background-color: rgba(233, 69, 96, 0.85);
-        border-radius: 50%;
-        background-size: 45%;
+    .banner-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 9px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.86);
+        font-size: 0.8rem;
+        border: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     /* ========== SECTION TITLES ========== */
@@ -301,13 +413,17 @@
 
     /* ========== LIVE MATCH CARD ========== */
     .live-card {
-        background: linear-gradient(135deg, var(--primary), var(--secondary));
-        border-radius: var(--radius-lg);
-        padding: 22px 20px;
+        background:
+            radial-gradient(circle at top right, rgba(233, 69, 96, 0.16), transparent 24%),
+            radial-gradient(circle at bottom left, rgba(241, 196, 15, 0.1), transparent 20%),
+            linear-gradient(135deg, #181c37 0%, #20264b 52%, #172545 100%);
+        border-radius: 28px;
+        padding: 28px 28px 24px;
         color: #fff;
         position: relative;
         overflow: hidden;
-        box-shadow: 0 10px 40px rgba(26, 26, 46, 0.25);
+        box-shadow: 0 20px 54px rgba(16, 22, 48, 0.24);
+        border: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     .live-card .card-glow-1 {
@@ -336,15 +452,15 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
-        background: var(--accent);
+        background: linear-gradient(135deg, #ff4f76, #ff6c4a);
         color: #fff;
-        padding: 4px 14px;
-        border-radius: 20px;
-        font-size: 0.7rem;
-        font-weight: 600;
-        letter-spacing: 1px;
+        padding: 6px 16px;
+        border-radius: 999px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
         text-transform: uppercase;
-        margin-bottom: 18px;
+        margin-bottom: 22px;
         animation: pulse-badge 2s infinite;
     }
 
@@ -372,7 +488,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        gap: 20px;
+        gap: 32px;
         position: relative;
         z-index: 1;
     }
@@ -380,73 +496,104 @@
     .live-team {
         text-align: center;
         flex: 1;
-        max-width: 120px;
+        max-width: 180px;
     }
 
     .live-team .team-avatar {
-        width: 52px;
-        height: 52px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.1);
-        backdrop-filter: blur(10px);
+        width: 92px;
+        height: 92px;
+        border-radius: 24px;
+        background: rgba(255, 255, 255, 0.06);
         display: flex;
         align-items: center;
         justify-content: center;
-        margin: 0 auto 8px;
+        margin: 0 auto 12px;
         font-size: 1.4rem;
-        border: 2px solid rgba(255, 255, 255, 0.15);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        overflow: hidden;
+        backdrop-filter: blur(12px);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    }
+
+    .live-team .team-avatar img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
     }
 
     .live-team .team-name {
-        font-weight: 600;
-        font-size: 0.85rem;
+        font-weight: 700;
+        font-size: 1.05rem;
         line-height: 1.2;
         word-break: break-word;
+        letter-spacing: 0.02em;
     }
 
     .live-vs {
         font-weight: 800;
-        font-size: 1rem;
-        color: var(--accent-light);
+        font-size: 1.05rem;
+        color: #fff;
         flex-shrink: 0;
-        background: rgba(233, 69, 96, 0.15);
-        width: 38px;
-        height: 38px;
+        background: linear-gradient(135deg, #ff5f6d, #ff8a65);
+        width: 52px;
+        height: 52px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
+        box-shadow: 0 14px 24px rgba(255, 95, 109, 0.26);
     }
 
     .live-score {
         text-align: center;
-        margin-top: 16px;
-        padding-top: 14px;
+        margin-top: 24px;
+        padding-top: 18px;
         border-top: 1px solid rgba(255, 255, 255, 0.08);
         position: relative;
         z-index: 1;
     }
 
     .live-score .score-text {
-        font-size: 1.1rem;
-        font-weight: 700;
+        font-size: 1.55rem;
+        font-weight: 800;
         color: var(--gold);
+        letter-spacing: 0.01em;
     }
 
     .live-score .score-status {
-        font-size: 0.75rem;
-        color: rgba(255, 255, 255, 0.5);
-        margin-top: 3px;
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.58);
+        margin-top: 6px;
+    }
+
+    .live-meta {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+        position: relative;
+        z-index: 1;
+    }
+
+    .live-meta-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 9px 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.84);
+        font-size: 0.78rem;
+        border: 1px solid rgba(255, 255, 255, 0.06);
     }
 
     /* ========== UPCOMING CARDS ========== */
     .upcoming-scroll {
-        display: flex;
-        gap: 12px;
-        overflow-x: auto;
-        padding: 4px 4px 14px;
-        scroll-snap-type: x mandatory;
-        -webkit-overflow-scrolling: touch;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 18px;
+        padding: 6px 0 14px;
     }
 
     .upcoming-scroll::-webkit-scrollbar {
@@ -463,18 +610,16 @@
     }
 
     .upcoming-card {
-        min-width: 240px;
-        max-width: 280px;
+        min-width: 0;
+        max-width: none;
         background: var(--card-bg);
-        border-radius: var(--radius-md);
-        padding: 16px;
-        scroll-snap-align: start;
-        box-shadow: var(--shadow-sm);
-        border: 1px solid var(--border-light);
+        border-radius: 24px;
+        padding: 18px;
+        box-shadow: 0 14px 36px rgba(21, 34, 68, 0.08);
+        border: 1px solid #e5edf8;
         transition: all 0.3s ease;
         position: relative;
         overflow: hidden;
-        flex-shrink: 0;
     }
 
     .upcoming-card:hover {
@@ -487,28 +632,91 @@
         top: 0;
         left: 0;
         right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #3498db, #2ecc71);
+        height: 4px;
+        background: linear-gradient(90deg, #1da1ff, #22c55e);
     }
 
     .upcoming-card .match-teams {
-        font-weight: 600;
-        font-size: 0.88rem;
+        font-weight: 700;
+        font-size: 1.02rem;
         color: var(--text-primary);
-        margin-bottom: 10px;
-        line-height: 1.4;
-        padding-right: 8px;
+        margin-bottom: 12px;
+        line-height: 1.3;
+    }
+
+    .upcoming-card .match-league {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        font-size: 0.74rem;
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+
+    .upcoming-card .match-row {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .upcoming-card .match-logo {
+        width: 58px;
+        height: 58px;
+        border-radius: 18px;
+        overflow: hidden;
+        background: linear-gradient(180deg, #fbfdff 0%, #f2f6fd 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid #e4ebf7;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: var(--primary);
+        flex-shrink: 0;
+    }
+
+    .upcoming-card .match-logo img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+    }
+
+    .upcoming-card .match-vs-badge {
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #ff5f6d, #ff8a65);
+        color: #fff;
+        font-weight: 800;
+        font-size: 0.72rem;
+        box-shadow: 0 10px 20px rgba(255, 95, 109, 0.18);
+    }
+
+    .upcoming-card .match-meta {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 9px;
+        margin-top: 10px;
     }
 
     .upcoming-card .match-date {
         display: inline-flex;
         align-items: center;
-        gap: 5px;
-        font-size: 0.76rem;
+        gap: 7px;
+        font-size: 0.8rem;
         color: var(--text-secondary);
-        background: #f1f3f5;
-        padding: 5px 10px;
-        border-radius: 6px;
+        background: #f5f8fc;
+        padding: 9px 12px;
+        border-radius: 12px;
+        border: 1px solid #edf2fa;
     }
 
     .upcoming-card .match-date i {
@@ -1201,7 +1409,7 @@
     /* ========== RESPONSIVE ========== */
     @media (min-width: 768px) {
         .banner-section .carousel-item img {
-            height: 340px;
+            height: clamp(360px, 38vw, 500px);
         }
 
         .tournament-grid {
@@ -1217,19 +1425,24 @@
         }
 
         .live-team .team-avatar {
-            width: 60px;
-            height: 60px;
+            width: 104px;
+            height: 104px;
             font-size: 1.6rem;
         }
 
         .live-team .team-name {
-            font-size: 0.95rem;
+            font-size: 1.12rem;
         }
     }
 
     @media (max-width: 576px) {
         :root {
             --header-height: 56px;
+        }
+
+        .banner-section .carousel-item img {
+            height: 240px;
+            object-position: center 18%;
         }
 
         .cricket-header h2 {
@@ -1263,35 +1476,44 @@
 
         .live-card {
             padding: 18px 16px;
+            border-radius: 22px;
         }
 
         .live-team .team-avatar {
-            width: 44px;
-            height: 44px;
+            width: 72px;
+            height: 72px;
             font-size: 1.2rem;
         }
 
         .live-team .team-name {
-            font-size: 0.78rem;
+            font-size: 0.88rem;
         }
 
         .live-vs {
-            width: 32px;
-            height: 32px;
+            width: 40px;
+            height: 40px;
             font-size: 0.82rem;
         }
 
         .live-score .score-text {
-            font-size: 0.95rem;
+            font-size: 1.2rem;
         }
 
         .upcoming-card {
-            min-width: 210px;
             padding: 14px;
         }
 
         .upcoming-card .match-teams {
-            font-size: 0.82rem;
+            font-size: 0.92rem;
+        }
+
+        .upcoming-card .match-logo {
+            width: 52px;
+            height: 52px;
+        }
+
+        .upcoming-scroll {
+            grid-template-columns: 1fr;
         }
 
         .tournament-card {
@@ -1378,8 +1600,8 @@
         }
 
         .live-team .team-avatar {
-            width: 38px;
-            height: 38px;
+            width: 58px;
+            height: 58px;
             font-size: 1rem;
         }
 
@@ -1432,26 +1654,49 @@
 
     <!-- BANNER -->
     <div class="banner-section animate-in delay-1">
-        <div id="cricketCarousel" class="carousel slide" data-bs-ride="carousel" data-bs-interval="4000">
-            <div class="carousel-indicators">
-                <button type="button" data-bs-target="#cricketCarousel" data-bs-slide-to="0" class="active"></button>
-                <button type="button" data-bs-target="#cricketCarousel" data-bs-slide-to="1"></button>
-            </div>
-            <div class="carousel-inner">
-                <div class="carousel-item active">
-                    <img src="<?= base_url('assets/images/cricket/banner1.jpeg') ?>" alt="Cricket Banner">
+        <div class="container">
+            <div class="banner-shell">
+                <div class="banner-topbar">
+                    <div class="banner-kicker">
+                        <i class="fas fa-trophy"></i>
+                        Featured Match
+                    </div>
+                    <div class="banner-status <?= !empty($live_match) ? 'live' : (!empty($featured_match) && ($featured_match['bucket'] ?? '') === 'today' ? 'today' : 'upcoming') ?>">
+                        <i class="fas fa-bolt"></i>
+                        <?= !empty($live_match) ? 'Live Now' : (!empty($featured_match) && ($featured_match['bucket'] ?? '') === 'today' ? 'Today Match' : 'Upcoming Match') ?>
+                    </div>
                 </div>
-                <div class="carousel-item">
-                    <img src="<?= base_url('assets/images/cricket/banner2.jpeg') ?>" alt="Cricket Banner">
+
+                <div class="banner-match">
+                    <div class="banner-team">
+                        <div class="banner-logo"><?= $renderCricketTeamAvatar($live['team1_logo'] ?? '', $live['team1'] ?? '') ?></div>
+                        <div class="banner-team-name"><?= html_escape($live['team1']) ?></div>
+                    </div>
+
+                    <div class="banner-center">
+                        <div class="banner-vs">VS</div>
+                        <div class="banner-time"><?= html_escape($live['score'] ?? 'Schedule not set') ?></div>
+                        <div class="banner-subtime"><?= html_escape($live['start_label'] ?? 'Schedule not set') ?></div>
+                    </div>
+
+                    <div class="banner-team">
+                        <div class="banner-logo"><?= $renderCricketTeamAvatar($live['team2_logo'] ?? '', $live['team2'] ?? '') ?></div>
+                        <div class="banner-team-name"><?= html_escape($live['team2']) ?></div>
+                    </div>
+                </div>
+
+                <div class="banner-meta">
+                    <?php if (!empty($live['competition_name'])): ?>
+                        <span class="banner-chip"><i class="fas fa-award"></i> <?= html_escape($live['competition_name']) ?></span>
+                    <?php endif; ?>
+                    <?php if (!empty($live['venue'])): ?>
+                        <span class="banner-chip"><i class="fas fa-map-marker-alt"></i> <?= html_escape($live['venue']) ?></span>
+                    <?php endif; ?>
+                    <?php if (!empty($live['start_label'])): ?>
+                        <span class="banner-chip"><i class="fas fa-clock"></i> <?= html_escape($live['start_label']) ?></span>
+                    <?php endif; ?>
                 </div>
             </div>
-            <div class="carousel-overlay"></div>
-            <button class="carousel-control-prev" type="button" data-bs-target="#cricketCarousel" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon"></span>
-            </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#cricketCarousel" data-bs-slide="next">
-                <span class="carousel-control-next-icon"></span>
-            </button>
         </div>
     </div>
 
@@ -1468,23 +1713,36 @@
             <div class="card-glow-2"></div>
             <div class="live-badge">
                 <span class="blink-dot"></span>
-                LIVE NOW
+                <?= ($live['status'] ?? '') === 'LIVE' ? 'LIVE NOW' : (($live['status'] ?? '') === 'TODAY' ? 'TODAY MATCH' : 'UPCOMING MATCH') ?>
             </div>
             <div class="live-teams">
                 <div class="live-team">
                     <div class="team-avatar">🏏</div>
-                    <div class="team-name"><?= $live['team1'] ?></div>
+                    <div class="team-name"><?= html_escape($live['team1']) ?></div>
                 </div>
                 <div class="live-vs">VS</div>
                 <div class="live-team">
                     <div class="team-avatar">🏏</div>
-                    <div class="team-name"><?= $live['team2'] ?></div>
+                    <div class="team-name"><?= html_escape($live['team2']) ?></div>
                 </div>
             </div>
             <div class="live-score">
                 <div class="score-text"><?= $live['score'] ?></div>
-                <div class="score-status">Match in progress</div>
+                <div class="score-status"><?= !empty($live_match) ? 'Match in progress' : html_escape($live['start_label'] ?? 'Schedule not set') ?></div>
             </div>
+            <?php if (!empty($live['competition_name']) || !empty($live['venue']) || !empty($live['start_label'])): ?>
+                <div class="live-meta">
+                    <?php if (!empty($live['competition_name'])): ?>
+                        <span class="live-meta-chip"><i class="fas fa-trophy"></i> <?= html_escape($live['competition_name']) ?></span>
+                    <?php endif; ?>
+                    <?php if (!empty($live['venue'])): ?>
+                        <span class="live-meta-chip"><i class="fas fa-map-marker-alt"></i> <?= html_escape($live['venue']) ?></span>
+                    <?php endif; ?>
+                    <?php if (!empty($live['start_label'])): ?>
+                        <span class="live-meta-chip"><i class="fas fa-clock"></i> <?= html_escape($live['start_label']) ?></span>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
 
             <div class="text-center mt-3" style="position: relative; z-index: 1;">
                 <a href="<?= base_url('pool') ?>" class="pool-cta-btn">
@@ -1511,32 +1769,85 @@
             </div>
         </div>
 
-        <!-- UPCOMING -->
+        <!-- TODAY -->
         <h4 class="section-title animate-in delay-3">
+            <span class="title-icon upcoming"><i class="fas fa-bolt"></i></span>
+            Today Matches
+        </h4>
+
+        <div class="upcoming-scroll animate-in delay-3">
+            <?php if (!empty($today_matches)): ?>
+                <?php foreach ($today_matches as $u): ?>
+                    <div class="upcoming-card">
+                        <div class="card-accent"></div>
+                        <div class="match-league"><i class="fas fa-circle text-warning"></i> <?= html_escape($u['competition_name'] ?: 'Today Match') ?></div>
+                        <div class="match-row">
+                            <div class="match-logo"><?= $renderCricketTeamAvatar($u['team1_logo'] ?? '', $u['team1'] ?? '') ?></div>
+                            <div class="match-vs-badge">VS</div>
+                            <div class="match-logo"><?= $renderCricketTeamAvatar($u['team2_logo'] ?? '', $u['team2'] ?? '') ?></div>
+                        </div>
+                        <div class="match-teams"><?= html_escape($u['teams']) ?></div>
+                        <div class="match-meta">
+                            <div class="match-date"><i class="fas fa-calendar-day"></i> <?= html_escape($u['date_label']) ?></div>
+                            <div class="match-date"><i class="fas fa-clock"></i> <?= html_escape($u['time_label']) ?></div>
+                            <?php if (!empty($u['venue'])): ?>
+                                <div class="match-date"><i class="fas fa-map-marker-alt"></i> <?= html_escape($u['venue']) ?></div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div class="upcoming-card">
+                    <div class="card-accent"></div>
+                    <div class="match-teams">No today matches available.</div>
+                    <div class="match-date"><i class="fas fa-info-circle"></i> Matches scheduled for today will appear here.</div>
+                </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- UPCOMING -->
+        <h4 class="section-title animate-in delay-4">
             <span class="title-icon upcoming"><i class="fas fa-calendar-alt"></i></span>
             Upcoming Matches
         </h4>
 
-        <div class="upcoming-scroll animate-in delay-3">
-            <?php foreach ($upcoming as $u): ?>
+        <div class="upcoming-scroll animate-in delay-4">
+            <?php if (!empty($upcoming)): ?>
+                <?php foreach ($upcoming as $u): ?>
+                    <div class="upcoming-card">
+                        <div class="card-accent"></div>
+                        <div class="match-league"><i class="fas fa-calendar-alt"></i> <?= html_escape($u['competition_name'] ?: 'Upcoming Match') ?></div>
+                        <div class="match-row">
+                            <div class="match-logo"><?= $renderCricketTeamAvatar($u['team1_logo'] ?? '', $u['team1'] ?? '') ?></div>
+                            <div class="match-vs-badge">VS</div>
+                            <div class="match-logo"><?= $renderCricketTeamAvatar($u['team2_logo'] ?? '', $u['team2'] ?? '') ?></div>
+                        </div>
+                        <div class="match-teams"><?= html_escape($u['teams']) ?></div>
+                        <div class="match-meta">
+                            <div class="match-date"><i class="fas fa-calendar-day"></i> <?= html_escape($u['date_label']) ?></div>
+                            <div class="match-date"><i class="fas fa-clock"></i> <?= html_escape($u['time_label']) ?></div>
+                            <?php if (!empty($u['venue'])): ?>
+                                <div class="match-date"><i class="fas fa-map-marker-alt"></i> <?= html_escape($u['venue']) ?></div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
                 <div class="upcoming-card">
                     <div class="card-accent"></div>
-                    <div class="match-teams"><?= $u['teams'] ?></div>
-                    <div class="match-date">
-                        <i class="fas fa-clock"></i>
-                        <?= $u['date'] ?>
-                    </div>
+                    <div class="match-teams">No upcoming matches available.</div>
+                    <div class="match-date"><i class="fas fa-info-circle"></i> Add more scheduled matches from admin to show them here.</div>
                 </div>
-            <?php endforeach; ?>
+            <?php endif; ?>
         </div>
 
         <!-- TOURNAMENTS -->
-        <h4 class="section-title animate-in delay-4">
+        <h4 class="section-title animate-in delay-5">
             <span class="title-icon tournament"><i class="fas fa-trophy"></i></span>
             Tournaments
         </h4>
 
-        <div class="tournament-grid animate-in delay-4">
+        <div class="tournament-grid animate-in delay-5">
             <?php foreach ($tournaments as $t): ?>
                 <div class="tournament-card">
                     <div class="trophy-icon">🏆</div>
@@ -1747,6 +2058,91 @@
 
     // Intersection Observer
     document.addEventListener('DOMContentLoaded', function() {
+        const liveTeamAvatars = document.querySelectorAll('.live-teams .live-team .team-avatar');
+        const liveTeamAvatarHtml = [
+            <?= json_encode($renderCricketTeamAvatar($live['team1_logo'] ?? '', $live['team1'] ?? '')) ?>,
+            <?= json_encode($renderCricketTeamAvatar($live['team2_logo'] ?? '', $live['team2'] ?? '')) ?>
+        ];
+
+        liveTeamAvatars.forEach((avatar, index) => {
+            if (liveTeamAvatarHtml[index]) {
+                avatar.innerHTML = liveTeamAvatarHtml[index];
+            }
+        });
+
+        const bannerSection = document.querySelector('.banner-section');
+        const carouselElement = document.getElementById('cricketCarousel');
+
+        if (carouselElement && typeof bootstrap !== 'undefined' && bootstrap.Carousel) {
+            const carousel = bootstrap.Carousel.getOrCreateInstance(carouselElement, {
+                interval: 4000,
+                ride: 'carousel',
+                pause: false,
+                wrap: true,
+                touch: true
+            });
+
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchEndX = 0;
+            let touchEndY = 0;
+            let isHorizontalSwipe = false;
+
+            const resetAutoplay = () => {
+                carousel.cycle();
+            };
+
+            carouselElement.addEventListener('slid.bs.carousel', resetAutoplay);
+            carouselElement.addEventListener('mouseenter', function() {
+                carousel.pause();
+            });
+            carouselElement.addEventListener('mouseleave', resetAutoplay);
+
+            carouselElement.addEventListener('touchstart', function(event) {
+                const touch = event.changedTouches[0];
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                touchEndX = touch.clientX;
+                touchEndY = touch.clientY;
+                isHorizontalSwipe = false;
+                if (bannerSection) {
+                    bannerSection.classList.add('is-touching');
+                }
+            }, {
+                passive: true
+            });
+
+            carouselElement.addEventListener('touchmove', function(event) {
+                const touch = event.changedTouches[0];
+                touchEndX = touch.clientX;
+                touchEndY = touch.clientY;
+                isHorizontalSwipe = Math.abs(touchEndX - touchStartX) > Math.abs(touchEndY - touchStartY);
+            }, {
+                passive: true
+            });
+
+            carouselElement.addEventListener('touchend', function() {
+                const deltaX = touchEndX - touchStartX;
+                const deltaY = touchEndY - touchStartY;
+
+                if (bannerSection) {
+                    bannerSection.classList.remove('is-touching');
+                }
+
+                if (Math.abs(deltaX) > 50 && Math.abs(deltaX) > Math.abs(deltaY) && isHorizontalSwipe) {
+                    if (deltaX < 0) {
+                        carousel.next();
+                    } else {
+                        carousel.prev();
+                    }
+                }
+
+                resetAutoplay();
+            }, {
+                passive: true
+            });
+        }
+
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {

@@ -1,3 +1,18 @@
+<?php
+$joinedPoolIds = array_map('intval', $joined_pool_ids ?? []);
+$poolMembersMap = $pool_members ?? [];
+
+$formatPoolDateTime = function ($dateTime) {
+    if (empty($dateTime)) {
+        return 'Not scheduled';
+    }
+
+    $timestamp = strtotime((string) $dateTime);
+
+    return $timestamp ? date('d M Y, h:i A', $timestamp) : 'Not scheduled';
+};
+?>
+
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
@@ -648,7 +663,15 @@
     .pool-join-btn.joined {
         background: var(--success-light);
         color: var(--success);
-        cursor: default;
+        cursor: pointer;
+        box-shadow: 0 3px 12px rgba(0, 184, 148, 0.18);
+    }
+
+    .pool-join-btn.joined:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 5px 18px rgba(0, 184, 148, 0.28);
+        color: var(--success);
+        background: linear-gradient(135deg, #dff8ef, #c9f1e4);
     }
 
     .pool-view-btn {
@@ -672,6 +695,146 @@
         border-color: var(--primary);
         color: var(--primary);
         background: var(--primary-ultra);
+    }
+
+    .pool-schedule-strip {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-bottom: 14px;
+    }
+
+    .pool-schedule-item {
+        background: #f8f9fa;
+        border-radius: var(--radius-sm);
+        padding: 10px 12px;
+    }
+
+    .pool-schedule-item .schedule-label {
+        font-size: 0.68rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 4px;
+    }
+
+    .pool-schedule-item .schedule-value {
+        font-size: 0.74rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        line-height: 1.4;
+    }
+
+    .pool-status-badge.closed {
+        background: var(--danger-light);
+        color: var(--danger);
+    }
+
+    .pool-join-btn.closed {
+        background: #e9ecef;
+        color: var(--text-muted);
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .pool-details-modal .modal-content {
+        border: none;
+        border-radius: 22px;
+        overflow: hidden;
+    }
+
+    .pool-details-modal .modal-header {
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        color: #fff;
+        border-bottom: 0;
+        padding: 20px 22px;
+    }
+
+    .pool-details-modal .modal-title {
+        font-weight: 700;
+    }
+
+    .pool-details-modal .btn-close {
+        filter: brightness(0) invert(1);
+        opacity: 1;
+    }
+
+    .pool-details-modal .modal-body {
+        max-height: 70vh;
+        overflow-y: auto;
+        padding: 22px;
+        background: #f8fbff;
+    }
+
+    .pool-detail-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 12px;
+        margin-bottom: 18px;
+    }
+
+    .pool-detail-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 14px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .pool-detail-card .detail-label {
+        font-size: 0.68rem;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+
+    .pool-detail-card .detail-value {
+        font-size: 0.86rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1.45;
+    }
+
+    .pool-members-panel {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 16px;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .pool-members-list {
+        max-height: 240px;
+        overflow-y: auto;
+        padding-right: 4px;
+    }
+
+    .pool-member-row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 0;
+        border-bottom: 1px solid #f1f3f8;
+    }
+
+    .pool-member-row:last-child {
+        border-bottom: 0;
+        padding-bottom: 0;
+    }
+
+    .pool-member-avatar {
+        width: 34px;
+        height: 34px;
+        border-radius: 12px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        color: #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: 700;
+        flex-shrink: 0;
     }
 
     /* Pool Status Badge */
@@ -1100,8 +1263,13 @@ $activePools = 0;
 if (!empty($pools)) {
     foreach ($pools as $p) {
         $totalPlayers += $p['total_joined'];
-        if ($p['total_joined'] >= $p['user_limit']) {
+        $joinCloseAt = trim((string) ($p['join_close_at'] ?? ''));
+        $isClosed = $joinCloseAt !== '' ? strtotime($joinCloseAt) <= time() : false;
+
+        if ((int) $p['user_limit'] > 0 && (int) $p['total_joined'] >= (int) $p['user_limit']) {
             $fullPools++;
+        } elseif ($isClosed) {
+            continue;
         } else {
             $activePools++;
         }
@@ -1228,17 +1396,27 @@ if (!empty($pools)) {
             <!-- ========== CARD VIEW ========== -->
             <div class="pools-grid active" id="cardView">
                 <?php foreach ($pools as $p):
-                    $percent = $p['user_limit'] > 0 ? round(($p['total_joined'] / $p['user_limit']) * 100) : 0;
-                    $spotsLeft = $p['user_limit'] - $p['total_joined'];
-                    $isFull = $spotsLeft <= 0;
+                    $hasLimit = (int) $p['user_limit'] > 0;
+                    $percent = $hasLimit ? round(($p['total_joined'] / $p['user_limit']) * 100) : 0;
+                    $spotsLeft = $hasLimit ? ((int) $p['user_limit'] - (int) $p['total_joined']) : null;
+                    $isFull = $hasLimit && $spotsLeft <= 0;
                     $isAlmostFull = !$isFull && $percent >= 80;
                     $hasJoined = in_array((int) $p['id'], $joinedPoolIds, true);
+                    $matchStartAt = trim((string) ($p['match_start_at'] ?? ''));
+                    $joinCloseAt = trim((string) ($p['join_close_at'] ?? ''));
+                    $isClosed = $joinCloseAt !== '' ? strtotime($joinCloseAt) <= time() : false;
+                    $memberNames = $poolMembersMap[(int) $p['id']] ?? [];
 
                     if ($hasJoined) {
                         $accentClass = '';
                         $barClass = 'full';
                         $statusText = 'JOINED';
                         $statusClass = 'open';
+                    } elseif ($isClosed) {
+                        $accentClass = 'almost-full';
+                        $barClass = 'danger';
+                        $statusText = 'CLOSED';
+                        $statusClass = 'closed';
                     } elseif ($isFull) {
                         $accentClass = 'full';
                         $barClass = 'full';
@@ -1261,9 +1439,9 @@ if (!empty($pools)) {
                         data-host="<?= strtolower($p['host_name']) ?>"
                         data-price="<?= $p['price'] ?>"
                         data-joined="<?= $p['total_joined'] ?>"
-                        data-limit="<?= $p['user_limit'] ?>"
-                        data-spots="<?= $spotsLeft ?>"
-                        data-status="<?= $isFull ? 'full' : 'open' ?>">
+                        data-limit="<?= $hasLimit ? (int) $p['user_limit'] : 0 ?>"
+                        data-spots="<?= $hasLimit ? $spotsLeft : 999999999 ?>"
+                        data-status="<?= ($isFull || $isClosed) ? 'full' : 'open' ?>">
 
                         <div class="pool-card-accent <?= $accentClass ?>"></div>
 
@@ -1286,7 +1464,7 @@ if (!empty($pools)) {
                             </div>
                             <div class="pool-card-stats">
                                 <div class="pool-stat">
-                                    <div class="stat-val"><?= $p['user_limit'] ?></div>
+                                    <div class="stat-val"><?= $hasLimit ? (int) $p['user_limit'] : 'Unlimited' ?></div>
                                     <div class="stat-lbl">Limit</div>
                                 </div>
                                 <div class="pool-stat">
@@ -1297,11 +1475,24 @@ if (!empty($pools)) {
 
                             <div class="pool-progress-section">
                                 <div class="progress-header">
-                                    <span class="progress-label"><?= $spotsLeft > 0 ? $spotsLeft . ' spots left' : 'No spots left' ?></span>
-                                    <span class="progress-percent"><?= $percent ?>%</span>
+                                    <span class="progress-label">
+                                        <?= $isClosed ? 'Joining closed' : ($hasLimit ? ($spotsLeft > 0 ? $spotsLeft . ' spots left' : 'No spots left') : 'Unlimited spots') ?>
+                                    </span>
+                                    <span class="progress-percent"><?= $hasLimit ? $percent . '%' : 'Open' ?></span>
                                 </div>
                                 <div class="progress-bar-bg">
                                     <div class="progress-bar-fill <?= $barClass ?>" style="width: <?= $percent ?>%"></div>
+                                </div>
+                            </div>
+
+                            <div class="pool-schedule-strip">
+                                <div class="pool-schedule-item">
+                                    <div class="schedule-label">Match Start</div>
+                                    <div class="schedule-value"><?= html_escape($formatPoolDateTime($matchStartAt)) ?></div>
+                                </div>
+                                <div class="pool-schedule-item">
+                                    <div class="schedule-label">Join Close</div>
+                                    <div class="schedule-value"><?= html_escape($formatPoolDateTime($joinCloseAt)) ?></div>
                                 </div>
                             </div>
 
@@ -1310,6 +1501,10 @@ if (!empty($pools)) {
                                     <a href="<?= base_url('pool/play/' . $p['id']) ?>" class="pool-join-btn joined">
                                         <i class="fas fa-play-circle"></i> Questions
                                     </a>
+                                <?php elseif ($isClosed): ?>
+                                    <button class="pool-join-btn closed" disabled>
+                                        <i class="fas fa-clock"></i> Closed
+                                    </button>
                                 <?php elseif ($isFull): ?>
                                     <button class="pool-join-btn full" disabled>
                                         <i class="fas fa-lock"></i> Pool Full
@@ -1319,9 +1514,74 @@ if (!empty($pools)) {
                                         <i class="fas fa-sign-in-alt"></i> Join Pool
                                     </a>
                                 <?php endif; ?>
-                                <a href="<?= $hasJoined ? base_url('pool/play/' . $p['id']) : base_url('pool/join/' . $p['id']) ?>" class="pool-view-btn" title="<?= $hasJoined ? 'Open Questions' : 'Join Pool' ?>">
-                                    <i class="fas <?= $hasJoined ? 'fa-clipboard-list' : 'fa-eye' ?>"></i>
-                                </a>
+                                <button type="button" class="pool-view-btn" title="View Pool Details" data-bs-toggle="modal" data-bs-target="#poolDetailsModal<?= (int) $p['id'] ?>">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal fade pool-details-modal" id="poolDetailsModal<?= (int) $p['id'] ?>" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-lg modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <div>
+                                        <h5 class="modal-title mb-1"><?= html_escape($p['pool_name']) ?></h5>
+                                        <div class="small opacity-75">Hosted by <?= html_escape($p['host_name']) ?></div>
+                                    </div>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="pool-detail-grid">
+                                        <div class="pool-detail-card">
+                                            <div class="detail-label">Entry Price</div>
+                                            <div class="detail-value"><?= $p['price'] == 0 ? 'Free' : 'Rs. ' . number_format($p['price'], 2) ?></div>
+                                        </div>
+                                        <div class="pool-detail-card">
+                                            <div class="detail-label">Player Limit</div>
+                                            <div class="detail-value"><?= (int) $p['user_limit'] > 0 ? (int) $p['user_limit'] : 'Unlimited' ?></div>
+                                        </div>
+                                        <div class="pool-detail-card">
+                                            <div class="detail-label">Joined Members</div>
+                                            <div class="detail-value"><?= (int) $p['total_joined'] ?></div>
+                                        </div>
+                                        <div class="pool-detail-card">
+                                            <div class="detail-label">Status</div>
+                                            <div class="detail-value"><?= html_escape($statusText) ?></div>
+                                        </div>
+                                        <div class="pool-detail-card">
+                                            <div class="detail-label">Match Start</div>
+                                            <div class="detail-value"><?= html_escape($formatPoolDateTime($matchStartAt)) ?></div>
+                                        </div>
+                                        <div class="pool-detail-card">
+                                            <div class="detail-label">Join Close</div>
+                                            <div class="detail-value"><?= html_escape($formatPoolDateTime($joinCloseAt)) ?></div>
+                                        </div>
+                                        <div class="pool-detail-card" style="grid-column: 1 / -1;">
+                                            <div class="detail-label">Description</div>
+                                            <div class="detail-value"><?= html_escape(trim((string) ($p['description'] ?? '')) !== '' ? $p['description'] : 'No extra description added by host.') ?></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="pool-members-panel">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h6 class="mb-0">Joined Member List</h6>
+                                            <span class="pool-status-badge <?= $statusClass ?>" style="position:static;"><?= html_escape($statusText) ?></span>
+                                        </div>
+                                        <div class="pool-members-list">
+                                            <?php if (!empty($memberNames)) : ?>
+                                                <?php foreach ($memberNames as $memberName) : ?>
+                                                    <div class="pool-member-row">
+                                                        <span class="pool-member-avatar"><?= html_escape(strtoupper(substr($memberName, 0, 1))) ?></span>
+                                                        <span><?= html_escape($memberName) ?></span>
+                                                    </div>
+                                                <?php endforeach; ?>
+                                            <?php else : ?>
+                                                <div class="text-muted">No members have joined this pool yet.</div>
+                                            <?php endif; ?>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1345,10 +1605,13 @@ if (!empty($pools)) {
                         </thead>
                         <tbody>
                             <?php foreach ($pools as $i => $p):
-                                $percent = $p['user_limit'] > 0 ? round(($p['total_joined'] / $p['user_limit']) * 100) : 0;
-                                $spotsLeft = $p['user_limit'] - $p['total_joined'];
-                                $isFull = $spotsLeft <= 0;
+                                $hasLimit = (int) $p['user_limit'] > 0;
+                                $percent = $hasLimit ? round(($p['total_joined'] / $p['user_limit']) * 100) : 0;
+                                $spotsLeft = $hasLimit ? ((int) $p['user_limit'] - (int) $p['total_joined']) : null;
+                                $isFull = $hasLimit && $spotsLeft <= 0;
                                 $hasJoined = in_array((int) $p['id'], $joinedPoolIds, true);
+                                $joinCloseAt = trim((string) ($p['join_close_at'] ?? ''));
+                                $isClosed = $joinCloseAt !== '' ? strtotime($joinCloseAt) <= time() : false;
                                 $barClass = $isFull ? 'full' : ($percent >= 80 ? 'danger' : ($percent >= 50 ? 'warning' : ''));
                                 $fillColor = $isFull ? 'var(--success)' : ($percent >= 80 ? 'var(--danger)' : ($percent >= 50 ? 'var(--warning)' : 'var(--primary)'));
                             ?>
@@ -1356,8 +1619,8 @@ if (!empty($pools)) {
                                     data-host="<?= strtolower($p['host_name']) ?>"
                                     data-price="<?= $p['price'] ?>"
                                     data-joined="<?= $p['total_joined'] ?>"
-                                    data-limit="<?= $p['user_limit'] ?>"
-                                    data-spots="<?= $spotsLeft ?>"
+                                    data-limit="<?= $hasLimit ? (int) $p['user_limit'] : 0 ?>"
+                                    data-spots="<?= $hasLimit ? $spotsLeft : 999999999 ?>"
                                     data-status="<?= $isFull ? 'full' : 'open' ?>">
 
                                     <td style="color:var(--text-muted); font-weight:600;"><?= $i + 1 ?></td>
@@ -1387,13 +1650,15 @@ if (!empty($pools)) {
                                             <div class="table-progress-bar">
                                                 <div class="table-progress-fill" style="width:<?= $percent ?>%; background:<?= $fillColor ?>"></div>
                                             </div>
-                                            <span class="table-progress-text"><?= $p['total_joined'] ?>/<?= $p['user_limit'] ?></span>
+                                            <span class="table-progress-text"><?= $hasLimit ? ($p['total_joined'] . '/' . $p['user_limit']) : ($p['total_joined'] . '/Unlimited') ?></span>
                                         </div>
                                     </td>
 
                                     <td>
                                         <?php if ($hasJoined): ?>
                                             <span class="pool-status-badge open" style="position:static;">JOINED</span>
+                                        <?php elseif ($isClosed): ?>
+                                            <span class="pool-status-badge closed" style="position:static;">CLOSED</span>
                                         <?php elseif ($isFull): ?>
                                             <span class="pool-status-badge full" style="position:static;">FULL</span>
                                         <?php elseif ($percent >= 80): ?>
@@ -1401,13 +1666,15 @@ if (!empty($pools)) {
                                         <?php else: ?>
                                             <span class="pool-status-badge open" style="position:static;">OPEN</span>
                                         <?php endif; ?>
-                                    </td>
+                                    </td>A
 
                                     <td>
                                         <?php if ($hasJoined): ?>
-                                            <a href="<?= base_url('pool/play/' . $p['id']) ?>" class="table-action-btn join">
+                                            <a href="<?= base_url('pool/play/' . $p['id']) ?>" class="table-action-btn join" style="cursor: pointer;">
                                                 <i class="fas fa-play-circle"></i> Questions
                                             </a>
+                                        <?php elseif ($isClosed): ?>
+                                            <span class="table-action-btn full"><i class="fas fa-clock"></i> Closed</span>
                                         <?php elseif ($isFull): ?>
                                             <span class="table-action-btn full"><i class="fas fa-lock"></i> Full</span>
                                         <?php else: ?>
@@ -1415,6 +1682,9 @@ if (!empty($pools)) {
                                                 <i class="fas fa-sign-in-alt"></i> Join
                                             </a>
                                         <?php endif; ?>
+                                        <button type="button" class="pool-view-btn ms-2" data-bs-toggle="modal" data-bs-target="#poolDetailsModal<?= (int) $p['id'] ?>">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>

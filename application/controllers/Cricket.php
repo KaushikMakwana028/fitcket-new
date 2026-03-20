@@ -11,6 +11,7 @@ class Cricket extends User_Controller
     private $RAZORPAY_KEY_ID = "rzp_live_RCge2Oz6kUJE74";
     private $RAZORPAY_KEY_SECRET = "Pw0gRqzQkzjl5pYW10pXXZeq";
     private $poolAnswerOptions = ['yes', 'no'];
+    private $cricketMatchDurationHours = 10;
 
     public function __construct()
     {
@@ -33,6 +34,240 @@ class Cricket extends User_Controller
         $sessionUser = $this->session->userdata('user');
 
         return $this->db->get_where('users', ['id' => $sessionUser['id']])->row_array();
+    }
+
+    private function hasPoolScheduleColumns()
+    {
+        return $this->db->field_exists('match_start_at', 'pools')
+            && $this->db->field_exists('join_close_at', 'pools');
+    }
+
+    private function hasCricketMatchesTable()
+    {
+        return $this->db->table_exists('cricket_matches');
+    }
+
+    private function getCricketLogoUrl($path)
+    {
+        $path = trim((string) $path);
+
+        if ($path === '') {
+            return '';
+        }
+
+        $path = str_replace('\\', '/', $path);
+
+        if (preg_match('#^https?://#i', $path)) {
+            return $path;
+        }
+
+        if (strpos($path, base_url()) === 0) {
+            return $path;
+        }
+
+        return base_url(ltrim($path, '/'));
+    }
+
+    private function getCricketMatchEndAt($startAt, $nextStartAt = false)
+    {
+        if ($startAt === false) {
+            return false;
+        }
+
+        $defaultEndAt = strtotime('+' . (int) $this->cricketMatchDurationHours . ' hours', $startAt);
+
+        if ($nextStartAt !== false && $nextStartAt > $startAt && $nextStartAt < $defaultEndAt) {
+            return $nextStartAt;
+        }
+
+        return $defaultEndAt;
+    }
+
+    private function getCricketMatchBucket(array $match, $nextStartAt = false)
+    {
+        $status = strtolower((string) ($match['admin_status'] ?? 'scheduled'));
+        $startAt = strtotime((string) ($match['start_at'] ?? ''));
+        $now = time();
+        $today = date('Y-m-d');
+
+        if ($startAt === false || $status === 'cancelled') {
+            return 'hidden';
+        }
+
+        $endAt = $this->getCricketMatchEndAt($startAt, $nextStartAt);
+
+        if ($status === 'completed' || $endAt < $now) {
+            return 'completed';
+        }
+
+        if ($status === 'live' || ($startAt <= $now && $endAt >= $now)) {
+            return 'live';
+        }
+
+        if (date('Y-m-d', $startAt) === $today) {
+            return 'today';
+        }
+
+        if ($startAt > $now) {
+            return 'upcoming';
+        }
+
+        return 'completed';
+    }
+
+    private function mapCricketMatchCard(array $match, $bucket)
+    {
+        $startAt = strtotime((string) ($match['start_at'] ?? ''));
+        $scoreLine = $bucket === 'live'
+            ? 'Match in progress'
+            : ($startAt ? 'Starts at ' . date('g:i A', $startAt) : 'Schedule not set');
+
+        return [
+            'id' => (int) ($match['id'] ?? 0),
+            'competition_name' => trim((string) ($match['competition_name'] ?? '')),
+            'team1' => trim((string) ($match['team_home'] ?? 'Team A')),
+            'team2' => trim((string) ($match['team_away'] ?? 'Team B')),
+            'team1_logo' => $this->getCricketLogoUrl($match['home_logo'] ?? ''),
+            'team2_logo' => $this->getCricketLogoUrl($match['away_logo'] ?? ''),
+            'score' => $scoreLine,
+            'venue' => trim((string) ($match['venue'] ?? '')),
+            'bucket' => $bucket,
+            'status' => strtolower((string) ($match['admin_status'] ?? 'scheduled')),
+            'start_label' => $startAt ? date('d M Y, h:i A', $startAt) : 'Not scheduled',
+            'date_label' => $startAt ? date('d M Y', $startAt) : 'Not scheduled',
+            'time_label' => $startAt ? date('h:i A', $startAt) : '',
+            'teams' => trim((string) ($match['team_home'] ?? '')) . ' vs ' . trim((string) ($match['team_away'] ?? '')),
+        ];
+    }
+
+    private function getCricketPageMatches()
+    {
+        $result = [
+            'live_match' => null,
+            'primary_match' => null,
+            'today_matches' => [],
+            'upcoming_matches' => [],
+            'featured_match' => null,
+        ];
+
+        if (!$this->hasCricketMatchesTable()) {
+            return $result;
+        }
+
+        $rows = $this->db
+            ->from('cricket_matches')
+            ->where('admin_status !=', 'cancelled')
+            ->order_by('start_at', 'ASC')
+            ->order_by('id', 'DESC')
+            ->get()
+            ->result_array();
+
+        $liveMatches = [];
+        $todayMatches = [];
+        $upcomingMatches = [];
+        $visibleMatches = [];
+
+        $totalRows = count($rows);
+
+        foreach ($rows as $index => $row) {
+            $nextStartAt = false;
+
+            for ($nextIndex = $index + 1; $nextIndex < $totalRows; $nextIndex++) {
+                $candidateStartAt = strtotime((string) ($rows[$nextIndex]['start_at'] ?? ''));
+                if ($candidateStartAt !== false) {
+                    $nextStartAt = $candidateStartAt;
+                    break;
+                }
+            }
+
+            $bucket = $this->getCricketMatchBucket($row, $nextStartAt);
+
+            if ($bucket === 'hidden' || $bucket === 'completed') {
+                continue;
+            }
+
+            $card = $this->mapCricketMatchCard($row, $bucket);
+            $visibleMatches[] = $card;
+
+            if ($bucket === 'live') {
+                $liveMatches[] = $card;
+            } elseif ($bucket === 'today') {
+                $todayMatches[] = $card;
+            } elseif ($bucket === 'upcoming') {
+                $upcomingMatches[] = $card;
+            }
+        }
+
+        $result['live_match'] = !empty($liveMatches) ? $liveMatches[0] : null;
+        $result['today_matches'] = array_slice($todayMatches, 0, 4);
+        $result['upcoming_matches'] = array_slice($upcomingMatches, 0, 4);
+        $result['primary_match'] = $result['live_match']
+            ?: (!empty($todayMatches) ? $todayMatches[0] : (!empty($upcomingMatches) ? $upcomingMatches[0] : null));
+
+        $result['featured_match'] = null;
+        if (!empty($result['primary_match'])) {
+            $primaryId = (int) ($result['primary_match']['id'] ?? 0);
+
+            foreach ($visibleMatches as $index => $matchCard) {
+                if ((int) ($matchCard['id'] ?? 0) === $primaryId) {
+                    $result['featured_match'] = $visibleMatches[$index + 1] ?? null;
+                    break;
+                }
+            }
+        }
+
+        if (empty($result['featured_match'])) {
+            $result['featured_match'] = $result['primary_match'];
+        }
+
+        return $result;
+    }
+
+    private function isPoolJoinClosed(array $pool)
+    {
+        $joinCloseAt = trim((string) ($pool['join_close_at'] ?? ''));
+        $matchStartAt = trim((string) ($pool['match_start_at'] ?? ''));
+
+        if ($joinCloseAt !== '') {
+            return strtotime($joinCloseAt) <= time();
+        }
+
+        if ($matchStartAt !== '') {
+            return strtotime($matchStartAt . ' -30 minutes') <= time();
+        }
+
+        return false;
+    }
+
+    private function getPoolMembersMap(array $poolIds)
+    {
+        if (empty($poolIds)) {
+            return [];
+        }
+
+        $rows = $this->db
+            ->select('pool_joins.pool_id, users.name')
+            ->from('pool_joins')
+            ->join('users', 'users.id = pool_joins.user_id', 'left')
+            ->where_in('pool_joins.pool_id', $poolIds)
+            ->where('pool_joins.status', 'success')
+            ->order_by('users.name', 'ASC')
+            ->get()
+            ->result_array();
+
+        $membersMap = [];
+
+        foreach ($rows as $row) {
+            $poolId = (int) $row['pool_id'];
+
+            if (!isset($membersMap[$poolId])) {
+                $membersMap[$poolId] = [];
+            }
+
+            $membersMap[$poolId][] = $row['name'] ?: 'User';
+        }
+
+        return $membersMap;
     }
 
     private function getPoolWithMeta($poolId)
@@ -242,17 +477,27 @@ class Cricket extends User_Controller
         $data['user'] = $user;
         $data['request'] = $request;
 
+        $matches = $this->getCricketPageMatches();
+        $data['live_match'] = $matches['live_match'];
+        $data['featured_match'] = $matches['featured_match'];
+        $data['today_matches'] = $matches['today_matches'];
+        $data['upcoming'] = $matches['upcoming_matches'];
+        $primaryLiveCard = $matches['primary_match'] ?? $matches['featured_match'];
         $data['live'] = [
-            'team1' => 'India',
-            'team2' => 'Australia',
-            'score' => '145/3 (15.2)',
-            'status' => 'LIVE'
+            'team1' => $primaryLiveCard['team1'] ?? 'No Match',
+            'team2' => $primaryLiveCard['team2'] ?? 'Scheduled Soon',
+            'score' => $primaryLiveCard['score'] ?? 'Add matches from admin',
+            'status' => !empty($matches['live_match']) ? 'LIVE' : strtoupper((string) ($primaryLiveCard['bucket'] ?? 'today')),
+            'team1_logo' => $primaryLiveCard['team1_logo'] ?? '',
+            'team2_logo' => $primaryLiveCard['team2_logo'] ?? '',
+            'competition_name' => $primaryLiveCard['competition_name'] ?? '',
+            'venue' => $primaryLiveCard['venue'] ?? '',
+            'start_label' => $primaryLiveCard['start_label'] ?? '',
         ];
-
-        $data['upcoming'] = [
-            ['teams' => 'India vs Pakistan', 'date' => '20 Mar 2026'],
-            ['teams' => 'England vs SA', 'date' => '22 Mar 2026']
-        ];
+        $data['upcoming'] = array_map(function ($match) {
+            $match['date'] = trim(($match['date_label'] ?? '') . (!empty($match['time_label']) ? ', ' . $match['time_label'] : ''));
+            return $match;
+        }, $data['upcoming']);
 
         $data['tournaments'] = [
             ['name' => 'IPL 2026', 'date' => 'Starts 25 Mar'],
@@ -330,6 +575,10 @@ class Cricket extends User_Controller
             ->order_by('pools.id', 'DESC')
             ->get()
             ->result_array();
+
+        $poolIds = array_map('intval', array_column($data['pools'], 'id'));
+        $data['pool_members'] = $this->getPoolMembersMap($poolIds);
+        $data['pool_schedule_ready'] = $this->hasPoolScheduleColumns();
 
         $joinedRows = $this->db
             ->select('pool_id')
@@ -469,6 +718,7 @@ class Cricket extends User_Controller
         }
 
         $data['user'] = $user;
+        $data['pool_schedule_ready'] = $this->hasPoolScheduleColumns();
 
         $this->load->view('header', $data);
         $this->load->view('pool_add', $data);
@@ -484,12 +734,72 @@ class Cricket extends User_Controller
             return;
         }
 
+        if (!$this->hasPoolScheduleColumns()) {
+            $this->session->set_flashdata('error', 'Please run the pool schedule SQL first to enable match time and auto-close.');
+            redirect('pool/add');
+            return;
+        }
+
+        $poolName = trim((string) $this->input->post('pool_name'));
+        $description = trim((string) $this->input->post('description'));
+        $userLimitRaw = trim((string) $this->input->post('user_limit'));
+        $userLimit = $userLimitRaw === '' ? 0 : (int) $userLimitRaw;
+        $price = (float) $this->input->post('price');
+        $matchDate = trim((string) $this->input->post('match_date'));
+        $matchTime = trim((string) $this->input->post('match_time'));
+
+        if ($poolName === '' || strlen($poolName) < 3) {
+            $this->session->set_flashdata('error', 'Pool name must be at least 3 characters.');
+            redirect('pool/add');
+            return;
+        }
+
+        if ($price < 0) {
+            $this->session->set_flashdata('error', 'Entry price cannot be negative.');
+            redirect('pool/add');
+            return;
+        }
+
+        if ($userLimit < 0 || ($userLimit > 0 && $userLimit < 2)) {
+            $this->session->set_flashdata('error', 'Players must be at least 2, or use 0 for unlimited.');
+            redirect('pool/add');
+            return;
+        }
+
+        if ($matchDate === '' || $matchTime === '') {
+            $this->session->set_flashdata('error', 'Please select match date and match start time.');
+            redirect('pool/add');
+            return;
+        }
+
+        $matchStartAt = strtotime($matchDate . ' ' . $matchTime);
+
+        if ($matchStartAt === false) {
+            $this->session->set_flashdata('error', 'Invalid match date or time.');
+            redirect('pool/add');
+            return;
+        }
+
+        $joinCloseAt = strtotime('-30 minutes', $matchStartAt);
+
+        if ($joinCloseAt <= time()) {
+            $this->session->set_flashdata('error', 'Match start time must be at least 30 minutes in the future.');
+            redirect('pool/add');
+            return;
+        }
+
         $data = [
             'user_id' => $user['id'],
-            'pool_name' => trim((string) $this->input->post('pool_name')),
-            'user_limit' => (int) $this->input->post('user_limit'),
-            'price' => (float) $this->input->post('price'),
+            'pool_name' => $poolName,
+            'user_limit' => $userLimit,
+            'price' => $price,
+            'match_start_at' => date('Y-m-d H:i:s', $matchStartAt),
+            'join_close_at' => date('Y-m-d H:i:s', $joinCloseAt),
         ];
+
+        if ($this->db->field_exists('description', 'pools')) {
+            $data['description'] = $description;
+        }
 
         if ($this->db->field_exists('total_joined', 'pools')) {
             $data['total_joined'] = 0;
@@ -529,8 +839,14 @@ class Cricket extends User_Controller
             return;
         }
 
-        if ((int) $pool['total_joined'] >= (int) $pool['user_limit']) {
+        if ((int) $pool['user_limit'] > 0 && (int) $pool['total_joined'] >= (int) $pool['user_limit']) {
             $this->session->set_flashdata('error', 'This pool is already full.');
+            redirect('pool');
+            return;
+        }
+
+        if ($this->isPoolJoinClosed($pool)) {
+            $this->session->set_flashdata('error', 'This pool is closed. Joining stops 30 minutes before match start.');
             redirect('pool');
             return;
         }

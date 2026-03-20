@@ -7,6 +7,7 @@ class Pool extends Admin_Controller
 {
     private $maxQuestionsPerPool = 10;
     private $answerOptions = ['yes', 'no'];
+    private $leaderboardPerPage = 10;
 
     public function __construct()
     {
@@ -177,8 +178,16 @@ class Pool extends Admin_Controller
         foreach ($answerRows as $row) {
             $leaderboard[] = [
                 'rank' => $rank++,
+                'user_id' => $row['user_id'] ?? 0,
                 'user_name' => $row['user_name'],
                 'user_email' => $row['user_email'],
+                'user_mobile' => $row['user_mobile'] ?? '',
+                'pool_id' => $row['pool_id'] ?? 0,
+                'pool_name' => $row['pool_name'] ?? '',
+                'host_name' => $row['host_name'] ?? '',
+                'entry_price' => $row['entry_price'] ?? 0,
+                'user_limit' => $row['user_limit'] ?? 0,
+                'total_questions' => $row['summary']['total'] ?? 0,
                 'right' => $row['summary']['right'],
                 'wrong' => $row['summary']['wrong'],
                 'checked' => $row['summary']['checked'],
@@ -190,17 +199,32 @@ class Pool extends Admin_Controller
 
     private function getFilteredLeaderboard($poolId, array $questions)
     {
-        $answerRows = $this->getPoolAnswerRows($poolId, $questions);
+        if ((int) $poolId > 0) {
+            $answerRows = $this->getPoolAnswerRows($poolId, $questions);
+        } else {
+            $answerRows = $this->getAllPoolAnswerRows();
+        }
+
         $leaderboard = $this->buildLeaderboard($answerRows);
         $search = trim((string) $this->input->get('search'));
         $resultFilter = trim((string) $this->input->get('result'));
+        $poolFilter = (int) $this->input->get('pool');
 
         if ($search !== '') {
             $leaderboard = array_values(array_filter($leaderboard, function ($row) use ($search) {
                 $needle = strtolower($search);
 
                 return strpos(strtolower((string) $row['user_name']), $needle) !== false
-                    || strpos(strtolower((string) $row['user_email']), $needle) !== false;
+                    || strpos(strtolower((string) $row['user_email']), $needle) !== false
+                    || strpos(strtolower((string) $row['user_mobile']), $needle) !== false
+                    || strpos(strtolower((string) $row['pool_name']), $needle) !== false
+                    || strpos(strtolower((string) $row['host_name']), $needle) !== false;
+            }));
+        }
+
+        if ($poolFilter > 0 && (int) $poolId === 0) {
+            $leaderboard = array_values(array_filter($leaderboard, function ($row) use ($poolFilter) {
+                return (int) $row['pool_id'] === $poolFilter;
             }));
         }
 
@@ -220,6 +244,113 @@ class Pool extends Admin_Controller
         unset($row);
 
         return $leaderboard;
+    }
+
+    private function getAllPoolAnswerRows()
+    {
+        if (!$this->db->table_exists('pool_question_answers')) {
+            return [];
+        }
+
+        $answerRows = $this->db
+            ->select("
+                pool_question_answers.*,
+                users.name as user_name,
+                users.email as user_email,
+                users.mobile as user_mobile,
+                pools.pool_name,
+                pools.price as entry_price,
+                pools.user_limit,
+                COALESCE(host_users.name, 'Host') as host_name
+            ", false)
+            ->from('pool_question_answers')
+            ->join('users', 'users.id = pool_question_answers.user_id', 'left')
+            ->join('pools', 'pools.id = pool_question_answers.pool_id', 'left')
+            ->join('users as host_users', 'host_users.id = pools.user_id', 'left')
+            ->order_by('pool_question_answers.pool_id', 'ASC')
+            ->order_by('pool_question_answers.user_id', 'ASC')
+            ->order_by('pool_question_answers.pool_question_id', 'ASC')
+            ->get()
+            ->result_array();
+
+        if (empty($answerRows)) {
+            return [];
+        }
+
+        $poolIds = array_values(array_unique(array_map(function ($row) {
+            return (int) $row['pool_id'];
+        }, $answerRows)));
+        $questionsByPool = [];
+
+        foreach ($poolIds as $poolId) {
+            $questionsByPool[$poolId] = $this->getPoolQuestions($poolId);
+        }
+
+        $answersByPoolUser = [];
+
+        foreach ($answerRows as $answerRow) {
+            $poolId = (int) $answerRow['pool_id'];
+            $userId = (int) $answerRow['user_id'];
+            $questionId = (int) $answerRow['pool_question_id'];
+            $groupKey = $poolId . ':' . $userId;
+
+            if (!isset($answersByPoolUser[$groupKey])) {
+                $answersByPoolUser[$groupKey] = [
+                    'pool_id' => $poolId,
+                    'pool_name' => $answerRow['pool_name'] ?: 'Pool',
+                    'host_name' => $answerRow['host_name'] ?: 'Host',
+                    'entry_price' => $answerRow['entry_price'] ?? 0,
+                    'user_limit' => $answerRow['user_limit'] ?? 0,
+                    'user_id' => $userId,
+                    'user_name' => $answerRow['user_name'] ?: 'User',
+                    'user_email' => $answerRow['user_email'] ?? '',
+                    'user_mobile' => $answerRow['user_mobile'] ?? '',
+                    'answers' => [],
+                ];
+            }
+
+            $answersByPoolUser[$groupKey]['answers'][$questionId] = $answerRow;
+        }
+
+        $rows = [];
+
+        foreach ($answersByPoolUser as $groupedRow) {
+            $questions = $questionsByPool[(int) $groupedRow['pool_id']] ?? [];
+            $summary = $this->calculateSummaryForRows($questions, $groupedRow['answers']);
+            $rows[] = array_merge($groupedRow, ['summary' => $summary]);
+        }
+
+        usort($rows, function ($left, $right) {
+            if ($left['summary']['right'] === $right['summary']['right']) {
+                if ($left['summary']['wrong'] === $right['summary']['wrong']) {
+                    if ($left['summary']['checked'] === $right['summary']['checked']) {
+                        return strcmp(
+                            strtolower((string) $left['user_name']),
+                            strtolower((string) $right['user_name'])
+                        );
+                    }
+
+                    return $right['summary']['checked'] <=> $left['summary']['checked'];
+                }
+
+                return $left['summary']['wrong'] <=> $right['summary']['wrong'];
+            }
+
+            return $right['summary']['right'] <=> $left['summary']['right'];
+        });
+
+        return $rows;
+    }
+
+    private function getLeaderboardPools()
+    {
+        return $this->db
+            ->select("pools.id, pools.pool_name, COALESCE(users.name, 'Host') as host_name", false)
+            ->from('pools')
+            ->join('users', 'users.id = pools.user_id', 'left')
+            ->order_by('pools.pool_name', 'ASC')
+            ->get()
+            ->result_array();
     }
 
     private function getPoolWithMeta($poolId)
@@ -303,27 +434,49 @@ class Pool extends Admin_Controller
 
     public function leaderboard($poolId = 0)
     {
-        $pool = $this->getPoolWithMeta($poolId);
-
-        if (!$pool) {
-            $this->session->set_flashdata('error', 'Pool not found.');
-            redirect('admin/pools');
+        if ((int) $poolId > 0) {
+            redirect('admin/pool/leaderboard');
             return;
         }
 
-        $questions = $this->getPoolQuestions($poolId);
-        $leaderboard = $this->getFilteredLeaderboard($poolId, $questions);
+        $pool = null;
+        $questions = [];
+        $leaderboard = $this->getFilteredLeaderboard(0, []);
+        $topThree = array_slice($leaderboard, 0, 3);
+        $remainingRows = array_slice($leaderboard, 3);
+        $currentPage = max(1, (int) $this->input->get('page'));
+        $perPage = $this->leaderboardPerPage;
+        $totalRows = count($remainingRows);
+        $totalPages = max(1, (int) ceil($totalRows / $perPage));
+
+        if ($currentPage > $totalPages) {
+            $currentPage = $totalPages;
+        }
+
+        $offset = ($currentPage - 1) * $perPage;
+        $paginatedRows = array_slice($remainingRows, $offset, $perPage);
+        $queryParams = $this->input->get();
+        unset($queryParams['page']);
 
         $data['pool'] = $pool;
         $data['questions'] = $questions;
         $data['leaderboard'] = $leaderboard;
+        $data['top_three'] = $topThree;
+        $data['table_rows'] = $paginatedRows;
         $data['search'] = trim((string) $this->input->get('search'));
         $data['result_filter'] = trim((string) $this->input->get('result'));
+        $data['pool_filter'] = (int) $this->input->get('pool');
+        $data['pool_options'] = $this->getLeaderboardPools();
         $data['participants_count'] = count($leaderboard);
         $data['top_score'] = !empty($leaderboard) ? max(array_column($leaderboard, 'right')) : 0;
         $data['checked_count'] = count(array_filter($leaderboard, function ($row) {
             return (int) $row['checked'] > 0;
         }));
+        $data['per_page'] = $perPage;
+        $data['current_page'] = $currentPage;
+        $data['total_pages'] = $totalPages;
+        $data['remaining_count'] = $totalRows;
+        $data['query_params'] = $queryParams;
 
         $this->load->view('admin/header');
         $this->load->view('admin/pool_leaderboard_view', $data);

@@ -294,6 +294,30 @@
 								<i class='bx bx-radio-circle'></i>All Pools
 							</a>
 						</li>
+						<li>
+							<a href="<?= base_url('admin/pool/leaderboard') ?>">
+								<i class='bx bx-radio-circle'></i>Leaderboard
+							</a>
+						</li>
+					</ul>
+				</li>
+
+				<li>
+					<a href="javascript:;" class="has-arrow">
+						<div class="parent-icon"><i class="bx bx-cricket-ball"></i></div>
+						<div class="menu-title">Cricket</div>
+					</a>
+					<ul>
+						<li>
+							<a href="<?= base_url('admin/cricket_matches') ?>">
+								<i class='bx bx-radio-circle'></i>All Matches
+							</a>
+						</li>
+						<li>
+							<a href="<?= base_url('admin/cricket_matches/create') ?>">
+								<i class='bx bx-radio-circle'></i>Add Match
+							</a>
+						</li>
 					</ul>
 				</li>
 

@@ -109,10 +109,17 @@ $route['admin/delete_fittv_video/(:num)'] = 'admin/fittv/delete_video/$1';
 $route['admin/fittv_course_settings'] = 'admin/fittv/course_settings';
 $route['admin/update_fittv_course_settings'] = 'admin/fittv/update_course_settings';
 $route['admin/pools'] = 'admin/pool/index';
+$route['admin/pool/leaderboard'] = 'admin/pool/leaderboard';
 $route['admin/pool/(:num)'] = 'admin/pool/questions/$1';
 $route['admin/pool/(:num)/leaderboard'] = 'admin/pool/leaderboard/$1';
 $route['admin/pool/(:num)/save_questions'] = 'admin/pool/save_questions/$1';
 $route['admin/pool/(:num)/save_answer_key'] = 'admin/pool/save_answer_key/$1';
+$route['admin/cricket_matches'] = 'admin/cricket_matches/index';
+$route['admin/cricket_matches/create'] = 'admin/cricket_matches/create';
+$route['admin/cricket_matches/store'] = 'admin/cricket_matches/store';
+$route['admin/cricket_matches/edit/(:num)'] = 'admin/cricket_matches/edit/$1';
+$route['admin/cricket_matches/update/(:num)'] = 'admin/cricket_matches/update/$1';
+$route['admin/cricket_matches/delete/(:num)'] = 'admin/cricket_matches/delete/$1';
 
 $route['admin/host_requests'] = 'admin/host_requests/index';
 $route['admin/host_requests/accept/(:num)'] = 'admin/host_requests/accept/$1';
