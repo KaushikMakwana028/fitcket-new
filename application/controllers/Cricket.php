@@ -10,6 +10,7 @@ class Cricket extends User_Controller
 {
     private $RAZORPAY_KEY_ID = "rzp_live_RCge2Oz6kUJE74";
     private $RAZORPAY_KEY_SECRET = "Pw0gRqzQkzjl5pYW10pXXZeq";
+    private $poolAnswerOptions = ['yes', 'no'];
 
     public function __construct()
     {
@@ -52,6 +53,100 @@ class Cricket extends User_Controller
             ->where('pools.id', (int) $poolId)
             ->get()
             ->row_array();
+    }
+
+    private function hasJoinedPool($poolId, $userId)
+    {
+        return $this->db
+            ->where('pool_id', (int) $poolId)
+            ->where('user_id', (int) $userId)
+            ->where('status', 'success')
+            ->count_all_results('pool_joins') > 0;
+    }
+
+    private function getPoolQuestions($poolId)
+    {
+        if (!$this->db->table_exists('pool_questions')) {
+            return [];
+        }
+
+        $query = $this->db
+            ->where('pool_id', (int) $poolId)
+            ->order_by('position', 'ASC')
+            ->order_by('id', 'ASC')
+            ->get('pool_questions');
+
+        if (!$query) {
+            return [];
+        }
+
+        return $query->result_array();
+    }
+
+    private function getUserPoolAnswersByQuestion($poolId, $userId)
+    {
+        if (!$this->db->table_exists('pool_question_answers')) {
+            return [];
+        }
+
+        $rows = $this->db
+            ->where('pool_id', (int) $poolId)
+            ->where('user_id', (int) $userId)
+            ->get('pool_question_answers')
+            ->result_array();
+
+        $answers = [];
+
+        foreach ($rows as $row) {
+            $answers[(int) $row['pool_question_id']] = $row;
+        }
+
+        return $answers;
+    }
+
+    private function hasUserSubmittedPoolAnswers($poolId, $userId)
+    {
+        if (!$this->db->table_exists('pool_question_answers')) {
+            return false;
+        }
+
+        return $this->db
+            ->where('pool_id', (int) $poolId)
+            ->where('user_id', (int) $userId)
+            ->count_all_results('pool_question_answers') > 0;
+    }
+
+    private function calculatePoolAnswerSummary(array $questions, array $userAnswers)
+    {
+        $summary = [
+            'total' => count($questions),
+            'answered' => 0,
+            'checked' => 0,
+            'right' => 0,
+            'wrong' => 0,
+        ];
+
+        foreach ($questions as $question) {
+            $questionId = (int) $question['id'];
+            $adminAnswer = strtolower(trim((string) ($question['correct_answer'] ?? '')));
+            $userAnswer = strtolower(trim((string) ($userAnswers[$questionId]['answer'] ?? '')));
+
+            if ($userAnswer !== '') {
+                $summary['answered']++;
+            }
+
+            if ($adminAnswer !== '' && $userAnswer !== '') {
+                $summary['checked']++;
+
+                if ($adminAnswer === $userAnswer) {
+                    $summary['right']++;
+                } else {
+                    $summary['wrong']++;
+                }
+            }
+        }
+
+        return $summary;
     }
 
     private function syncPoolJoinedCount($poolId)
@@ -250,6 +345,119 @@ class Cricket extends User_Controller
         $this->load->view('header', $data);
         $this->load->view('pool_view', $data);
         $this->load->view('footer');
+    }
+
+    public function pool_play($poolId = 0)
+    {
+        $user = $this->getCurrentUser();
+        $pool = $this->getPoolWithMeta($poolId);
+
+        if (!$pool) {
+            $this->session->set_flashdata('error', 'Pool not found.');
+            redirect('pool');
+            return;
+        }
+
+        if (!$this->hasJoinedPool($poolId, $user['id'])) {
+            $this->session->set_flashdata('error', 'Join this pool first to answer questions.');
+            redirect('pool');
+            return;
+        }
+
+        $questions = $this->getPoolQuestions($poolId);
+
+        if (empty($questions)) {
+            $this->session->set_flashdata('error', 'Questions are not added for this pool yet.');
+            redirect('pool');
+            return;
+        }
+
+        $userAnswers = $this->getUserPoolAnswersByQuestion($poolId, $user['id']);
+        $data['pool'] = $pool;
+        $data['questions'] = $questions;
+        $data['user_answers'] = $userAnswers;
+        $data['summary'] = $this->calculatePoolAnswerSummary($questions, $userAnswers);
+        $data['answer_options'] = $this->poolAnswerOptions;
+        $data['answers_locked'] = $this->hasUserSubmittedPoolAnswers($poolId, $user['id']);
+
+        $this->load->view('header', $data);
+        $this->load->view('pool_questions_play_view', $data);
+        $this->load->view('footer');
+    }
+
+    public function pool_submit_answers($poolId = 0)
+    {
+        $user = $this->getCurrentUser();
+        $pool = $this->getPoolWithMeta($poolId);
+
+        if (!$pool) {
+            $this->session->set_flashdata('error', 'Pool not found.');
+            redirect('pool');
+            return;
+        }
+
+        if (!$this->hasJoinedPool($poolId, $user['id'])) {
+            $this->session->set_flashdata('error', 'Join this pool first to answer questions.');
+            redirect('pool');
+            return;
+        }
+
+        if (!$this->db->table_exists('pool_question_answers')) {
+            $this->session->set_flashdata('error', 'Pool answer table is missing. Please update the database SQL first.');
+            redirect('pool/play/' . (int) $poolId);
+            return;
+        }
+
+        $questions = $this->getPoolQuestions($poolId);
+
+        if (empty($questions)) {
+            $this->session->set_flashdata('error', 'Questions are not available for this pool.');
+            redirect('pool/play/' . (int) $poolId);
+            return;
+        }
+
+        if ($this->hasUserSubmittedPoolAnswers($poolId, $user['id'])) {
+            $this->session->set_flashdata('error', 'You have already submitted your answers for this pool. Answers cannot be changed now.');
+            redirect('pool/play/' . (int) $poolId);
+            return;
+        }
+
+        $submittedAnswers = $this->input->post('answers');
+        $submittedAnswers = is_array($submittedAnswers) ? $submittedAnswers : [];
+        $timestamp = date('Y-m-d H:i:s');
+
+        $this->db->trans_start();
+
+        foreach ($questions as $question) {
+            $questionId = (int) $question['id'];
+            $answer = strtolower(trim((string) ($submittedAnswers[$questionId] ?? '')));
+
+            if (!in_array($answer, $this->poolAnswerOptions, true)) {
+                continue;
+            }
+
+            $payload = [
+                'pool_id' => (int) $poolId,
+                'pool_question_id' => $questionId,
+                'user_id' => (int) $user['id'],
+                'answer' => $answer,
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ];
+
+            $this->db->insert('pool_question_answers', $payload);
+        }
+
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === false) {
+            $this->session->set_flashdata('error', 'Unable to save your answers right now. Please try again.');
+            redirect('pool/play/' . (int) $poolId);
+            return;
+        }
+
+        $this->session->set_flashdata('success', 'Your answers have been submitted successfully.');
+        redirect('pool/play/' . (int) $poolId);
     }
 
     public function pool_add()

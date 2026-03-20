@@ -284,6 +284,20 @@
 				</li>
 
 				<li>
+					<a href="javascript:;" class="has-arrow">
+						<div class="parent-icon"><i class="bx bx-trophy"></i></div>
+						<div class="menu-title">Pool</div>
+					</a>
+					<ul>
+						<li>
+							<a href="<?= base_url('admin/pools') ?>">
+								<i class='bx bx-radio-circle'></i>All Pools
+							</a>
+						</li>
+					</ul>
+				</li>
+
+				<li>
 
 					<a href="<?= base_url('partner'); ?>" class="">
 

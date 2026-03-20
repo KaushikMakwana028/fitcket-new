@@ -1245,13 +1245,13 @@
                     </button>
                 </li>
 
-                <li class="nav-item flex-fill text-center">
+                <!-- <li class="nav-item flex-fill text-center">
                     <button class="nav-link w-100" id="fittv-tab"
                         data-bs-toggle="pill" data-bs-target="#fittv"
                         type="button">
                         <i class="fa-solid fa-play-circle me-2"></i>FITTV
                     </button>
-                </li>
+                </li> -->
                 <li class="nav-item flex-fill text-center">
                     <button class="nav-link w-100" id="about-tab" data-bs-toggle="pill" data-bs-target="#about"
                         type="button">

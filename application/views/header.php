@@ -118,25 +118,9 @@
       box-shadow: var(--shadow-medium);
     }
 
-    .main-navbar .container {
-      gap: 16px;
-      flex-wrap: nowrap;
-    }
-
-    .main-navbar .navbar-collapse {
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-
-    .main-navbar .navbar-nav {
-      flex-wrap: nowrap;
-      align-items: center;
-    }
-
     .navbar-brand img {
       transition: transform 0.3s ease;
       filter: drop-shadow(0 2px 8px rgba(111, 66, 193, 0.2));
-      flex-shrink: 0;
     }
 
     .navbar-brand:hover img {
@@ -154,7 +138,6 @@
       position: relative;
       overflow: hidden;
       font-size: 0.95rem;
-      white-space: nowrap;
     }
 
     .navbar-nav .nav-link::before {
@@ -634,47 +617,6 @@
       }
     }
 
-    @media (min-width: 1025px) and (max-width: 1366px) {
-      .top-bar {
-        display: none !important;
-      }
-
-      .main-navbar .container {
-        max-width: 100%;
-        padding: 8px 16px;
-        gap: 10px;
-      }
-
-      .navbar-brand {
-        margin-right: 6px;
-      }
-
-      .navbar-brand img {
-        width: 90px;
-        height: 46px;
-      }
-
-      .navbar-nav .nav-link {
-        padding: 10px 10px !important;
-        margin: 0 1px;
-        font-size: 0.88rem;
-      }
-
-      .cart-icon a {
-        padding: 10px;
-      }
-
-      .cart-icon a i {
-        font-size: 18px !important;
-      }
-
-      .account-btn,
-      .btn-outline-primary {
-        padding: 9px 16px !important;
-        font-size: 0.86rem !important;
-      }
-    }
-
     /* Small Mobile: under 480px */
     @media (max-width: 480px) {
       .navbar-brand img {
@@ -997,11 +939,13 @@
           <li class="nav-item">
             <a class="nav-link <?= ($segment == 'session_booking' ? 'active' : '') ?>" href="<?= base_url('session_booking'); ?>">Session</a>
           </li>
+
           <li class="nav-item">
             <a class="nav-link <?= ($segment == 'cricket' ? 'active' : '') ?>" href="<?= base_url('cricket'); ?>">
               Cricket
             </a>
           </li>
+
           <li class="nav-item">
             <a class="nav-link <?= ($segment == 'about-us' ? 'active' : '') ?>" href="<?= base_url('about-us'); ?>">About Us</a>
           </li>
@@ -1059,11 +1003,13 @@
         <li class="nav-item">
           <a class="nav-link" href="<?= base_url(); ?>"><i class="fas fa-home me-2"></i>Home</a>
         </li>
-        <li class="nav-item">
+
+       <li class="nav-item">
           <a class="nav-link" href="<?= base_url('cricket'); ?>">
             <i class="fas fa-baseball-ball me-2"></i>Cricket
           </a>
         </li>
+
         <li class="nav-item">
           <a class="nav-link" href="<?= base_url('about-us'); ?>"><i class="fas fa-info-circle me-2"></i>About Us</a>
         </li>

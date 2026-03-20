@@ -1307,9 +1307,9 @@ if (!empty($pools)) {
 
                             <div class="pool-card-footer">
                                 <?php if ($hasJoined): ?>
-                                    <button class="pool-join-btn joined" disabled>
-                                        <i class="fas fa-check"></i> Joined
-                                    </button>
+                                    <a href="<?= base_url('pool/play/' . $p['id']) ?>" class="pool-join-btn joined">
+                                        <i class="fas fa-play-circle"></i> Questions
+                                    </a>
                                 <?php elseif ($isFull): ?>
                                     <button class="pool-join-btn full" disabled>
                                         <i class="fas fa-lock"></i> Pool Full
@@ -1319,8 +1319,8 @@ if (!empty($pools)) {
                                         <i class="fas fa-sign-in-alt"></i> Join Pool
                                     </a>
                                 <?php endif; ?>
-                                <a href="<?= base_url('pool/view/' . $p['id']) ?>" class="pool-view-btn" title="View Details">
-                                    <i class="fas fa-eye"></i>
+                                <a href="<?= $hasJoined ? base_url('pool/play/' . $p['id']) : base_url('pool/join/' . $p['id']) ?>" class="pool-view-btn" title="<?= $hasJoined ? 'Open Questions' : 'Join Pool' ?>">
+                                    <i class="fas <?= $hasJoined ? 'fa-clipboard-list' : 'fa-eye' ?>"></i>
                                 </a>
                             </div>
                         </div>
@@ -1405,7 +1405,9 @@ if (!empty($pools)) {
 
                                     <td>
                                         <?php if ($hasJoined): ?>
-                                            <span class="table-action-btn full"><i class="fas fa-check"></i> Joined</span>
+                                            <a href="<?= base_url('pool/play/' . $p['id']) ?>" class="table-action-btn join">
+                                                <i class="fas fa-play-circle"></i> Questions
+                                            </a>
                                         <?php elseif ($isFull): ?>
                                             <span class="table-action-btn full"><i class="fas fa-lock"></i> Full</span>
                                         <?php else: ?>
