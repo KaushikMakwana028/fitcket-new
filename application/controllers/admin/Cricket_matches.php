@@ -154,6 +154,13 @@ class Cricket_matches extends Admin_Controller
             $adminStatus = 'scheduled';
         }
 
+        if ($adminStatus === 'completed') {
+            $oldStatus = $existing['admin_status'] ?? 'scheduled';
+            if ($oldStatus !== 'live' && $oldStatus !== 'completed') {
+                throw new RuntimeException('Match must be set to Live before it can be marked as Completed.');
+            }
+        }
+
         $startAt = strtotime($startDate . ' ' . $startTime);
 
         if ($startAt === false) {
@@ -260,6 +267,16 @@ class Cricket_matches extends Admin_Controller
             'scheduled' => (int) $this->db->where('admin_status', 'scheduled')->count_all_results('cricket_matches'),
             'completed' => (int) $this->db->where('admin_status', 'completed')->count_all_results('cricket_matches'),
         ];
+
+        $data['pending_results'] = $this->db
+            ->where('admin_status', 'completed')
+            ->group_start()
+                ->where('match_result', null)
+                ->or_where('match_result', '')
+            ->group_end()
+            ->order_by('updated_at', 'DESC')
+            ->get('cricket_matches')
+            ->result_array();
 
         $this->load->view('admin/header');
         $this->load->view('admin/cricket_matches_view', $data);
@@ -384,5 +401,53 @@ class Cricket_matches extends Admin_Controller
         $this->db->where('id', (int) $id)->delete('cricket_matches');
         $this->session->set_flashdata('success', 'Cricket match deleted successfully.');
         redirect('admin/cricket_matches');
+    }
+
+    public function auto_update_status()
+    {
+        if (!$this->input->is_ajax_request()) {
+            show_404();
+        }
+
+        $id = (int) $this->input->post('id');
+        $status = trim((string) $this->input->post('status'));
+
+        if ($id > 0 && in_array($status, ['scheduled', 'live', 'completed', 'cancelled'])) {
+            if ($status === 'completed') {
+                $match = $this->db->get_where('cricket_matches', ['id' => $id])->row_array();
+                if ($match && $match['admin_status'] !== 'live' && $match['admin_status'] !== 'completed') {
+                    echo json_encode(['success' => false, 'message' => 'Match must be Live before it can be Completed.']);
+                    return;
+                }
+            }
+            
+            $this->db->where('id', $id)->update('cricket_matches', [
+                'admin_status' => $status, 
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false]);
+        }
+    }
+
+    public function save_result()
+    {
+        if (!$this->input->is_ajax_request()) {
+            show_404();
+        }
+
+        $id = (int) $this->input->post('id');
+        $result = trim((string) $this->input->post('match_result'));
+
+        if ($id > 0 && $result !== '') {
+            $this->db->where('id', $id)->update('cricket_matches', [
+                'match_result' => $result,
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+            echo json_encode(['success' => true]);
+        } else {
+            echo json_encode(['success' => false, 'message' => 'Invalid data']);
+        }
     }
 }

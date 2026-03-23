@@ -137,6 +137,7 @@ class Cricket extends User_Controller
             'date_label' => $startAt ? date('d M Y', $startAt) : 'Not scheduled',
             'time_label' => $startAt ? date('h:i A', $startAt) : '',
             'teams' => trim((string) ($match['team_home'] ?? '')) . ' vs ' . trim((string) ($match['team_away'] ?? '')),
+            'match_result' => trim((string) ($match['match_result'] ?? '')),
         ];
     }
 
@@ -145,7 +146,7 @@ class Cricket extends User_Controller
         $result = [
             'live_match' => null,
             'primary_match' => null,
-            'today_matches' => [],
+            'completed_matches' => [],
             'upcoming_matches' => [],
             'featured_match' => null,
         ];
@@ -163,7 +164,7 @@ class Cricket extends User_Controller
             ->result_array();
 
         $liveMatches = [];
-        $todayMatches = [];
+        $completedMatches = [];
         $upcomingMatches = [];
         $visibleMatches = [];
 
@@ -182,27 +183,30 @@ class Cricket extends User_Controller
 
             $bucket = $this->getCricketMatchBucket($row, $nextStartAt);
 
-            if ($bucket === 'hidden' || $bucket === 'completed') {
+            if ($bucket === 'hidden') {
                 continue;
             }
 
             $card = $this->mapCricketMatchCard($row, $bucket);
-            $visibleMatches[] = $card;
+            
+            if ($bucket !== 'completed') {
+                $visibleMatches[] = $card;
+            }
 
             if ($bucket === 'live') {
                 $liveMatches[] = $card;
-            } elseif ($bucket === 'today') {
-                $todayMatches[] = $card;
-            } elseif ($bucket === 'upcoming') {
+            } elseif ($bucket === 'completed') {
+                $completedMatches[] = $card;
+            } elseif ($bucket === 'today' || $bucket === 'upcoming') {
                 $upcomingMatches[] = $card;
             }
         }
 
         $result['live_match'] = !empty($liveMatches) ? $liveMatches[0] : null;
-        $result['today_matches'] = array_slice($todayMatches, 0, 4);
+        $result['completed_matches'] = array_slice(array_reverse($completedMatches), 0, 4);
         $result['upcoming_matches'] = array_slice($upcomingMatches, 0, 4);
         $result['primary_match'] = $result['live_match']
-            ?: (!empty($todayMatches) ? $todayMatches[0] : (!empty($upcomingMatches) ? $upcomingMatches[0] : null));
+            ?: (!empty($upcomingMatches) ? $upcomingMatches[0] : null);
 
         $result['featured_match'] = null;
         if (!empty($result['primary_match'])) {
@@ -480,19 +484,34 @@ class Cricket extends User_Controller
         $matches = $this->getCricketPageMatches();
         $data['live_match'] = $matches['live_match'];
         $data['featured_match'] = $matches['featured_match'];
-        $data['today_matches'] = $matches['today_matches'];
+        $data['completed_matches'] = $matches['completed_matches'];
         $data['upcoming'] = $matches['upcoming_matches'];
         $primaryLiveCard = $matches['primary_match'] ?? $matches['featured_match'];
+        $data['has_live'] = !empty($matches['live_match']);
         $data['live'] = [
-            'team1' => $primaryLiveCard['team1'] ?? 'No Match',
-            'team2' => $primaryLiveCard['team2'] ?? 'Scheduled Soon',
-            'score' => $primaryLiveCard['score'] ?? 'Add matches from admin',
+            'team1' => $primaryLiveCard['team1'] ?? 'No Matches',
+            'team2' => $primaryLiveCard['team2'] ?? 'Scheduled',
+            'score' => $primaryLiveCard['score'] ?? 'Check back soon for fixtures',
             'status' => !empty($matches['live_match']) ? 'LIVE' : strtoupper((string) ($primaryLiveCard['bucket'] ?? 'today')),
             'team1_logo' => $primaryLiveCard['team1_logo'] ?? '',
             'team2_logo' => $primaryLiveCard['team2_logo'] ?? '',
             'competition_name' => $primaryLiveCard['competition_name'] ?? '',
             'venue' => $primaryLiveCard['venue'] ?? '',
             'start_label' => $primaryLiveCard['start_label'] ?? '',
+        ];
+
+        $featuredCard = $matches['featured_match'] ?? $matches['primary_match'];
+        $data['has_featured'] = !empty($featuredCard);
+        $data['featured'] = [
+            'team1' => $featuredCard['team1'] ?? 'No Matches',
+            'team2' => $featuredCard['team2'] ?? 'Scheduled',
+            'score' => $featuredCard['score'] ?? 'Check back soon for fixtures',
+            'status' => !empty($featuredCard['bucket']) && $featuredCard['bucket'] === 'live' ? 'LIVE NOW' : (!empty($featuredCard['bucket']) && $featuredCard['bucket'] === 'today' ? 'TODAY MATCH' : 'UPCOMING MATCH'),
+            'team1_logo' => $featuredCard['team1_logo'] ?? '',
+            'team2_logo' => $featuredCard['team2_logo'] ?? '',
+            'competition_name' => $featuredCard['competition_name'] ?? '',
+            'venue' => $featuredCard['venue'] ?? '',
+            'start_label' => $featuredCard['start_label'] ?? '',
         ];
         $data['upcoming'] = array_map(function ($match) {
             $match['date'] = trim(($match['date_label'] ?? '') . (!empty($match['time_label']) ? ', ' . $match['time_label'] : ''));
