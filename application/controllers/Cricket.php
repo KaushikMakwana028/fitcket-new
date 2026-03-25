@@ -26,7 +26,6 @@ class Cricket extends User_Controller
             $current_url = current_url();
             redirect('login?redirect=' . urlencode($current_url));
         }
-
     }
 
     private function getCurrentUser()
@@ -188,7 +187,7 @@ class Cricket extends User_Controller
             }
 
             $card = $this->mapCricketMatchCard($row, $bucket);
-            
+
             if ($bucket !== 'completed') {
                 $visibleMatches[] = $card;
             }
@@ -525,10 +524,22 @@ class Cricket extends User_Controller
         ];
 
         $data['players'] = [
-            'Virat Kohli',
-            'Babar Azam',
-            'Joe Root',
-            'Steve Smith'
+            [
+                'name' => 'Virat Kohli',
+                'image' => 'assets/images/cricket/VK.jpg'
+            ],
+            [
+                'name' => 'AB de Villiers',
+                'image' => 'assets/images/cricket/ABD.png'
+            ],
+            [
+                'name' => 'Joe Root',
+                'image' => 'assets/images/cricket/JR.jpeg'
+            ],
+            [
+                'name' => 'Steve Smith',
+                'image' => 'assets/images/cricket/SS.jpeg'
+            ]
         ];
 
         $data['request_status'] = $request ? $request['status'] : null;
@@ -578,8 +589,13 @@ class Cricket extends User_Controller
     {
         $user = $this->getCurrentUser();
 
-        $data['pools'] = $this->db
-            ->select("
+        if ($this->db->field_exists('isActive', 'pools') && $this->db->field_exists('created_at', 'pools')) {
+            $this->db->where('created_at <=', date('Y-m-d H:i:s', strtotime('-24 hours')))
+                ->where('isActive', 1)
+                ->update('pools', ['isActive' => 0]);
+        }
+
+        $this->db->select("
                 pools.*,
                 COALESCE(users.name, 'Host') as host_name,
                 (
@@ -590,8 +606,13 @@ class Cricket extends User_Controller
                 ) as total_joined
             ", false)
             ->from('pools')
-            ->join('users', 'users.id = pools.user_id', 'left')
-            ->order_by('pools.id', 'DESC')
+            ->join('users', 'users.id = pools.user_id', 'left');
+
+        if ($this->db->field_exists('isActive', 'pools')) {
+            $this->db->where('pools.isActive', 1);
+        }
+
+        $data['pools'] = $this->db->order_by('pools.id', 'DESC')
             ->get()
             ->result_array();
 

@@ -31,6 +31,7 @@ $completionPercent = (int) round(((int) $summary['answered'] / max(1, (int) $sum
         border-radius: 18px;
         border: 1px solid transparent;
         box-shadow: 0 10px 18px rgba(23, 50, 77, 0.05);
+        font-weight: 700;
     }
 
     .pool-play-hero {
@@ -66,7 +67,7 @@ $completionPercent = (int) round(((int) $summary['answered'] / max(1, (int) $sum
         bottom: -80px;
     }
 
-    .pool-play-hero > * {
+    .pool-play-hero>* {
         position: relative;
         z-index: 1;
     }

@@ -1457,9 +1457,9 @@ if (!empty($pools)) {
                                 <div class="pool-card-meta">
                                     <span class="pool-status-badge <?= $statusClass ?>"><?= $statusText ?></span>
                                     <div class="pool-price-tag <?= $p['price'] == 0 ? 'free' : '' ?>">
-                                    <?= $p['price'] == 0 ? 'FREE' : '₹' . number_format($p['price']) ?>
+                                        <?= $p['price'] == 0 ? 'FREE' : '₹' . number_format($p['price']) ?>
+                                    </div>
                                 </div>
-                            </div>
 
                             </div>
                             <div class="pool-card-stats">
@@ -1695,7 +1695,7 @@ if (!empty($pools)) {
 
         <?php else: ?>
             <div class="empty-state">
-                <div class="empty-icon"><i class="fas fa-swimming-pool"></i></div>
+                <div class="empty-icon"><i class="fas fa-dice"></i></div>
                 <div class="empty-title">No Pools Available</div>
                 <div class="empty-text">No host has created a pool yet. Once any host creates one, it will appear here.</div>
             </div>

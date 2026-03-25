@@ -17,6 +17,7 @@ class Api extends CI_Controller
     private $razorpay_key_id;
     private $razorpay_key_secret;
     private $api;
+    private $poolAnswerOptions = ['yes', 'no'];
 
     public function __construct()
     {
@@ -653,6 +654,99 @@ class Api extends CI_Controller
         return true;
     }
 
+    public function become_host()
+    {
+        header('Content-Type: application/json');
+
+        // 1️⃣ Verify JWT Token
+        $authHeader = $this->input->get_request_header('Authorization', TRUE);
+        $token = null;
+
+        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        $decoded = $this->verify_jwt($token);
+        if (!$decoded || empty($decoded->data->id)) {
+            return $this->output
+                ->set_status_header(401)
+                ->set_output(json_encode([
+                    'status' => false,
+                    'code' => 401,
+                    'message' => 'Invalid token or user ID missing',
+                    'data' => null
+                ]));
+        }
+
+        $user_id = (int) $decoded->data->id;
+
+        $input_data = json_decode($this->input->raw_input_stream, true);
+        if (!empty($input_data)) {
+            $_POST = $input_data;
+        }
+
+        $instagram_url = $this->input->post('insta_url');
+        if (!$instagram_url) {
+            $instagram_url = $this->input->post('instagram_url');
+        }
+
+        if (empty($instagram_url)) {
+            return $this->output
+                ->set_status_header(400)
+                ->set_output(json_encode([
+                    'status' => false,
+                    'code' => 400,
+                    'message' => 'Instagram URL is required.',
+                    'data' => null
+                ]));
+        }
+
+        $exists = $this->db->get_where('host_requests', ['user_id' => $user_id])->row();
+
+        if ($exists) {
+            return $this->output
+                ->set_status_header(400)
+                ->set_output(json_encode([
+                    'status' => false,
+                    'code' => 400,
+                    'message' => 'You have already applied to become a host.',
+                    'data' => null
+                ]));
+        }
+
+        $user = $this->db->get_where('users', ['id' => $user_id])->row_array();
+
+        if (!$user) {
+            return $this->output
+                ->set_status_header(400)
+                ->set_output(json_encode([
+                    'status' => false,
+                    'code' => 400,
+                    'message' => 'User not found.',
+                    'data' => null
+                ]));
+        }
+
+        $data = [
+            'user_id' => $user_id,
+            'name' => $user['name'] ?? '',
+            'email' => $user['email'] ?? '',
+            'mobile' => $user['mobile'] ?? '',
+            'instagram_url' => $instagram_url,
+            'status' => 'pending'
+        ];
+
+        $this->db->insert('host_requests', $data);
+
+        return $this->output
+            ->set_status_header(200)
+            ->set_output(json_encode([
+                'status' => true,
+                'code' => 200,
+                'message' => 'Host request submitted successfully.',
+                'data' => null
+            ]));
+    }
 
     public function home()
     {
@@ -5393,7 +5487,7 @@ class Api extends CI_Controller
 
         foreach ($categories as &$cat) {
             if (!empty($cat->image)) {
-                $cat->image = base_url($cat->image); 
+                $cat->image = base_url($cat->image);
             }
         }
 
@@ -5420,7 +5514,7 @@ class Api extends CI_Controller
         }
 
         $category = $this->db->get_where('fittv_categories', ['id' => $category_id])->row();
-        
+
         if (!$category) {
             return $this->output->set_status_header(404)->set_output(json_encode([
                 'status' => false,
@@ -5438,10 +5532,10 @@ class Api extends CI_Controller
 
         foreach ($videos as &$vid) {
             if (!empty($vid->video)) {
-                $vid->video = base_url('uploads/videos/' . $vid->video); 
+                $vid->video = base_url('uploads/videos/' . $vid->video);
             }
             if (!empty($vid->thumbnail)) {
-                $vid->thumbnail = base_url('uploads/thumbnails/' . $vid->thumbnail); 
+                $vid->thumbnail = base_url('uploads/thumbnails/' . $vid->thumbnail);
             }
         }
 
@@ -5455,6 +5549,619 @@ class Api extends CI_Controller
                 'gender' => $category->gender
             ],
             'data' => $videos
+        ]));
+    }
+    public function get_pools()
+    {
+        header('Content-Type: application/json');
+
+        $authHeader = $this->input->get_request_header('Authorization', TRUE);
+        $token = null;
+        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        $decoded = $this->verify_jwt($token);
+        if (!$decoded || empty($decoded->data->id)) {
+            return $this->output->set_status_header(401)->set_output(json_encode([
+                'status' => false,
+                'code' => 401,
+                'message' => 'Invalid token or user ID missing',
+                'data' => null
+            ]));
+        }
+
+        $user_id = (int) $decoded->data->id;
+
+        // Temporarily commented out so you can see older pools for testing
+        // if ($this->db->field_exists('isActive', 'pools') && $this->db->field_exists('created_at', 'pools')) {
+        //     $this->db->where('created_at <=', date('Y-m-d H:i:s', strtotime('-24 hours')))
+        //          ->where('isActive', 1)
+        //          ->update('pools', ['isActive' => 0]);
+        // }
+
+        $this->db->select("
+                pools.*,
+                COALESCE(users.name, 'Host') as host_name,
+                (
+                    SELECT COUNT(*)
+                    FROM pool_joins
+                    WHERE pool_joins.pool_id = pools.id
+                    AND pool_joins.status = 'success'
+                ) as total_joined
+            ", false)
+            ->from('pools')
+            ->join('users', 'users.id = pools.user_id', 'left');
+
+        if ($this->db->field_exists('isActive', 'pools')) {
+            $this->db->where('pools.isActive', 1);
+        }
+
+        $pools = $this->db->order_by('pools.id', 'DESC')
+            ->get()
+            ->result_array();
+
+        $poolIds = array_map('intval', array_column($pools, 'id'));
+
+        $pool_members = [];
+        if (!empty($poolIds)) {
+            $rows = $this->db
+                ->select('pool_joins.pool_id, users.name')
+                ->from('pool_joins')
+                ->join('users', 'users.id = pool_joins.user_id', 'left')
+                ->where_in('pool_joins.pool_id', $poolIds)
+                ->where('pool_joins.status', 'success')
+                ->order_by('users.name', 'ASC')
+                ->get()
+                ->result_array();
+
+            foreach ($rows as $row) {
+                $poolId = (int) $row['pool_id'];
+                if (!isset($pool_members[$poolId])) {
+                    $pool_members[$poolId] = [];
+                }
+                $pool_members[$poolId][] = $row['name'] ?: 'User';
+            }
+        }
+
+        $joinedRows = $this->db
+            ->select('pool_id')
+            ->from('pool_joins')
+            ->where('user_id', $user_id)
+            ->where('status', 'success')
+            ->get()
+            ->result_array();
+
+        $joined_pool_ids = array_map('intval', array_column($joinedRows, 'pool_id'));
+
+        return $this->output->set_status_header(200)->set_output(json_encode([
+            'status' => true,
+            'code' => 200,
+            'message' => 'Pools fetched successfully.',
+            'data' => [
+                'pools' => $pools,
+                'pool_members' => $pool_members,
+                'joined_pool_ids' => $joined_pool_ids
+            ]
+        ]));
+    }
+
+    public function get_pool_details()
+    {
+        header('Content-Type: application/json');
+
+        $authHeader = $this->input->get_request_header('Authorization', TRUE);
+        $token = null;
+        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        $decoded = $this->verify_jwt($token);
+        if (!$decoded || empty($decoded->data->id)) {
+            return $this->output->set_status_header(401)->set_output(json_encode([
+                'status' => false,
+                'code' => 401,
+                'message' => 'Invalid token or user ID missing',
+                'data' => null
+            ]));
+        }
+
+        $user_id = (int) $decoded->data->id;
+
+        $input_data = json_decode($this->input->raw_input_stream, true);
+        if (!empty($input_data)) {
+            $_POST = $input_data;
+        }
+
+        $pool_id = (int) ($this->input->post('pool_id') ?? $this->input->get('pool_id') ?? $this->input->post('id') ?? $this->input->get('id'));
+
+        if (!$pool_id) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'pool_id (or id) is required.',
+                'data' => null
+            ]));
+        }
+
+        $pool = $this->db->select("
+                pools.*,
+                COALESCE(users.name, 'Host') as host_name,
+                (
+                    SELECT COUNT(*)
+                    FROM pool_joins
+                    WHERE pool_joins.pool_id = pools.id
+                    AND pool_joins.status = 'success'
+                ) as total_joined
+            ", false)
+            ->from('pools')
+            ->join('users', 'users.id = pools.user_id', 'left')
+            ->where('pools.id', $pool_id)
+            ->get()
+            ->row_array();
+
+        if (!$pool) {
+            return $this->output->set_status_header(404)->set_output(json_encode([
+                'status' => false,
+                'code' => 404,
+                'message' => 'Pool not found.',
+                'data' => null
+            ]));
+        }
+
+        $has_joined = $this->db
+            ->where('pool_id', $pool_id)
+            ->where('user_id', $user_id)
+            ->where('status', 'success')
+            ->count_all_results('pool_joins') > 0;
+
+        $members = $this->db
+            ->select('users.name')
+            ->from('pool_joins')
+            ->join('users', 'users.id = pool_joins.user_id', 'left')
+            ->where('pool_joins.pool_id', $pool_id)
+            ->where('pool_joins.status', 'success')
+            ->order_by('users.name', 'ASC')
+            ->get()
+            ->result_array();
+
+        $pool_members = array_column($members, 'name');
+
+        return $this->output->set_status_header(200)->set_output(json_encode([
+            'status' => true,
+            'code' => 200,
+            'message' => 'Pool details fetched successfully.',
+            'data' => [
+                'pool' => $pool,
+                'has_joined' => $has_joined,
+                'pool_members' => $pool_members
+            ]
+        ]));
+    }
+
+    public function create_pool()
+    {
+        header('Content-Type: application/json');
+
+        $authHeader = $this->input->get_request_header('Authorization', TRUE);
+        $token = null;
+        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        $decoded = $this->verify_jwt($token);
+        if (!$decoded || empty($decoded->data->id)) {
+            return $this->output->set_status_header(401)->set_output(json_encode([
+                'status' => false,
+                'code' => 401,
+                'message' => 'Invalid token or user ID missing',
+                'data' => null
+            ]));
+        }
+
+        $user_id = (int) $decoded->data->id;
+        $user = $this->db->get_where('users', ['id' => $user_id])->row_array();
+
+        if (!$user) {
+            return $this->output->set_status_header(404)->set_output(json_encode([
+                'status' => false,
+                'code' => 404,
+                'message' => 'User not found.',
+                'data' => null
+            ]));
+        }
+
+        if ((int) ($user['is_host'] ?? 0) !== 1) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Unauthorized. Only hosts can create pools.',
+                'data' => null
+            ]));
+        }
+
+        $input_data = json_decode($this->input->raw_input_stream, true);
+        if (!empty($input_data)) {
+            $_POST = $input_data;
+        }
+
+        $poolName = trim((string) $this->input->post('pool_name'));
+        $description = trim((string) $this->input->post('description'));
+        $userLimitRaw = trim((string) $this->input->post('user_limit'));
+        $userLimit = $userLimitRaw === '' ? 0 : (int) $userLimitRaw;
+        $price = (float) $this->input->post('price');
+        $matchDate = trim((string) $this->input->post('match_date'));
+        $matchTime = trim((string) $this->input->post('match_time'));
+
+        if ($poolName === '' || strlen($poolName) < 3) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Pool name must be at least 3 characters.',
+                'data' => null
+            ]));
+        }
+
+        if ($price < 0) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Entry price cannot be negative.',
+                'data' => null
+            ]));
+        }
+
+        if ($userLimit < 0 || ($userLimit > 0 && $userLimit < 2)) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Players must be at least 2, or use 0 for unlimited.',
+                'data' => null
+            ]));
+        }
+
+        if ($matchDate === '' || $matchTime === '') {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Please provide match date and match start time.',
+                'data' => null
+            ]));
+        }
+
+        $matchStartAt = strtotime($matchDate . ' ' . $matchTime);
+        if ($matchStartAt === false) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Invalid match date or time.',
+                'data' => null
+            ]));
+        }
+
+        $joinCloseAt = strtotime('-30 minutes', $matchStartAt);
+        if ($joinCloseAt <= time()) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Match start time must be at least 30 minutes in the future.',
+                'data' => null
+            ]));
+        }
+
+        $data = [
+            'user_id' => $user_id,
+            'pool_name' => $poolName,
+            'user_limit' => $userLimit,
+            'price' => $price,
+            'match_start_at' => date('Y-m-d H:i:s', $matchStartAt),
+            'join_close_at' => date('Y-m-d H:i:s', $joinCloseAt),
+        ];
+
+        if ($this->db->field_exists('description', 'pools')) {
+            $data['description'] = $description;
+        }
+
+        if ($this->db->field_exists('total_joined', 'pools')) {
+            $data['total_joined'] = 0;
+        }
+
+        $this->db->insert('pools', $data);
+        $insert_id = $this->db->insert_id();
+
+        if ($insert_id) {
+            return $this->output->set_status_header(200)->set_output(json_encode([
+                'status' => true,
+                'code' => 200,
+                'message' => 'Pool created successfully.',
+                'data' => ['pool_id' => $insert_id]
+            ]));
+        } else {
+            return $this->output->set_status_header(500)->set_output(json_encode([
+                'status' => false,
+                'code' => 500,
+                'message' => 'Failed to create pool. Please try again.',
+                'data' => null
+            ]));
+        }
+    }
+    public function get_questions()
+    {
+        header('Content-Type: application/json');
+
+        $authHeader = $this->input->get_request_header('Authorization', TRUE);
+        $token = null;
+        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        $decoded = $this->verify_jwt($token);
+        if (!$decoded || empty($decoded->data->id)) {
+            return $this->output->set_status_header(401)->set_output(json_encode([
+                'status' => false,
+                'code' => 401,
+                'message' => 'Invalid token or user ID missing',
+                'data' => null
+            ]));
+        }
+
+        $user_id = (int) $decoded->data->id;
+
+        $input_data = json_decode($this->input->raw_input_stream, true);
+        if (!empty($input_data)) {
+            $_POST = $input_data;
+        }
+
+        $pool_id = (int) ($this->input->post('pool_id') ?? $this->input->get('pool_id') ?? $this->input->post('id') ?? $this->input->get('id'));
+
+        if (!$pool_id) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'pool_id is required.',
+                'data' => null
+            ]));
+        }
+
+        $hasJoined = $this->db
+            ->where('pool_id', $pool_id)
+            ->where('user_id', $user_id)
+            ->where('status', 'success')
+            ->count_all_results('pool_joins') > 0;
+
+        if (!$hasJoined) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'You must join this pool first to view or answer questions.',
+                'data' => null
+            ]));
+        }
+
+        $questions = [];
+        if ($this->db->table_exists('pool_questions')) {
+            $questions = $this->db
+                ->where('pool_id', $pool_id)
+                ->order_by('position', 'ASC')
+                ->order_by('id', 'ASC')
+                ->get('pool_questions')
+                ->result_array();
+        }
+
+        $user = $this->db->get_where('users', ['id' => $user_id])->row_array();
+        $user_name = $user ? ($user['name'] ?: 'User') : 'Unknown';
+
+        $userAnswers = [];
+        $answers_locked = false;
+        if ($this->db->table_exists('pool_question_answers')) {
+            $rows = $this->db
+                ->where('pool_id', $pool_id)
+                ->where('user_id', $user_id)
+                ->get('pool_question_answers')
+                ->result_array();
+
+            if (!empty($rows)) {
+                $answers_locked = true;
+            }
+
+            foreach ($rows as $row) {
+                $userAnswers[(int) $row['pool_question_id']] = [
+                    'pool_question_id' => $row['pool_question_id'],
+                    'user_name' => $user_name,
+                    'answer' => $row['answer']
+                ];
+            }
+        }
+
+        $summary = [
+            'total' => count($questions),
+            'answered' => 0,
+            'checked' => 0,
+            'right' => 0,
+            'wrong' => 0,
+        ];
+
+        foreach ($questions as $question) {
+            $questionId = (int) $question['id'];
+            $adminAnswer = strtolower(trim((string) ($question['correct_answer'] ?? '')));
+            $userAnswer = strtolower(trim((string) ($userAnswers[$questionId]['answer'] ?? '')));
+
+            if ($userAnswer !== '') {
+                $summary['answered']++;
+            }
+
+            if ($adminAnswer !== '' && $userAnswer !== '') {
+                $summary['checked']++;
+                if ($adminAnswer === $userAnswer) {
+                    $summary['right']++;
+                } else {
+                    $summary['wrong']++;
+                }
+            }
+        }
+
+        $output_questions = [];
+        foreach ($questions as $q) {
+            $output_questions[] = [
+                'id' => $q['id'],
+                'question' => $q['question']
+            ];
+        }
+
+        return $this->output->set_status_header(200)->set_output(json_encode([
+            'status' => true,
+            'code' => 200,
+            'message' => 'Questions fetched successfully.',
+            'data' => [
+                'questions' => $output_questions,
+                'user_answers' => $userAnswers,
+                'summary' => $summary,
+                'answer_options' => $this->poolAnswerOptions,
+                'answers_locked' => $answers_locked
+            ]
+        ]));
+    }
+
+    public function submit_answer()
+    {
+        header('Content-Type: application/json');
+
+        $authHeader = $this->input->get_request_header('Authorization', TRUE);
+        $token = null;
+        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        $decoded = $this->verify_jwt($token);
+        if (!$decoded || empty($decoded->data->id)) {
+            return $this->output->set_status_header(401)->set_output(json_encode([
+                'status' => false,
+                'code' => 401,
+                'message' => 'Invalid token or user ID missing',
+                'data' => null
+            ]));
+        }
+
+        $user_id = (int) $decoded->data->id;
+
+        $input_data = json_decode($this->input->raw_input_stream, true);
+        if (!empty($input_data)) {
+            $_POST = $input_data;
+        }
+
+        $pool_id = (int) ($this->input->post('pool_id') ?? $this->input->get('pool_id') ?? $this->input->post('id') ?? $this->input->get('id'));
+
+        if (!$pool_id) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'pool_id is required.',
+                'data' => null
+            ]));
+        }
+
+        $hasJoined = $this->db
+            ->where('pool_id', $pool_id)
+            ->where('user_id', $user_id)
+            ->where('status', 'success')
+            ->count_all_results('pool_joins') > 0;
+
+        if (!$hasJoined) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'You must join this pool first to submit answers.',
+                'data' => null
+            ]));
+        }
+
+        if (!$this->db->table_exists('pool_question_answers')) {
+            return $this->output->set_status_header(500)->set_output(json_encode([
+                'status' => false,
+                'code' => 500,
+                'message' => 'Database error: pool_question_answers table missing.',
+                'data' => null
+            ]));
+        }
+
+        $alreadySubmitted = $this->db
+            ->where('pool_id', $pool_id)
+            ->where('user_id', $user_id)
+            ->count_all_results('pool_question_answers') > 0;
+
+        if ($alreadySubmitted) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'You have already submitted your answers. They cannot be changed.',
+                'data' => null
+            ]));
+        }
+
+        $questions = [];
+        if ($this->db->table_exists('pool_questions')) {
+            $questions = $this->db
+                ->where('pool_id', $pool_id)
+                ->get('pool_questions')
+                ->result_array();
+        }
+
+        $submittedAnswers = $this->input->post('answers');
+        if (!is_array($submittedAnswers)) {
+            $submittedAnswers = [];
+        }
+
+        $timestamp = date('Y-m-d H:i:s');
+        $validInserts = 0;
+
+        $this->db->trans_start();
+
+        foreach ($questions as $question) {
+            $questionId = (int) $question['id'];
+            $answer = strtolower(trim((string) ($submittedAnswers[$questionId] ?? '')));
+
+            if (!in_array($answer, $this->poolAnswerOptions, true)) {
+                continue;
+            }
+
+            $payload = [
+                'pool_id' => $pool_id,
+                'pool_question_id' => $questionId,
+                'user_id' => $user_id,
+                'answer' => $answer,
+                'created_at' => $timestamp,
+                'updated_at' => $timestamp,
+            ];
+
+            $this->db->insert('pool_question_answers', $payload);
+            $validInserts++;
+        }
+
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === false) {
+            return $this->output->set_status_header(500)->set_output(json_encode([
+                'status' => false,
+                'code' => 500,
+                'message' => 'Unable to save your answers right now. Please try again.',
+                'data' => null
+            ]));
+        }
+
+        if ($validInserts === 0 && !empty($questions)) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'No valid answers provided.',
+                'data' => null
+            ]));
+        }
+
+        return $this->output->set_status_header(200)->set_output(json_encode([
+            'status' => true,
+            'code' => 200,
+            'message' => 'Your answers have been submitted successfully.',
+            'data' => null
         ]));
     }
 }
