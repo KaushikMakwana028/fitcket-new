@@ -667,7 +667,11 @@ class Cricket extends User_Controller
         $data['user_answers'] = $userAnswers;
         $data['summary'] = $this->calculatePoolAnswerSummary($questions, $userAnswers);
         $data['answer_options'] = $this->poolAnswerOptions;
-        $data['answers_locked'] = $this->hasUserSubmittedPoolAnswers($poolId, $user['id']);
+
+        $match_started = (!empty($pool['match_start_at']) && strtotime($pool['match_start_at']) <= time());
+        $data['match_started'] = $match_started;
+        $data['has_submitted'] = $this->hasUserSubmittedPoolAnswers($poolId, $user['id']);
+        $data['answers_locked'] = $data['has_submitted'] || $match_started;
 
         $this->load->view('header', $data);
         $this->load->view('pool_questions_play_view', $data);
@@ -693,6 +697,12 @@ class Cricket extends User_Controller
 
         if (!$this->db->table_exists('pool_question_answers')) {
             $this->session->set_flashdata('error', 'Pool answer table is missing. Please update the database SQL first.');
+            redirect('pool/play/' . (int) $poolId);
+            return;
+        }
+
+        if (!empty($pool['match_start_at']) && strtotime($pool['match_start_at']) <= time()) {
+            $this->session->set_flashdata('error', 'The match has already started. You can no longer submit answers.');
             redirect('pool/play/' . (int) $poolId);
             return;
         }
@@ -1046,5 +1056,115 @@ class Cricket extends User_Controller
         $this->deletePendingPoolJoinByTxnid($txnid);
         $this->session->set_flashdata('error', 'Pool payment was cancelled.');
         redirect('pool');
+    }
+
+    public function pool_history()
+    {
+        $user = $this->getCurrentUser();
+
+        $userId = (int) $user['id'];
+
+        $pools = $this->db->query("
+            SELECT DISTINCT p.*
+            FROM pools p
+            JOIN pool_joins pj ON pj.pool_id = p.id
+            WHERE pj.user_id = ? AND pj.status = 'success'
+        ", [$userId])->result();
+
+        $final = [];
+
+        foreach ($pools as $pool) {
+            $questions = $this->db->query("
+                SELECT 
+                    pq.id as question_id,
+                    pq.question,
+                    pq.correct_answer,
+                    pa.answer as user_answer
+                FROM pool_questions pq
+                LEFT JOIN pool_question_answers pa 
+                    ON pa.pool_question_id = pq.id 
+                    AND pa.user_id = ?
+                WHERE pq.pool_id = ?
+                ORDER BY pq.position ASC
+            ", [$userId, $pool->id])->result();
+
+            $questionData = [];
+            $correctCount = 0;
+
+            foreach ($questions as $q) {
+                $isCorrect = false;
+                if ($q->correct_answer !== null && $q->user_answer !== null) {
+                    if (strtolower($q->correct_answer) == strtolower($q->user_answer)) {
+                        $isCorrect = true;
+                        $correctCount++;
+                    }
+                }
+                $questionData[] = [
+                    'question_id' => $q->question_id,
+                    'question' => $q->question,
+                    'correct_answer' => $q->correct_answer,
+                    'user_answer' => $q->user_answer,
+                    'is_correct' => $isCorrect
+                ];
+            }
+
+            $attempted = 0;
+            $notAttempted = 0;
+            $wrong = 0;
+
+            foreach ($questions as $q) {
+                if ($q->user_answer !== null) {
+                    $attempted++;
+                } else {
+                    $notAttempted++;
+                }
+
+                if ($q->correct_answer !== null && $q->user_answer !== null) {
+                    if (strtolower($q->correct_answer) != strtolower($q->user_answer)) {
+                        $wrong++;
+                    }
+                }
+            }
+
+            $final[] = [
+                'pool_id' => $pool->id,
+                'pool_name' => $pool->pool_name,
+                'total_questions' => count($questions),
+                'attempted' => $attempted,
+                'not_attempted' => $notAttempted,
+                'correct_answers' => $correctCount,
+                'wrong_answers' => $wrong
+            ];
+        }
+
+        $data['user'] = $user;
+        $totalPools = count($final);
+        $totalQuestions = 0;
+        $totalAttempted = 0;
+        $totalNotAttempted = 0;
+        $totalCorrect = 0;
+        $totalWrong = 0;
+
+        foreach ($final as $pool) {
+            $totalQuestions += $pool['total_questions'];
+            $totalAttempted += $pool['attempted'];
+            $totalNotAttempted += $pool['not_attempted'];
+            $totalCorrect += $pool['correct_answers'];
+            $totalWrong += $pool['wrong_answers'];
+        }
+
+        $data['overall'] = [
+            'pools' => $totalPools,
+            'questions' => $totalQuestions,
+            'attempted' => $totalAttempted,
+            'not_attempted' => $totalNotAttempted,
+            'correct' => $totalCorrect,
+            'wrong' => $totalWrong
+        ];
+        $data['history'] = $final;
+
+        $this->load->view('header', $data);
+        $this->load->view('pool_history_view', $data);
+        $this->load->view('footer');
     }
 }

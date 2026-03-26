@@ -331,7 +331,11 @@ $completionPercent = (int) round(((int) $summary['answered'] / max(1, (int) $sum
 
         <?php if (!empty($answers_locked)): ?>
             <div class="alert alert-info pool-alert">
-                You already submitted your answers for this pool. Answers are locked now and cannot be changed.
+                <?php if (!empty($has_submitted)): ?>
+                    You already submitted your answers for this pool. Answers are locked now and cannot be changed.
+                <?php else: ?>
+                    The match has already started. Answers are locked and can no longer be submitted.
+                <?php endif; ?>
             </div>
         <?php endif; ?>
 

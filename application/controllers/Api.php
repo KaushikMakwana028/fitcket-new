@@ -5923,6 +5923,18 @@ class Api extends CI_Controller
             ]));
         }
 
+        $pool = $this->db->get_where('pools', ['id' => $pool_id])->row_array();
+        if (!$pool) {
+            return $this->output->set_status_header(404)->set_output(json_encode([
+                'status' => false,
+                'code' => 404,
+                'message' => 'Pool not found.',
+                'data' => null
+            ]));
+        }
+
+        $match_started = (!empty($pool['match_start_at']) && strtotime($pool['match_start_at']) <= time());
+
         $hasJoined = $this->db
             ->where('pool_id', $pool_id)
             ->where('user_id', $user_id)
@@ -5952,7 +5964,7 @@ class Api extends CI_Controller
         $user_name = $user ? ($user['name'] ?: 'User') : 'Unknown';
 
         $userAnswers = [];
-        $answers_locked = false;
+        $answers_locked = $match_started;
         if ($this->db->table_exists('pool_question_answers')) {
             $rows = $this->db
                 ->where('pool_id', $pool_id)
@@ -6060,6 +6072,25 @@ class Api extends CI_Controller
             ]));
         }
 
+        $pool = $this->db->get_where('pools', ['id' => $pool_id])->row_array();
+        if (!$pool) {
+            return $this->output->set_status_header(404)->set_output(json_encode([
+                'status' => false,
+                'code' => 404,
+                'message' => 'Pool not found.',
+                'data' => null
+            ]));
+        }
+
+        if (!empty($pool['match_start_at']) && strtotime($pool['match_start_at']) <= time()) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'The match has already started. You can no longer submit answers.',
+                'data' => null
+            ]));
+        }
+
         $hasJoined = $this->db
             ->where('pool_id', $pool_id)
             ->where('user_id', $user_id)
@@ -6163,5 +6194,233 @@ class Api extends CI_Controller
             'message' => 'Your answers have been submitted successfully.',
             'data' => null
         ]));
+    }
+
+    public function get_pool_history()
+    {
+        header('Content-Type: application/json');
+
+        $authHeader = $this->input->get_request_header('Authorization', TRUE);
+        $token = null;
+
+        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        $decoded = $this->verify_jwt($token);
+
+        if (!$decoded || empty($decoded->data->id)) {
+            return $this->output->set_output(json_encode([
+                'status' => false,
+                'message' => 'Invalid token'
+            ]));
+        }
+
+        $user_id = (int) $decoded->data->id;
+
+        // ✅ STEP 1: Get ONLY pools where user participated
+        $pools = $this->db->query("
+            SELECT DISTINCT p.*
+            FROM pools p
+            JOIN pool_joins pj ON pj.pool_id = p.id
+            WHERE pj.user_id = ? AND pj.status = 'success'
+        ", [$user_id])->result();
+
+        $final = [];
+
+        foreach ($pools as $pool) {
+
+            // ✅ STEP 2: Get questions + user answers + correct answers
+            $questions = $this->db->query("
+                SELECT 
+                    pq.id as question_id,
+                    pq.question,
+                    pq.correct_answer,
+                    pa.answer as user_answer
+                FROM pool_questions pq
+                LEFT JOIN pool_question_answers pa 
+                    ON pa.pool_question_id = pq.id 
+                    AND pa.user_id = ?
+                WHERE pq.pool_id = ?
+                ORDER BY pq.position ASC
+            ", [$user_id, $pool->id])->result();
+
+            $questionData = [];
+            $correctCount = 0;
+
+            foreach ($questions as $q) {
+
+                $isCorrect = false;
+
+                if ($q->correct_answer !== null && $q->user_answer !== null) {
+                    if (strtolower($q->correct_answer) == strtolower($q->user_answer)) {
+                        $isCorrect = true;
+                        $correctCount++;
+                    }
+                }
+
+                $questionData[] = [
+                    'question_id' => $q->question_id,
+                    'question' => $q->question,
+                    'correct_answer' => $q->correct_answer,
+                    'user_answer' => $q->user_answer,
+                    'is_correct' => $isCorrect
+                ];
+            }
+
+            $final[] = [
+                'pool_id' => $pool->id,
+                'pool_name' => $pool->pool_name,
+                'total_questions' => count($questions),
+                'correct_answers' => $correctCount,
+                'questions' => $questionData
+            ];
+        }
+
+        return $this->output->set_output(json_encode([
+            'status' => true,
+            'data' => $final
+        ]));
+    }
+
+    public function get_matches()
+    {
+        header('Content-Type: application/json');
+
+        // ===============================
+        // ✅ TOKEN VERIFY
+        // ===============================
+        $authHeader = $this->input->get_request_header('Authorization', TRUE);
+        $token = null;
+
+        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        $decoded = $this->verify_jwt($token);
+
+        $response = [
+            'status'  => true,
+            'code'    => 200,
+            'message' => 'Success',
+            'data'    => null,
+            'access'  => false
+        ];
+
+        if (!$decoded || empty($decoded->data->id)) {
+            $response['status']  = false;
+            $response['message'] = 'Invalid token or user ID missing';
+
+            return $this->output
+                ->set_status_header(200)
+                ->set_output(json_encode($response));
+        }
+
+        $user_id = (int) $decoded->data->id;
+
+        // ===============================
+        // ✅ GET USER
+        // ===============================
+        $user = $this->db->get_where('users', ['id' => $user_id])->row_array();
+
+
+        $request = $this->db
+            ->get_where('host_requests', ['user_id' => $user_id])
+            ->row_array();
+
+        $matches = $this->getCricketPageMatches();
+
+        $primaryLiveCard = $matches['primary_match'] ?? $matches['featured_match'];
+
+
+        $live = [
+            'team1' => $primaryLiveCard['team1'] ?? 'No Matches',
+            'team2' => $primaryLiveCard['team2'] ?? 'Scheduled',
+            'score' => $primaryLiveCard['score'] ?? 'Check back soon',
+            'status' => !empty($matches['live_match'])
+                ? 'LIVE'
+                : strtoupper((string) ($primaryLiveCard['bucket'] ?? 'today')),
+            'team1_logo' => $primaryLiveCard['team1_logo'] ?? '',
+            'team2_logo' => $primaryLiveCard['team2_logo'] ?? '',
+            'competition_name' => $primaryLiveCard['competition_name'] ?? '',
+            'venue' => $primaryLiveCard['venue'] ?? '',
+            'start_label' => $primaryLiveCard['start_label'] ?? '',
+        ];
+
+        // ===============================
+        // ✅ FEATURED CARD
+        // ===============================
+        $featuredCard = $matches['featured_match'] ?? $matches['primary_match'];
+
+        $featured = [
+            'team1' => $featuredCard['team1'] ?? 'No Matches',
+            'team2' => $featuredCard['team2'] ?? 'Scheduled',
+            'score' => $featuredCard['score'] ?? '',
+            'status' => !empty($featuredCard['bucket']) && $featuredCard['bucket'] === 'live'
+                ? 'LIVE NOW'
+                : (!empty($featuredCard['bucket']) && $featuredCard['bucket'] === 'today'
+                    ? 'TODAY MATCH'
+                    : 'UPCOMING MATCH'),
+            'team1_logo' => $featuredCard['team1_logo'] ?? '',
+            'team2_logo' => $featuredCard['team2_logo'] ?? '',
+            'competition_name' => $featuredCard['competition_name'] ?? '',
+            'venue' => $featuredCard['venue'] ?? '',
+            'start_label' => $featuredCard['start_label'] ?? '',
+        ];
+
+        // ===============================
+        // ✅ UPCOMING FORMAT
+        // ===============================
+        $upcoming = array_map(function ($match) {
+            $match['date'] = trim(
+                ($match['date_label'] ?? '') .
+                    (!empty($match['time_label']) ? ', ' . $match['time_label'] : '')
+            );
+            return $match;
+        }, $matches['upcoming_matches']);
+
+        // ===============================
+        // ✅ STATIC DATA (same as web)
+        // ===============================
+        $tournaments = [
+            ['name' => 'IPL 2026', 'date' => 'Starts 25 Mar'],
+            ['name' => 'Asia Cup', 'date' => 'June 2026'],
+            ['name' => 'World Cup', 'date' => 'Oct 2026']
+        ];
+
+        $players = [
+            ['name' => 'Virat Kohli', 'image' => base_url('assets/images/cricket/VK.jpg')],
+            ['name' => 'AB de Villiers', 'image' => base_url('assets/images/cricket/ABD.png')],
+            ['name' => 'Joe Root', 'image' => base_url('assets/images/cricket/JR.jpg')],
+            ['name' => 'Steve Smith', 'image' => base_url('assets/images/cricket/SS.jpeg')]
+        ];
+
+        // ===============================
+        // ✅ FINAL RESPONSE DATA
+        // ===============================
+        $response['data'] = [
+            'user' => [
+                'id' => $user['id'],
+                'name' => $user['name'],
+                'is_host' => $user['is_host']
+            ],
+            'request_status' => $request['status'] ?? null,
+
+            'has_live' => !empty($matches['live_match']),
+            'today' => $live,
+
+            // 'has_featured' => !empty($featuredCard),
+            // 'featured' => $featured,
+
+            'completed_matches' => $matches['completed_matches'],
+            'upcoming_matches' => $upcoming
+
+            // 'tournaments' => $tournaments,
+            // 'players' => $players
+        ];
+
+        return $this->output
+            ->set_status_header(200)
+            ->set_output(json_encode($response));
     }
 }

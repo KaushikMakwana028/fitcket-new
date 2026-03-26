@@ -298,6 +298,21 @@
 
       <div class="action-category">
         <div class="category-title">
+          <div class="category-icon" style="background: linear-gradient(135deg, #10b981, #059669);">
+            <i class="bi bi-trophy"></i>
+          </div>
+          Sports & Pools
+        </div>
+        <div class="action-links">
+          <a href="<?= base_url('pool/history'); ?>" class="action-button">
+            <div class="action-icon" style="background: #d1fae5; color: #10b981;"><i class="bi bi-ui-checks"></i></div>
+            <div>View Pool History</div>
+          </a>
+        </div>
+      </div>
+
+      <div class="action-category">
+        <div class="category-title">
           <div class="category-icon">
             <i class="bi bi-camera-video-fill"></i>
           </div>

@@ -312,6 +312,7 @@ $route['pool/play/(:num)/submit'] = 'cricket/pool_submit_answers/$1';
 $route['pool/join/(:num)'] = 'cricket/pool_join/$1';
 $route['pool/razorpay_callback'] = 'cricket/pool_razorpay_callback';
 $route['pool/payment_cancel/(:any)'] = 'cricket/pool_payment_cancel/$1';
+$route['pool/history'] = 'cricket/pool_history';
 
 
 
