@@ -114,12 +114,23 @@ $route['admin/pool/(:num)'] = 'admin/pool/questions/$1';
 $route['admin/pool/(:num)/leaderboard'] = 'admin/pool/leaderboard/$1';
 $route['admin/pool/(:num)/save_questions'] = 'admin/pool/save_questions/$1';
 $route['admin/pool/(:num)/save_answer_key'] = 'admin/pool/save_answer_key/$1';
+$route['admin/cricket_questions'] = 'admin/pool/question_matches';
+$route['admin/cricket_questions/(:num)'] = 'admin/pool/match_questions/$1';
+$route['admin/cricket_questions/(:num)/save_questions'] = 'admin/pool/save_match_questions/$1';
+$route['admin/cricket_questions/(:num)/save_answer_key'] = 'admin/pool/save_match_answer_key/$1';
 $route['admin/cricket_matches'] = 'admin/cricket_matches/index';
 $route['admin/cricket_matches/create'] = 'admin/cricket_matches/create';
 $route['admin/cricket_matches/store'] = 'admin/cricket_matches/store';
 $route['admin/cricket_matches/edit/(:num)'] = 'admin/cricket_matches/edit/$1';
 $route['admin/cricket_matches/update/(:num)'] = 'admin/cricket_matches/update/$1';
 $route['admin/cricket_matches/delete/(:num)'] = 'admin/cricket_matches/delete/$1';
+$route['admin/pool/prize/(:num)'] = 'admin/pool/prize/$1';
+$route['admin/pool/prize/(:num)/save'] = 'admin/pool/save_prize/$1';
+$route['admin/user_wallet'] = 'admin/user_wallet/index';
+$route['admin/user_wallet/credit_winning'] = 'admin/user_wallet/credit_winning';
+$route['admin/user_wallet/approve_withdraw/(:num)'] = 'admin/user_wallet/approve_withdraw/$1';
+$route['admin/user_wallet/mark_paid_manual/(:num)'] = 'admin/user_wallet/mark_paid_manual/$1';
+$route['admin/user_wallet/reject_withdraw/(:num)'] = 'admin/user_wallet/reject_withdraw/$1';
 
 $route['admin/host_requests'] = 'admin/host_requests/index';
 $route['admin/host_requests/accept/(:num)'] = 'admin/host_requests/accept/$1';
@@ -254,6 +265,9 @@ $route['user/provider_details/(:num)'] = 'api/provider_details/$1';
 $route['user/profile'] = 'api/profile';
 $route['user/edit_profile'] = 'api/edit_profile';
 $route['user/update_profile'] = 'api/update_profile';
+$route['user/wallet']['GET'] = 'api/wallet';
+$route['user/wallet/withdraw']['POST'] = 'api/wallet_withdraw';
+$route['user/wallet/transactions']['GET'] = 'api/wallet_transactions';
 $route['user/bank_accounts']['GET'] = 'api/bank_accounts';
 $route['user/bank_account']['POST'] = 'api/save_bank_account';
 $route['user/bookings']['GET'] = 'api/bookings';
@@ -313,6 +327,8 @@ $route['pool/join/(:num)'] = 'cricket/pool_join/$1';
 $route['pool/razorpay_callback'] = 'cricket/pool_razorpay_callback';
 $route['pool/payment_cancel/(:any)'] = 'cricket/pool_payment_cancel/$1';
 $route['pool/history'] = 'cricket/pool_history';
+$route['wallet'] = 'UserWallet/index';
+$route['wallet/withdraw'] = 'UserWallet/withdraw';
 
 
 

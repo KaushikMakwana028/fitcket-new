@@ -283,6 +283,22 @@
         </div>
       </div>
 
+
+      <div class="action-category">
+        <div class="category-title">
+          <div class="category-icon"><i class="bi bi-wallet2"></i></div>
+          Wallet
+        </div>
+        <div class="action-links">
+          <a href="<?= base_url('wallet'); ?>" class="action-button">
+            <div class="action-icon">
+              <i class="bi bi-wallet2"></i>
+            </div>
+            <div>My Wallet</div>
+          </a>
+        </div>
+      </div>
+
       <div class="action-category">
         <div class="category-title">
           <div class="category-icon"><i class="bi bi-calendar-check"></i></div>

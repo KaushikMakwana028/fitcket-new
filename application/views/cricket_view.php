@@ -237,6 +237,16 @@ $renderCricketTeamAvatar = function ($logoUrl, $teamName) {
         backdrop-filter: blur(14px);
     }
 
+    .banner-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 18px;
+    }
+
+    .banner-shell-split {
+        height: 100%;
+    }
+
     .banner-shell::before,
     .banner-shell::after {
         content: '';
@@ -367,8 +377,10 @@ $renderCricketTeamAvatar = function ($logoUrl, $teamName) {
     }
 
     .banner-center {
-        text-align: center;
-        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex: 0 0 auto;
     }
 
     .banner-vs {
@@ -385,12 +397,19 @@ $renderCricketTeamAvatar = function ($logoUrl, $teamName) {
         box-shadow: 0 10px 20px rgba(255, 95, 109, 0.26);
     }
 
+    .banner-details {
+        position: relative;
+        z-index: 1;
+        margin-top: 14px;
+        text-align: center;
+    }
+
     .banner-time {
-        margin-top: 10px;
         color: var(--gold);
         font-size: 1.1rem;
         font-weight: 800;
         word-break: break-word;
+        line-height: 1.2;
     }
 
     .banner-subtime {
@@ -398,6 +417,7 @@ $renderCricketTeamAvatar = function ($logoUrl, $teamName) {
         color: rgba(255, 255, 255, 0.62);
         font-size: 0.72rem;
         word-break: break-word;
+        line-height: 1.35;
     }
 
     .banner-meta {
@@ -428,6 +448,16 @@ $renderCricketTeamAvatar = function ($logoUrl, $teamName) {
 
     .banner-chip i {
         flex-shrink: 0;
+    }
+
+    @media (min-width: 992px) {
+        .banner-grid.two-matches {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .banner-grid.two-matches .banner-match {
+            min-height: 180px;
+        }
     }
 
     .empty-banner {
@@ -1464,7 +1494,7 @@ $renderCricketTeamAvatar = function ($logoUrl, $teamName) {
     }
 
     /* ============================================================
-       DESKTOP-SPECIFIC LAYOUT - TWO COLUMN
+       DESKTOP-SPECIFIC LAYOUT
        ============================================================ */
 
     /* Desktop layout wrapper */
@@ -1480,6 +1510,7 @@ $renderCricketTeamAvatar = function ($logoUrl, $teamName) {
 
     .desktop-side-col {
         width: 100%;
+        display: none;
     }
 
     /* ========== TABLET (576px+) ========== */
@@ -1511,6 +1542,10 @@ $renderCricketTeamAvatar = function ($logoUrl, $teamName) {
 
         .banner-time {
             font-size: 1.35rem;
+        }
+
+        .banner-details {
+            margin-top: 16px;
         }
 
         .banner-match {
@@ -1571,7 +1606,7 @@ $renderCricketTeamAvatar = function ($logoUrl, $teamName) {
         }
     }
 
-    /* ========== DESKTOP (992px+) - TWO COLUMN LAYOUT ========== */
+    /* ========== DESKTOP (992px+) ========== */
     @media (min-width: 992px) {
         .banner-section {
             padding: 34px 0 28px;
@@ -1620,11 +1655,14 @@ $renderCricketTeamAvatar = function ($logoUrl, $teamName) {
 
         .banner-time {
             font-size: 1.65rem;
-            margin-top: 14px;
         }
 
         .banner-subtime {
             font-size: 0.88rem;
+        }
+
+        .banner-details {
+            margin-top: 20px;
         }
 
         .banner-match {
@@ -1660,11 +1698,10 @@ $renderCricketTeamAvatar = function ($logoUrl, $teamName) {
             max-width: 420px;
         }
 
-        /* TWO COLUMN */
         .desktop-layout {
             display: grid;
-            grid-template-columns: 1fr 360px;
-            gap: 28px;
+            grid-template-columns: 1fr;
+            gap: 0;
             align-items: start;
         }
 
@@ -1769,7 +1806,7 @@ $renderCricketTeamAvatar = function ($logoUrl, $teamName) {
 
         /* Matches grid */
         .matches-grid {
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 18px;
         }
 
@@ -1798,47 +1835,6 @@ $renderCricketTeamAvatar = function ($logoUrl, $teamName) {
             font-size: 0.8rem;
         }
 
-        /* Tournaments */
-        .tournament-grid {
-            grid-template-columns: 1fr;
-            gap: 10px;
-        }
-
-        .tournament-card {
-            padding: 16px;
-        }
-
-        .tournament-card .trophy-icon {
-            width: 46px;
-            height: 46px;
-            font-size: 1.1rem;
-        }
-
-        .tournament-card .tournament-name {
-            font-size: 0.9rem;
-        }
-
-        /* Players */
-        .player-avatar {
-            width: 68px;
-            height: 68px;
-            font-size: 1.5rem;
-            border: 3px solid #fff;
-        }
-
-        .player-avatar .spin-border {
-            inset: -5px;
-        }
-
-        .player-card {
-            min-width: 100px;
-            max-width: 120px;
-        }
-
-        .player-name {
-            font-size: 0.78rem;
-        }
-
         /* Host */
         .host-section {
             padding: 32px 0 16px;
@@ -1853,8 +1849,8 @@ $renderCricketTeamAvatar = function ($logoUrl, $teamName) {
     /* ========== LARGE DESKTOP (1200px+) ========== */
     @media (min-width: 1200px) {
         .desktop-layout {
-            grid-template-columns: 1fr 400px;
-            gap: 36px;
+            grid-template-columns: 1fr;
+            gap: 0;
         }
 
         .banner-shell {
@@ -1908,7 +1904,7 @@ $renderCricketTeamAvatar = function ($logoUrl, $teamName) {
         }
 
         .matches-grid {
-            grid-template-columns: repeat(2, 1fr);
+            grid-template-columns: repeat(4, minmax(0, 1fr));
             gap: 20px;
         }
     }
@@ -2133,53 +2129,63 @@ $renderCricketTeamAvatar = function ($logoUrl, $teamName) {
     <!-- BANNER -->
     <div class="banner-section animate-in delay-1">
         <div class="ck-container">
-            <div class="banner-shell">
-                <div class="banner-topbar">
-                    <div class="banner-kicker">
-                        <i class="fas fa-trophy"></i>
-                        Featured Match
-                    </div>
-                    <div class="banner-status <?= !empty($featured_match) ? ($featured_match['bucket'] ?? 'upcoming') : 'upcoming' ?>">
-                        <i class="fas fa-bolt"></i>
-                        <?= !empty($featured_match) && ($featured_match['bucket'] ?? '') === 'live' ? 'Live Now' : (!empty($featured_match) && ($featured_match['bucket'] ?? '') === 'today' ? 'Today Match' : 'Upcoming Match') ?>
-                    </div>
-                </div>
+            <?php $bannerCards = !empty($header_matches) ? $header_matches : (!empty($has_featured) ? [$featured_match] : []); ?>
+            <div class="banner-grid <?= count($bannerCards) > 1 ? 'two-matches' : '' ?>">
+                <?php if (!empty($bannerCards)): ?>
+                    <?php foreach ($bannerCards as $index => $bannerCard): ?>
+                        <div class="banner-shell <?= count($bannerCards) > 1 ? 'banner-shell-split' : '' ?>">
+                            <div class="banner-topbar">
+                                <div class="banner-kicker">
+                                    <i class="fas fa-trophy"></i>
+                                    <?= $index === 0 ? 'Featured Match' : 'Match ' . ($index + 1) ?>
+                                </div>
+                                <div class="banner-status <?= !empty($bannerCard) ? ($bannerCard['bucket'] ?? 'upcoming') : 'upcoming' ?>">
+                                    <i class="fas fa-bolt"></i>
+                                    <?= !empty($bannerCard) && ($bannerCard['bucket'] ?? '') === 'live' ? 'Live Now' : (!empty($bannerCard) && ($bannerCard['bucket'] ?? '') === 'today' ? 'Today Match' : 'Upcoming Match') ?>
+                                </div>
+                            </div>
 
-                <?php if ($has_featured): ?>
-                    <div class="banner-match">
-                        <div class="banner-team">
-                            <div class="banner-logo"><?= $renderCricketTeamAvatar($featured['team1_logo'] ?? '', $featured['team1'] ?? '') ?></div>
-                            <div class="banner-team-name"><?= html_escape($featured['team1']) ?></div>
+                            <div class="banner-match">
+                                <div class="banner-team">
+                                    <div class="banner-logo"><?= $renderCricketTeamAvatar($bannerCard['team1_logo'] ?? '', $bannerCard['team1'] ?? '') ?></div>
+                                    <div class="banner-team-name"><?= html_escape($bannerCard['team1'] ?? 'Team A') ?></div>
+                                </div>
+                                <div class="banner-center">
+                                    <div class="banner-vs">VS</div>
+                                </div>
+                                <div class="banner-team">
+                                    <div class="banner-logo"><?= $renderCricketTeamAvatar($bannerCard['team2_logo'] ?? '', $bannerCard['team2'] ?? '') ?></div>
+                                    <div class="banner-team-name"><?= html_escape($bannerCard['team2'] ?? 'Team B') ?></div>
+                                </div>
+                            </div>
+
+                            <div class="banner-details">
+                                <div class="banner-time"><?= html_escape($bannerCard['score'] ?? 'TBD') ?></div>
+                                <div class="banner-subtime"><?= html_escape($bannerCard['start_label'] ?? 'Schedule not set') ?></div>
+                            </div>
+
+                            <div class="banner-meta">
+                                <?php if (!empty($bannerCard['competition_name'])): ?>
+                                    <span class="banner-chip"><i class="fas fa-award"></i> <?= html_escape($bannerCard['competition_name']) ?></span>
+                                <?php endif; ?>
+                                <?php if (!empty($bannerCard['venue'])): ?>
+                                    <span class="banner-chip"><i class="fas fa-map-marker-alt"></i> <?= html_escape($bannerCard['venue']) ?></span>
+                                <?php endif; ?>
+                                <?php if (!empty($bannerCard['start_label'])): ?>
+                                    <span class="banner-chip"><i class="fas fa-clock"></i> <?= html_escape($bannerCard['start_label']) ?></span>
+                                <?php endif; ?>
+                            </div>
                         </div>
-                        <div class="banner-center">
-                            <div class="banner-vs">VS</div>
-                            <div class="banner-time"><?= html_escape($featured['score'] ?? 'TBD') ?></div>
-                            <div class="banner-subtime"><?= html_escape($featured['start_label'] ?? 'Schedule not set') ?></div>
-                        </div>
-                        <div class="banner-team">
-                            <div class="banner-logo"><?= $renderCricketTeamAvatar($featured['team2_logo'] ?? '', $featured['team2'] ?? '') ?></div>
-                            <div class="banner-team-name"><?= html_escape($featured['team2']) ?></div>
-                        </div>
-                    </div>
+                    <?php endforeach; ?>
                 <?php else: ?>
-                    <div class="banner-match empty-banner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
-                        <div class="empty-icon"><i class="fas fa-cricket-bat-ball"></i></div>
-                        <div class="empty-title">No Matches Right Now</div>
-                        <div class="empty-desc">We are scheduling the next big fixtures. Check back soon!</div>
+                    <div class="banner-shell">
+                        <div class="banner-match empty-banner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;">
+                            <div class="empty-icon"><i class="fas fa-cricket-bat-ball"></i></div>
+                            <div class="empty-title">No Matches Right Now</div>
+                            <div class="empty-desc">We are scheduling the next big fixtures. Check back soon!</div>
+                        </div>
                     </div>
                 <?php endif; ?>
-
-                <div class="banner-meta">
-                    <?php if (!empty($featured['competition_name'])): ?>
-                        <span class="banner-chip"><i class="fas fa-award"></i> <?= html_escape($featured['competition_name']) ?></span>
-                    <?php endif; ?>
-                    <?php if (!empty($featured['venue'])): ?>
-                        <span class="banner-chip"><i class="fas fa-map-marker-alt"></i> <?= html_escape($featured['venue']) ?></span>
-                    <?php endif; ?>
-                    <?php if (!empty($featured['start_label'])): ?>
-                        <span class="banner-chip"><i class="fas fa-clock"></i> <?= html_escape($featured['start_label']) ?></span>
-                    <?php endif; ?>
-                </div>
             </div>
         </div>
     </div>

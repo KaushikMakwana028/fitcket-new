@@ -554,7 +554,7 @@ public function login_send_otp()
 
     if (!empty($input_data)) $_POST = $input_data;
 
-    $mobile = trim($this->input->post('mobile'));
+    $mobile = trim((string) $this->input->post('mobile'));
 
     if (!$mobile) {
         echo json_encode([

@@ -90,6 +90,54 @@ class Cricket_matches extends Admin_Controller
         return $match;
     }
 
+    private function sortPreparedMatches(array $matches)
+    {
+        $bucketPriority = [
+            'live' => 1,
+            'today' => 2,
+            'upcoming' => 3,
+            'scheduled' => 4,
+            'cancelled' => 5,
+            'completed' => 6,
+            'unknown' => 7,
+        ];
+
+        usort($matches, function ($left, $right) use ($bucketPriority) {
+            $leftBucket = strtolower((string) ($left['bucket'] ?? 'unknown'));
+            $rightBucket = strtolower((string) ($right['bucket'] ?? 'unknown'));
+
+            $leftPriority = $bucketPriority[$leftBucket] ?? 999;
+            $rightPriority = $bucketPriority[$rightBucket] ?? 999;
+
+            if ($leftPriority !== $rightPriority) {
+                return $leftPriority <=> $rightPriority;
+            }
+
+            $leftStartAt = !empty($left['start_at']) ? strtotime((string) $left['start_at']) : false;
+            $rightStartAt = !empty($right['start_at']) ? strtotime((string) $right['start_at']) : false;
+
+            if ($leftStartAt === false && $rightStartAt === false) {
+                return ((int) ($right['id'] ?? 0)) <=> ((int) ($left['id'] ?? 0));
+            }
+
+            if ($leftStartAt === false) {
+                return 1;
+            }
+
+            if ($rightStartAt === false) {
+                return -1;
+            }
+
+            if ($leftBucket === 'completed') {
+                return $rightStartAt <=> $leftStartAt;
+            }
+
+            return $leftStartAt <=> $rightStartAt;
+        });
+
+        return $matches;
+    }
+
     private function buildUploadPath()
     {
         $relativePath = 'uploads/matches/';
@@ -100,6 +148,295 @@ class Cricket_matches extends Admin_Controller
         }
 
         return [$absolutePath, $relativePath];
+    }
+
+    private function poolQuestionsUseMatchId()
+    {
+        return $this->db->table_exists('pool_questions')
+            && $this->db->field_exists('match_id', 'pool_questions');
+    }
+
+    private function getQuestionCorrectAnswerColumn()
+    {
+        if (!$this->db->table_exists('pool_questions')) {
+            return "'' as correct_answer";
+        }
+
+        if ($this->db->field_exists('correct_answer', 'pool_questions')) {
+            return 'pool_questions.correct_answer';
+        }
+
+        return "'' as correct_answer";
+    }
+
+    private function getPoolQuestionContext($poolId)
+    {
+        $pool = $this->db
+            ->select('id, match_id')
+            ->from('pools')
+            ->where('id', (int) $poolId)
+            ->get()
+            ->row_array();
+
+        return [
+            'pool_id' => (int) ($pool['id'] ?? $poolId),
+            'match_id' => (int) ($pool['match_id'] ?? 0),
+        ];
+    }
+
+    private function getPoolQuestionsForSettlement($poolId)
+    {
+        if (!$this->db->table_exists('pool_questions')) {
+            return [];
+        }
+
+        $context = $this->getPoolQuestionContext($poolId);
+
+        $builder = $this->db
+            ->select("
+                pool_questions.id,
+                pool_questions.pool_id,
+                " . ($this->poolQuestionsUseMatchId() ? 'pool_questions.match_id,' : '') . "
+                pool_questions.question,
+                pool_questions.position,
+                {$this->getQuestionCorrectAnswerColumn()}
+            ", false)
+            ->from('pool_questions');
+
+        if ($this->poolQuestionsUseMatchId() && (int) $context['match_id'] > 0) {
+            $builder->where('pool_questions.match_id', (int) $context['match_id']);
+        } else {
+            $builder->where('pool_questions.pool_id', (int) $context['pool_id']);
+        }
+
+        return $builder
+            ->order_by('pool_questions.position', 'ASC')
+            ->order_by('pool_questions.id', 'ASC')
+            ->get()
+            ->result_array();
+    }
+
+    private function calculateSummaryForSettlement(array $questions, array $answersByQuestion)
+    {
+        $summary = [
+            'total' => count($questions),
+            'answered' => 0,
+            'checked' => 0,
+            'right' => 0,
+            'wrong' => 0,
+        ];
+
+        foreach ($questions as $question) {
+            $questionId = (int) $question['id'];
+            $adminAnswer = strtolower(trim((string) ($question['correct_answer'] ?? '')));
+            $userAnswer = strtolower(trim((string) ($answersByQuestion[$questionId]['answer'] ?? '')));
+
+            if ($userAnswer !== '') {
+                $summary['answered']++;
+            }
+
+            if ($adminAnswer !== '' && $userAnswer !== '') {
+                $summary['checked']++;
+
+                if ($adminAnswer === $userAnswer) {
+                    $summary['right']++;
+                } else {
+                    $summary['wrong']++;
+                }
+            }
+        }
+
+        return $summary;
+    }
+
+    private function getPoolAnswerRowsForSettlement($poolId, array $questions)
+    {
+        if (!$this->db->table_exists('pool_question_answers')) {
+            return [];
+        }
+
+        $answerRows = $this->db
+            ->select('pool_question_answers.*, users.name as user_name, users.email as user_email, users.mobile as user_mobile')
+            ->from('pool_question_answers')
+            ->join('users', 'users.id = pool_question_answers.user_id', 'left')
+            ->where('pool_question_answers.pool_id', (int) $poolId)
+            ->order_by('pool_question_answers.user_id', 'ASC')
+            ->order_by('pool_question_answers.pool_question_id', 'ASC')
+            ->get()
+            ->result_array();
+
+        if (empty($answerRows)) {
+            return [];
+        }
+
+        $answersByUser = [];
+
+        foreach ($answerRows as $answerRow) {
+            $userId = (int) $answerRow['user_id'];
+            $questionId = (int) $answerRow['pool_question_id'];
+
+            if (!isset($answersByUser[$userId])) {
+                $answersByUser[$userId] = [
+                    'user_id' => $userId,
+                    'user_name' => $answerRow['user_name'] ?: 'User',
+                    'user_email' => $answerRow['user_email'] ?? '',
+                    'user_mobile' => $answerRow['user_mobile'] ?? '',
+                    'answers' => [],
+                ];
+            }
+
+            $answersByUser[$userId]['answers'][$questionId] = $answerRow;
+        }
+
+        $rows = [];
+
+        foreach ($answersByUser as $userRow) {
+            $summary = $this->calculateSummaryForSettlement($questions, $userRow['answers']);
+            $rows[] = array_merge($userRow, ['summary' => $summary]);
+        }
+
+        usort($rows, function ($left, $right) {
+            if (($left['summary']['right'] ?? 0) === ($right['summary']['right'] ?? 0)) {
+                if (($left['summary']['wrong'] ?? 0) === ($right['summary']['wrong'] ?? 0)) {
+                    return strcmp((string) $left['user_name'], (string) $right['user_name']);
+                }
+
+                return ($left['summary']['wrong'] ?? 0) <=> ($right['summary']['wrong'] ?? 0);
+            }
+
+            return ($right['summary']['right'] ?? 0) <=> ($left['summary']['right'] ?? 0);
+        });
+
+        return $rows;
+    }
+
+    private function settlePoolWinnings($poolId)
+    {
+        $questions = $this->getPoolQuestionsForSettlement($poolId);
+        $poolUsers = $this->getPoolAnswerRowsForSettlement($poolId, $questions);
+
+        if (empty($poolUsers)) {
+            return ['winners' => 0, 'credited' => 0];
+        }
+
+        $hasChecked = false;
+        foreach ($poolUsers as $userRow) {
+            if ((int) ($userRow['summary']['checked'] ?? 0) > 0) {
+                $hasChecked = true;
+                break;
+            }
+        }
+
+        if (!$hasChecked) {
+            return ['winners' => 0, 'credited' => 0];
+        }
+
+        $topScore = (int) ($poolUsers[0]['summary']['right'] ?? 0);
+        $winners = array_values(array_filter($poolUsers, function ($userRow) use ($topScore) {
+            return (int) ($userRow['summary']['right'] ?? 0) === $topScore;
+        }));
+
+        if (empty($winners)) {
+            return ['winners' => 0, 'credited' => 0];
+        }
+
+        $pool = $this->db->where('id', (int) $poolId)->get('pools')->row_array();
+        if (!$pool || (float) ($pool['price'] ?? 0) <= 0) {
+            return ['winners' => count($winners), 'credited' => 0];
+        }
+
+        $totalPrize = (float) $pool['price'] * count($poolUsers);
+        $winningAmount = $totalPrize / count($winners);
+
+        if ($winningAmount <= 0) {
+            return ['winners' => count($winners), 'credited' => 0];
+        }
+
+        $creditedCount = 0;
+
+        foreach ($winners as $winner) {
+            $userId = (int) $winner['user_id'];
+            $wallet = $this->db->where('user_id', $userId)->get('wallets')->row_array();
+
+            if (!$wallet) {
+                $this->db->insert('wallets', [
+                    'user_id' => $userId,
+                    'balance' => 0,
+                ]);
+
+                $wallet = $this->db->where('user_id', $userId)->get('wallets')->row_array();
+            }
+
+            if (!$wallet) {
+                continue;
+            }
+
+            $alreadyPaid = $this->db
+                ->where('wallet_id', $wallet['id'])
+                ->where('pool_id', (int) $poolId)
+                ->where('type', 'winning')
+                ->where('status', 'success')
+                ->get('transactions')
+                ->row_array();
+
+            if ($alreadyPaid) {
+                continue;
+            }
+
+            $this->db->trans_start();
+
+            $this->db->set('balance', 'balance + ' . $winningAmount, false)
+                ->where('id', $wallet['id'])
+                ->update('wallets');
+
+            $this->db->insert('transactions', [
+                'wallet_id' => $wallet['id'],
+                'type' => 'winning',
+                'amount' => $winningAmount,
+                'status' => 'success',
+                'pool_id' => (int) $poolId,
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+
+            $this->db->trans_complete();
+
+            if ($this->db->trans_status() !== false) {
+                $creditedCount++;
+            }
+        }
+
+        return [
+            'winners' => count($winners),
+            'credited' => $creditedCount,
+        ];
+    }
+
+    private function settleMatchWinnings($matchId)
+    {
+        if (!$this->db->table_exists('pools')) {
+            return ['pools' => 0, 'winners' => 0, 'credited' => 0];
+        }
+
+        $poolRows = $this->db
+            ->select('id')
+            ->from('pools')
+            ->where('match_id', (int) $matchId)
+            ->get()
+            ->result_array();
+
+        $summary = [
+            'pools' => count($poolRows),
+            'winners' => 0,
+            'credited' => 0,
+        ];
+
+        foreach ($poolRows as $poolRow) {
+            $poolSummary = $this->settlePoolWinnings((int) $poolRow['id']);
+            $summary['winners'] += (int) ($poolSummary['winners'] ?? 0);
+            $summary['credited'] += (int) ($poolSummary['credited'] ?? 0);
+        }
+
+        return $summary;
     }
 
     private function uploadLogo($fieldName, $existingPath = '')
@@ -193,6 +530,10 @@ class Cricket_matches extends Admin_Controller
         $status = trim((string) $this->input->get('status'));
         $page = max(0, (int) $this->input->get('page'));
 
+        if ($this->input->get('page') === null) {
+            $_GET['page'] = '0';
+        }
+
         $builder = $this->db->from('cricket_matches');
 
         if ($search !== '') {
@@ -227,6 +568,8 @@ class Cricket_matches extends Admin_Controller
             $preparedMatches[] = $this->prepareMatchRow($match, $nextStartAt);
         }
 
+        $preparedMatches = $this->sortPreparedMatches($preparedMatches);
+
         if ($status !== '') {
             $preparedMatches = array_values(array_filter($preparedMatches, function ($match) use ($status) {
                 return strtolower((string) ($match['bucket'] ?? '')) === $status;
@@ -241,23 +584,25 @@ class Cricket_matches extends Admin_Controller
         $config['base_url'] = base_url('admin/cricket_matches');
         $config['total_rows'] = $totalRows;
         $config['per_page'] = $this->perPage;
+        $config['cur_page'] = (string) $page;
         $config['reuse_query_string'] = true;
         $config['page_query_string'] = true;
         $config['query_string_segment'] = 'page';
         $config['full_tag_open'] = '<ul class="pagination mb-0">';
         $config['full_tag_close'] = '</ul>';
+        $config['attributes'] = ['class' => 'page-link'];
         $config['cur_tag_open'] = '<li class="page-item active"><span class="page-link">';
         $config['cur_tag_close'] = '</span></li>';
-        $config['num_tag_open'] = '<li class="page-item"><span class="page-link">';
-        $config['num_tag_close'] = '</span></li>';
-        $config['prev_tag_open'] = '<li class="page-item"><span class="page-link">';
-        $config['prev_tag_close'] = '</span></li>';
-        $config['next_tag_open'] = '<li class="page-item"><span class="page-link">';
-        $config['next_tag_close'] = '</span></li>';
-        $config['first_tag_open'] = '<li class="page-item"><span class="page-link">';
-        $config['first_tag_close'] = '</span></li>';
-        $config['last_tag_open'] = '<li class="page-item"><span class="page-link">';
-        $config['last_tag_close'] = '</span></li>';
+        $config['num_tag_open'] = '<li class="page-item">';
+        $config['num_tag_close'] = '</li>';
+        $config['prev_tag_open'] = '<li class="page-item">';
+        $config['prev_tag_close'] = '</li>';
+        $config['next_tag_open'] = '<li class="page-item">';
+        $config['next_tag_close'] = '</li>';
+        $config['first_tag_open'] = '<li class="page-item">';
+        $config['first_tag_close'] = '</li>';
+        $config['last_tag_open'] = '<li class="page-item">';
+        $config['last_tag_close'] = '</li>';
         $this->pagination->initialize($config);
         $data['pagination'] = $this->pagination->create_links();
 
@@ -445,7 +790,16 @@ class Cricket_matches extends Admin_Controller
                 'match_result' => $result,
                 'updated_at' => date('Y-m-d H:i:s')
             ]);
-            echo json_encode(['success' => true]);
+
+            $message = 'Result saved successfully.';
+            $settlement = ['pools' => 0, 'winners' => 0, 'credited' => 0];
+            $message .= ' Winner amount payout will happen after answer key is saved from pool questions.';
+
+            echo json_encode([
+                'success' => true,
+                'message' => $message,
+                'settlement' => $settlement,
+            ]);
         } else {
             echo json_encode(['success' => false, 'message' => 'Invalid data']);
         }

@@ -1,15 +1,21 @@
 <?php
-$poolCount = count($pools ?? []);
+$poolCount = (int) ($pool_total_count ?? count($all_pools ?? $pools ?? []));
 $fullQuestionPools = 0;
 $openQuestionPools = 0;
 
-foreach (($pools ?? []) as $poolItem) {
+foreach (($all_pools ?? $pools ?? []) as $poolItem) {
     if ((int) $poolItem['question_count'] >= (int) $max_questions) {
         $fullQuestionPools++;
     } else {
         $openQuestionPools++;
     }
 }
+
+$currentPage = max(1, (int) ($pool_current_page ?? 1));
+$totalPages = max(1, (int) ($pool_total_pages ?? 1));
+$buildPoolPageUrl = function ($pageNumber) {
+    return base_url('admin/pools?page=' . (int) $pageNumber);
+};
 ?>
 
 <style>
@@ -129,9 +135,10 @@ foreach (($pools ?? []) as $poolItem) {
     .admin-pool-list .action-stack {
         display: flex;
         flex-direction: row;
-        flex-wrap: wrap;
-        gap: 8px;
         align-items: center;
+        gap: 8px;
+        flex-wrap: nowrap;
+        justify-content: flex-start;
     }
 
     .admin-pool-list .action-btn {
@@ -158,6 +165,18 @@ foreach (($pools ?? []) as $poolItem) {
         background: linear-gradient(135deg, var(--pool-primary), var(--pool-accent));
         border-color: transparent;
         color: #fff;
+    }
+
+    .admin-pool-list .action-btn.prize {
+        width: 40px;
+        min-width: 40px;
+        height: 40px;
+        padding: 0;
+        background: linear-gradient(135deg, #0f766e, #14b8a6);
+        border-color: transparent;
+        color: #fff;
+        justify-content: center;
+        border-radius: 12px;
     }
 
     .admin-pool-list .action-btn.board {
@@ -195,6 +214,20 @@ foreach (($pools ?? []) as $poolItem) {
         font-weight: 600;
     }
 
+    .admin-pool-list .pagination-wrap .page-link {
+        border-radius: 12px;
+        margin: 0 4px;
+        border-color: var(--pool-border);
+        color: var(--pool-dark);
+        min-width: 42px;
+        text-align: center;
+    }
+
+    .admin-pool-list .pagination-wrap .page-item.active .page-link {
+        background: linear-gradient(135deg, var(--pool-dark), var(--pool-primary));
+        border-color: transparent;
+    }
+
     @media (max-width: 767.98px) {
         .admin-pool-list {
             padding: 16px;
@@ -209,11 +242,17 @@ foreach (($pools ?? []) as $poolItem) {
         }
 
         .admin-pool-list .action-stack {
-            align-items: center;
+            justify-content: flex-start;
         }
 
         .admin-pool-list .action-btn {
             width: 38px;
+            height: 38px;
+        }
+
+        .admin-pool-list .action-btn.prize {
+            width: 38px;
+            min-width: 38px;
             height: 38px;
         }
     }
@@ -261,7 +300,7 @@ foreach (($pools ?? []) as $poolItem) {
             <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
                 <div>
                     <h4 class="mb-1 text-dark">Pool List</h4>
-                    <div class="text-muted">Select a pool to manage up to <?= (int) $max_questions ?> questions. Leaderboard is now one global page for all pools.</div>
+                    <div class="text-muted">Select a pool to see its shared match questions and answers. Leaderboard is now one global page for all pools.</div>
                 </div>
                 <span class="badge bg-primary fs-6"><?= (int) $poolCount ?> Pools</span>
             </div>
@@ -272,6 +311,7 @@ foreach (($pools ?? []) as $poolItem) {
                         <tr>
                             <th>#</th>
                             <th>Pool Details</th>
+                            <th>Match</th>
                             <th>Host</th>
                             <th>Entry Price</th>
                             <th>User Limit</th>
@@ -287,7 +327,26 @@ foreach (($pools ?? []) as $poolItem) {
                                     <td><span class="pool-row-id"><?= $index + 1 ?></span></td>
                                     <td>
                                         <div class="pool-name"><?= html_escape($pool['pool_name']) ?></div>
+                                        <div style="
+                                            display:inline-block;
+                                            background:#eef2ff;
+                                            color:#4e54c8;
+                                            padding:4px 10px;
+                                            border-radius:8px;
+                                            font-size:12px;
+                                            font-weight:600;
+                                            margin-top:4px;
+                                        ">
+                                            <?= html_escape($pool['team_home']) ?> vs <?= html_escape($pool['team_away']) ?>
+                                        </div>
+
+                                        <div class="pool-subtext">
+                                            <?= date('d M, h:i A', strtotime($pool['match_time'])) ?>
+                                        </div>
                                         <!-- <div class="pool-subtext">Pool ID: #<?= (int) $pool['id'] ?></div> -->
+                                    </td>
+                                    <td>
+                                        <?= html_escape($pool['team_home']) ?> vs <?= html_escape($pool['team_away']) ?>
                                     </td>
                                     <td>
                                         <div class="fw-semibold"><?= html_escape($pool['host_name']) ?></div>
@@ -309,13 +368,16 @@ foreach (($pools ?? []) as $poolItem) {
                                     </td>
                                     <td>
                                         <div class="action-stack">
-                                            <a href="<?= base_url('admin/pool/' . (int) $pool['id']) ?>" class="btn btn-sm action-btn manage" data-label="Manage Questions" title="Manage Questions">
-                                                <i class="bx bx-edit"></i>
+                                            <?php $prizeInfo = $pool_prize_map[(int) $pool['id']] ?? null; ?>
+                                            <a href="<?= base_url('admin/pool/prize/' . (int) $pool['id']) ?>" class="btn btn-sm action-btn prize" data-label="<?= $prizeInfo ? 'Edit Winner Amount' : 'Add Winner Amount' ?>" title="<?= $prizeInfo ? 'Edit Winner Amount' : 'Add Winner Amount' ?>">
+                                                <i class="bx bx-trophy"></i>
+                                            </a>
+                                            <a href="<?= base_url('admin/pool/' . (int) $pool['id']) ?>" class="btn btn-sm action-btn manage" data-label="See Questions" title="See Questions">
+                                                <i class="bx bx-show"></i>
                                             </a>
                                             <a href="<?= base_url('admin/pool/leaderboard') ?>" class="btn btn-sm action-btn board" data-label="Global Leaderboard" title="Global Leaderboard">
                                                 <i class="bx bx-bar-chart-alt-2"></i>
                                             </a>
-                                            <!-- <span class="action-note">Quick actions</span> -->
                                         </div>
                                     </td>
                                 </tr>
@@ -328,6 +390,29 @@ foreach (($pools ?? []) as $poolItem) {
                     </tbody>
                 </table>
             </div>
+
+            <?php if ($totalPages > 1) : ?>
+                <div class="pagination-wrap d-flex justify-content-between align-items-center flex-wrap gap-3 mt-4">
+                    <div class="text-muted">
+                        Showing <?= count($pools ?? []) ?> of <?= (int) $poolCount ?> pools
+                    </div>
+                    <nav aria-label="Pool list pagination">
+                        <ul class="pagination mb-0">
+                            <li class="page-item <?= $currentPage <= 1 ? 'disabled' : '' ?>">
+                                <a class="page-link" href="<?= $currentPage <= 1 ? '#' : $buildPoolPageUrl($currentPage - 1) ?>">Prev</a>
+                            </li>
+                            <?php for ($page = 1; $page <= $totalPages; $page++) : ?>
+                                <li class="page-item <?= $page === $currentPage ? 'active' : '' ?>">
+                                    <a class="page-link" href="<?= $buildPoolPageUrl($page) ?>"><?= $page ?></a>
+                                </li>
+                            <?php endfor; ?>
+                            <li class="page-item <?= $currentPage >= $totalPages ? 'disabled' : '' ?>">
+                                <a class="page-link" href="<?= $currentPage >= $totalPages ? '#' : $buildPoolPageUrl($currentPage + 1) ?>">Next</a>
+                            </li>
+                        </ul>
+                    </nav>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>

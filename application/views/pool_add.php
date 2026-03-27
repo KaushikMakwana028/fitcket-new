@@ -1280,7 +1280,7 @@
 
                     <?php if (empty($pool_schedule_ready)) : ?>
                         <div class="alert alert-warning mb-4">
-                           <i class="fas fa-exclamation-triangle"></i> Pool schedule is not ready!
+                            <i class="fas fa-exclamation-triangle"></i> Pool schedule is not ready!
                         </div>
                     <?php endif; ?>
 
@@ -1426,43 +1426,25 @@
                                 Match Schedule
                             </div>
 
-                            <div class="row">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <div class="form-label-row">
-                                            <label class="form-label">
-                                                <span class="label-icon time"><i class="fas fa-calendar-alt"></i></span>
-                                                Match Date <span class="required">*</span>
-                                            </label>
-                                            <span class="form-hint">Required</span>
-                                        </div>
-                                        <input type="date"
-                                            name="match_date"
-                                            class="form-input"
-                                            id="matchDate"
-                                            min="<?= date('Y-m-d') ?>"
-                                            required
-                                            oninput="updatePreview(); validateField('schedule')">
-                                    </div>
+                            <div class="form-group">
+                                <div class="form-label-row">
+                                    <label class="form-label">
+                                        <span class="label-icon time">🏏</span>
+                                        Select Match (Today)
+                                    </label>
                                 </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <div class="form-label-row">
-                                            <label class="form-label">
-                                                <span class="label-icon time"><i class="fas fa-clock"></i></span>
-                                                Match Start Time <span class="required">*</span>
-                                            </label>
-                                            <span class="form-hint">Example 8:00 PM</span>
-                                        </div>
-                                        <input type="time"
-                                            name="match_time"
-                                            class="form-input"
-                                            id="matchTime"
-                                            required
-                                            oninput="updatePreview(); validateField('schedule')">
-                                    </div>
-                                </div>
+
+                                <select name="match_id" class="form-input" id="matchSelect" required onchange="updatePreview(); validateField('schedule')">
+                                    <option value="">Select match</option>
+                                    <?php foreach ($today_matches as $match): ?>
+                                        <option value="<?= $match['id'] ?>" data-start-at="<?= html_escape((string) $match['start_at']) ?>">
+                                            <?= $match['team_home'] ?> vs <?= $match['team_away'] ?>
+                                            (<?= date('h:i A', strtotime($match['start_at'])) ?>)
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
+
                             <div class="schedule-note">
                                 Joining will close automatically 30 minutes before match start time.
                                 Close time: <strong id="previewCloseText">Select date and time</strong>
@@ -1573,13 +1555,44 @@
 </div>
 
 <script>
+    function showPoolAlert(type, title, text) {
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: type,
+                title: title,
+                text: text,
+                confirmButtonColor: '#4e54c8'
+            });
+            return;
+        }
+
+        alert(title + '\n' + text);
+    }
+
+    function getSelectedMatchOption() {
+        const matchSelect = document.getElementById('matchSelect');
+        if (!matchSelect) {
+            return null;
+        }
+
+        return matchSelect.options[matchSelect.selectedIndex] || null;
+    }
+
+    function getSelectedMatchStartAt() {
+        const selectedOption = getSelectedMatchOption();
+        if (!selectedOption) {
+            return '';
+        }
+
+        return selectedOption.getAttribute('data-start-at') || '';
+    }
+
     // ========== LIVE PREVIEW ==========
     function updatePreview() {
         const name = document.getElementById('poolName').value.trim();
         const price = document.getElementById('poolPrice').value;
         const limitRaw = document.getElementById('userLimit').value.trim();
-        const matchDate = document.getElementById('matchDate').value;
-        const matchTime = document.getElementById('matchTime').value;
+        const matchStartAt = getSelectedMatchStartAt();
 
         // Name
         const previewName = document.getElementById('previewName');
@@ -1614,7 +1627,7 @@
         // Name hint
         document.getElementById('nameHint').textContent = (name.length || 0) + '/50';
 
-        const schedule = getScheduleDetails(matchDate, matchTime);
+        const schedule = getScheduleDetails(matchStartAt);
         document.getElementById('previewStartText').textContent = 'Match start: ' + (schedule.startLabel || 'Not set');
         document.getElementById('previewCloseMini').textContent = 'Join close: ' + (schedule.closeLabel || 'Not set');
         document.getElementById('previewCloseText').textContent = schedule.closeLabel || 'Select date and time';
@@ -1623,8 +1636,8 @@
         updateSteps();
     }
 
-    function getScheduleDetails(matchDate, matchTime) {
-        if (!matchDate || !matchTime) {
+    function getScheduleDetails(matchStartAt) {
+        if (!matchStartAt) {
             return {
                 startLabel: '',
                 closeLabel: '',
@@ -1632,7 +1645,7 @@
             };
         }
 
-        const startDate = new Date(matchDate + 'T' + matchTime);
+        const startDate = new Date(matchStartAt.replace(' ', 'T'));
 
         if (Number.isNaN(startDate.getTime())) {
             return {
@@ -1662,8 +1675,7 @@
     function updateSteps() {
         const name = document.getElementById('poolName').value.trim();
         const price = document.getElementById('poolPrice').value;
-        const matchDate = document.getElementById('matchDate').value;
-        const matchTime = document.getElementById('matchTime').value;
+        const matchStartAt = getSelectedMatchStartAt();
 
         const s1 = document.getElementById('step1Circle');
         const s2 = document.getElementById('step2Circle');
@@ -1744,7 +1756,7 @@
             l4.className = 'step-label';
         }
 
-        const schedule = getScheduleDetails(matchDate, matchTime);
+        const schedule = getScheduleDetails(matchStartAt);
         if (name.length >= 3 && price !== '' && schedule.valid) {
             s4.className = 'step-circle done';
             s4.innerHTML = '<i class="fas fa-check" style="font-size:0.65rem"></i>';
@@ -1845,30 +1857,26 @@
             }
         }
         if (field === 'schedule') {
-            const dateInput = document.getElementById('matchDate');
-            const timeInput = document.getElementById('matchTime');
+            const matchInput = document.getElementById('matchSelect');
             const msg = document.getElementById('scheduleValidation');
             const msgText = msg.querySelector('span');
             const msgIcon = msg.querySelector('i');
-            const schedule = getScheduleDetails(dateInput.value, timeInput.value);
+            const schedule = getScheduleDetails(getSelectedMatchStartAt());
 
-            if (!dateInput.value || !timeInput.value) {
-                dateInput.classList.remove('valid', 'error');
-                timeInput.classList.remove('valid', 'error');
+            if (!matchInput || !matchInput.value) {
+                if (matchInput) {
+                    matchInput.classList.remove('valid', 'error');
+                }
                 msg.classList.remove('show');
             } else if (!schedule.valid) {
-                dateInput.classList.add('error');
-                timeInput.classList.add('error');
-                dateInput.classList.remove('valid');
-                timeInput.classList.remove('valid');
+                matchInput.classList.add('error');
+                matchInput.classList.remove('valid');
                 msg.className = 'validation-msg show error';
                 msgIcon.className = 'fas fa-exclamation-circle';
                 msgText.textContent = 'Match start must be at least 30 minutes from now.';
             } else {
-                dateInput.classList.add('valid');
-                timeInput.classList.add('valid');
-                dateInput.classList.remove('error');
-                timeInput.classList.remove('error');
+                matchInput.classList.add('valid');
+                matchInput.classList.remove('error');
                 msg.className = 'validation-msg show success';
                 msgIcon.className = 'fas fa-check-circle';
                 msgText.textContent = 'Joining closes at ' + schedule.closeLabel;
@@ -1905,8 +1913,7 @@
     document.getElementById('poolForm')?.addEventListener('submit', function(e) {
         const name = document.getElementById('poolName').value.trim();
         const price = document.getElementById('poolPrice').value;
-        const matchDate = document.getElementById('matchDate').value;
-        const matchTime = document.getElementById('matchTime').value;
+        const matchId = document.getElementById('matchSelect')?.value || '';
         let hasError = false;
 
         if (name.length < 3) {
@@ -1917,7 +1924,7 @@
             validateField('price');
             hasError = true;
         }
-        if (!getScheduleDetails(matchDate, matchTime).valid) {
+        if (!matchId || !getScheduleDetails(getSelectedMatchStartAt()).valid) {
             validateField('schedule');
             hasError = true;
         }
@@ -1955,5 +1962,18 @@
             updatePreview();
         }, 50);
     }
-</script>
 
+    document.addEventListener('DOMContentLoaded', function() {
+        updatePreview();
+        validateField('schedule');
+
+        <?php if ($this->session->flashdata('error')) : ?>
+            showPoolAlert('error', 'Pool Not Created', <?= json_encode((string) $this->session->flashdata('error')) ?>);
+        <?php endif; ?>
+
+        <?php if ($this->session->flashdata('success')) : ?>
+            showPoolAlert('success', 'Success', <?= json_encode((string) $this->session->flashdata('success')) ?>);
+        <?php endif; ?>
+    });
+</script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

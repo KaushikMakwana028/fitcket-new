@@ -34,9 +34,9 @@ class Login extends CI_Controller
 
         $user = $this->session->userdata('user');
 
-// echo "<pre>";
-// print_r($user);
-// die;
+        // echo "<pre>";
+        // print_r($user);
+        // die;
 
         $current_method = $this->router->fetch_method();
 
@@ -47,13 +47,8 @@ class Login extends CI_Controller
             if ($user && isset($user['is_logged_in']) && $user['is_logged_in'] === true) {
 
                 redirect(base_url());
-
             }
-
         }
-
-
-
     }
 
 
@@ -69,7 +64,6 @@ class Login extends CI_Controller
         $this->load->view('login_view');
 
         $this->load->view('footer');
-
     }
 
 
@@ -85,63 +79,62 @@ class Login extends CI_Controller
         $this->load->view('sign_in_view');
 
         $this->load->view('footer');
-
     }
 
 
 
-   public function send_otp()
-{
-    // Load form validation library
-    $this->load->library('form_validation');
+    public function send_otp()
+    {
+        // Load form validation library
+        $this->load->library('form_validation');
 
-    // Set validation rules
-    $this->form_validation->set_rules('mobile', 'Mobile Number', 'required|numeric|min_length[10]|max_length[10]');
+        // Set validation rules
+        $this->form_validation->set_rules('mobile', 'Mobile Number', 'required|numeric|min_length[10]|max_length[10]');
 
-    if ($this->form_validation->run() == FALSE) {
-        // Validation failed → reload login form with errors
-       $this->load->view('header');
+        if ($this->form_validation->run() == FALSE) {
+            // Validation failed → reload login form with errors
+            $this->load->view('header');
 
-        $this->load->view('login_view');
+            $this->load->view('login_view');
 
-        $this->load->view('footer');
-        return;
+            $this->load->view('footer');
+            return;
+        }
+
+        $mobile = $this->input->post('mobile');
+
+        // Check if user exists
+        $user = $this->general_model->getOne('users', ['mobile' => $mobile]);
+
+        if (!$user) {
+            $this->session->set_flashdata('error', 'User not found. Please register.');
+            redirect('login');
+        }
+
+        if ($user->role == 1) {
+            $this->session->set_flashdata('error', 'Invalid mobile number.');
+            redirect('login');
+        }
+
+        // Generate OTP
+        $otp = rand(100000, 999999);
+        $this->session->set_userdata('otp', $otp);
+        $this->session->set_userdata('mobile', $mobile);
+
+        $sms_sent = $this->send_otp_via_sms($mobile, $otp);
+
+        if ($sms_sent) {
+            $this->session->set_flashdata('success', 'OTP sent successfully.');
+        } else {
+            $this->session->set_flashdata('error', 'Failed to send OTP.');
+            redirect('login');
+        }
+
+        $masked_mobile = '*******' . substr($mobile, -4);
+        $data['masked_mobile'] = $masked_mobile;
+
+        $this->load->view('otp_form', $data);
     }
-
-    $mobile = $this->input->post('mobile');
-
-    // Check if user exists
-    $user = $this->general_model->getOne('users', ['mobile' => $mobile]);
-
-    if (!$user) {
-        $this->session->set_flashdata('error', 'User not found. Please register.');
-        redirect('login');
-    }
-
-    if ($user->role == 1) {
-        $this->session->set_flashdata('error', 'Invalid mobile number.');
-        redirect('login');
-    }
-
-    // Generate OTP
-    $otp = rand(100000, 999999);
-    $this->session->set_userdata('otp', $otp);
-    $this->session->set_userdata('mobile', $mobile);
-
-    $sms_sent = $this->send_otp_via_sms($mobile, $otp);
-
-    if ($sms_sent) {
-        $this->session->set_flashdata('success', 'OTP sent successfully.');
-    } else {
-        $this->session->set_flashdata('error', 'Failed to send OTP.');
-        redirect('login');
-    }
-
-    $masked_mobile = '*******' . substr($mobile, -4);
-    $data['masked_mobile'] = $masked_mobile;
-
-    $this->load->view('otp_form', $data);
-}
 
 
 
@@ -162,7 +155,7 @@ class Login extends CI_Controller
 
 
 
-            if ($user['role'] == 0 ||$user['role']==2 ) {
+            if ($user['role'] == 0 || $user['role'] == 2) {
 
                 $user['is_logged_in'] = true;
 
@@ -183,73 +176,72 @@ class Login extends CI_Controller
                 }
 
                 return;
-
             } else {
 
                 $this->session->set_flashdata('error', 'invalid credentails.');
 
                 redirect('login');
-
             }
-
         } else {
 
             http_response_code(401);
 
             echo json_encode(['error' => 'Invalid OTP']);
+        }
+    }
 
+    public function register_user()
+    {
+
+        $this->load->library('form_validation');
+
+
+        $this->form_validation->set_rules('first_name', 'First Name', 'required|trim');
+        $this->form_validation->set_rules('last_name', 'Last Name', 'required|trim');
+        $this->form_validation->set_rules(
+            'mobile',
+            'Mobile Number',
+            'required|trim|is_unique[users.mobile]',
+            ['is_unique' => 'This mobile number is already registered.']
+        );
+        $this->form_validation->set_rules('email', 'Email', 'required|valid_email|trim');
+
+        if ($this->form_validation->run() == FALSE) {
+
+            $data['old'] = $this->input->post();
+            $this->load->view('header');
+
+            $this->load->view('sign_in_view', $data);
+
+            $this->load->view('footer');
+
+            return;
         }
 
+        $form_data = [
+            'firstname' => $this->input->post('first_name'),
+            'lastname'  => $this->input->post('last_name'),
+            'email'     => $this->input->post('email'),
+            'mobile'    => $this->input->post('mobile')
+        ];
+
+        $this->session->set_userdata('user_register_form_data', $form_data);
+
+        // Generate OTP
+        $otp = rand(100000, 999999);
+        $this->session->set_userdata('otp', $otp);
+
+        // Send OTP
+        $sms_sent = $this->send_otp_via_sms($form_data['mobile'], $otp);
+        if ($sms_sent) {
+            $masked_mobile = '*******' . substr($form_data['mobile'], -4);
+            $data['masked_mobile'] = $masked_mobile;
+            $this->load->view('register_otp_form', $data);
+        } else {
+            $this->session->set_flashdata('error', 'Failed to send OTP.');
+            redirect('login');
+        }
     }
-
-   public function register_user()
-{
-    
-    $this->load->library('form_validation');
-
-    
-    $this->form_validation->set_rules('first_name', 'First Name', 'required|trim');
-    $this->form_validation->set_rules('last_name', 'Last Name', 'required|trim');
-    $this->form_validation->set_rules('mobile', 'Mobile Number', 'required|trim|is_unique[users.mobile]',
-        ['is_unique' => 'This mobile number is already registered.']);
-    $this->form_validation->set_rules('email', 'Email', 'required|valid_email|trim');
-
-    if ($this->form_validation->run() == FALSE) {
-        
-        $data['old'] = $this->input->post(); 
-        $this->load->view('header');
-
-        $this->load->view('sign_in_view',$data);
-
-        $this->load->view('footer');
-
-        return;
-    }
-
-    $form_data = [
-        'firstname' => $this->input->post('first_name'),
-        'lastname'  => $this->input->post('last_name'),
-        'email'     => $this->input->post('email'),
-        'mobile'    => $this->input->post('mobile')
-    ];
-
-    $this->session->set_userdata('user_register_form_data', $form_data);
-
-    // Generate OTP
-    $otp = rand(100000, 999999);
-    $this->session->set_userdata('otp', $otp);
-
-    // Send OTP
-    $sms_sent = $this->send_otp_via_sms($form_data['mobile'], $otp);
-    if ($sms_sent) {
-        $masked_mobile = '*******' . substr($form_data['mobile'], -4);
-        $data['masked_mobile'] = $masked_mobile;
-        $this->load->view('register_otp_form', $data);
-    } else {
-        $this->session->set_flashdata('error', 'Failed to send OTP.');
-        redirect('login');
-    }
-}
 
 
 
@@ -269,7 +261,6 @@ class Login extends CI_Controller
             echo json_encode(['error' => 'Session expired. Please try again.']);
 
             return;
-
         }
 
         if ($entered_otp == $session_otp) {
@@ -297,15 +288,20 @@ class Login extends CI_Controller
             ]);
 
             $user_id = $this->db->insert_id();
+            // 🔥 CREATE WALLET FOR USER
+            $this->db->insert('wallets', [
+                'user_id' => $user_id,
+                'balance' => 0
+            ]);
 
 
 
-         $query = $this->db->get_where('users', ['id' => $user_id]);
-$user_data = $query->row_array(); // ✅ returns array
-$user_data['is_logged_in']  = true;
-$user_data['is_registered'] = true;
+            $query = $this->db->get_where('users', ['id' => $user_id]);
+            $user_data = $query->row_array(); // ✅ returns array
+            $user_data['is_logged_in']  = true;
+            $user_data['is_registered'] = true;
 
-$this->session->set_userdata('user', $user_data);
+            $this->session->set_userdata('user', $user_data);
 
 
 
@@ -320,14 +316,10 @@ $this->session->set_userdata('user', $user_data);
             } else {
                 echo json_encode(['redirect_url' => base_url()]);
             }
-
-
         } else {
 
             echo json_encode(['error' => 'Invalid OTP. Please try again.']);
-
         }
-
     }
 
     public function send_otp_via_sms($mobileNo, $otp)
@@ -380,7 +372,6 @@ $this->session->set_userdata('user', $user_data);
             curl_close($ch);
 
             return false;
-
         }
 
 
@@ -400,7 +391,6 @@ $this->session->set_userdata('user', $user_data);
 
 
         return $response;
-
     }
 
     public function logout()
@@ -413,7 +403,5 @@ $this->session->set_userdata('user', $user_data);
 
 
         redirect(base_url());
-
     }
-
 }

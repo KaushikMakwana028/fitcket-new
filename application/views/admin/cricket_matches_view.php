@@ -1335,7 +1335,7 @@
                                                         </span>
                                                         <span class="admin-pill" data-role="admin-pill">
                                                             <div class="fixture-result text-success fw-bold" style="font-size:0.85rem;">
-                                                                 <?= html_escape($match['match_result']) ?>
+                                                                <?= html_escape($match['match_result']) ?>
                                                             </div>
                                                         </span>
                                                     </div>
@@ -1425,36 +1425,6 @@
             return 'completed';
         }
 
-        function updateStats(matches) {
-            const totalEl = document.getElementById('statTotal');
-            const liveEl = document.getElementById('statLive');
-            const scheduledEl = document.getElementById('statScheduled');
-            const completedEl = document.getElementById('statCompleted');
-
-            if (!totalEl || !liveEl || !scheduledEl || !completedEl) {
-                return;
-            }
-
-            let live = 0;
-            let scheduled = 0;
-            let completed = 0;
-
-            matches.forEach(function(match) {
-                if (match.bucket === 'live') {
-                    live++;
-                } else if (match.bucket === 'today' || match.bucket === 'upcoming') {
-                    scheduled++;
-                } else if (match.bucket === 'completed') {
-                    completed++;
-                }
-            });
-
-            totalEl.textContent = String(matches.length);
-            liveEl.textContent = String(live);
-            scheduledEl.textContent = String(scheduled);
-            completedEl.textContent = String(completed);
-        }
-
         function updateStatuses() {
             const now = Date.now();
             const matches = rows.map(function(row) {
@@ -1517,8 +1487,6 @@
                     statusPill.innerHTML = '<i class="bx bx-radio-circle-marked"></i> ' + formatLabel(match.bucket);
                 }
             });
-
-            updateStats(matches);
         }
 
         if (rows.length) {
@@ -1531,7 +1499,10 @@
         var statusSelect = document.getElementById('tableStatus');
 
         function fetchMatches(url) {
-            fetch(url, {
+            var requestUrl = typeof url === 'string' ? url : url.toString();
+            var tbody = document.querySelector('.matches-table-wrap tbody');
+
+            fetch(requestUrl, {
                     headers: {
                         'X-Requested-With': 'XMLHttpRequest'
                     }
@@ -1544,8 +1515,8 @@
                     var doc = parser.parseFromString(html, 'text/html');
 
                     var newTbody = doc.querySelector('.matches-table-wrap tbody');
-                    if (newTbody) {
-                        document.querySelector('.matches-table-wrap tbody').innerHTML = newTbody.innerHTML;
+                    if (newTbody && tbody) {
+                        tbody.innerHTML = newTbody.innerHTML;
                     }
 
                     var newPagination = doc.querySelector('.matches-card .card-footer');
@@ -1566,11 +1537,14 @@
                         if (oldStats) oldStats.innerHTML = newStats.innerHTML;
                     }
 
-                    window.history.pushState({}, '', url);
+                    window.history.pushState({}, '', requestUrl);
 
                     rows.length = 0;
                     Array.prototype.push.apply(rows, Array.from(document.querySelectorAll('.fixture-row[data-start-at]')));
                     updateStatuses();
+                })
+                .catch(function(error) {
+                    console.error('Unable to load cricket matches pagination.', error);
                 });
         }
 
@@ -1634,6 +1608,9 @@
                     })
                     .then(function(data) {
                         if (data.success) {
+                            if (data.message) {
+                                alert(data.message);
+                            }
                             card.style.transition = 'all 0.5s ease';
                             card.style.opacity = '0';
                             card.style.transform = 'translateY(-20px)';

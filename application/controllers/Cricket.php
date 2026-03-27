@@ -148,6 +148,7 @@ class Cricket extends User_Controller
             'completed_matches' => [],
             'upcoming_matches' => [],
             'featured_match' => null,
+            'header_matches' => [],
         ];
 
         if (!$this->hasCricketMatchesTable()) {
@@ -223,6 +224,59 @@ class Cricket extends User_Controller
             $result['featured_match'] = $result['primary_match'];
         }
 
+        $headerBaseMatches = [];
+        if (!empty($result['live_match'])) {
+            $headerBaseMatches[] = $result['live_match'];
+        }
+        if (!empty($result['featured_match'])) {
+            $featuredId = (int) ($result['featured_match']['id'] ?? 0);
+            $alreadyIncluded = false;
+
+            foreach ($headerBaseMatches as $headerMatch) {
+                if ((int) ($headerMatch['id'] ?? 0) === $featuredId) {
+                    $alreadyIncluded = true;
+                    break;
+                }
+            }
+
+            if (!$alreadyIncluded) {
+                $headerBaseMatches[] = $result['featured_match'];
+            }
+        }
+
+        if (count($headerBaseMatches) < 2) {
+            foreach ($visibleMatches as $visibleMatch) {
+                $visibleId = (int) ($visibleMatch['id'] ?? 0);
+                $alreadyIncluded = false;
+
+                foreach ($headerBaseMatches as $headerMatch) {
+                    if ((int) ($headerMatch['id'] ?? 0) === $visibleId) {
+                        $alreadyIncluded = true;
+                        break;
+                    }
+                }
+
+                if (!$alreadyIncluded) {
+                    $headerBaseMatches[] = $visibleMatch;
+                }
+
+                if (count($headerBaseMatches) >= 2) {
+                    break;
+                }
+            }
+        }
+
+        if (!empty($headerBaseMatches)) {
+            $primaryDate = trim((string) ($headerBaseMatches[0]['date_label'] ?? ''));
+            $sameDayMatches = array_values(array_filter($headerBaseMatches, function ($match) use ($primaryDate) {
+                return trim((string) ($match['date_label'] ?? '')) === $primaryDate;
+            }));
+
+            $result['header_matches'] = count($sameDayMatches) >= 2
+                ? array_slice($sameDayMatches, 0, 2)
+                : array_slice($headerBaseMatches, 0, 1);
+        }
+
         return $result;
     }
 
@@ -293,6 +347,18 @@ class Cricket extends User_Controller
             ->row_array();
     }
 
+    private function poolQuestionsUseMatchId()
+    {
+        return $this->db->table_exists('pool_questions')
+            && $this->db->field_exists('match_id', 'pool_questions');
+    }
+
+    private function poolAnswersUseMatchId()
+    {
+        return $this->db->table_exists('pool_question_answers')
+            && $this->db->field_exists('match_id', 'pool_question_answers');
+    }
+
     private function hasJoinedPool($poolId, $userId)
     {
         return $this->db
@@ -308,11 +374,25 @@ class Cricket extends User_Controller
             return [];
         }
 
-        $query = $this->db
-            ->where('pool_id', (int) $poolId)
+        $pool = $this->getPoolWithMeta($poolId);
+
+        if (!$pool) {
+            return [];
+        }
+
+        $builder = $this->db
+            ->from('pool_questions');
+
+        if ($this->poolQuestionsUseMatchId() && (int) ($pool['match_id'] ?? 0) > 0) {
+            $builder->where('match_id', (int) $pool['match_id']);
+        } else {
+            $builder->where('pool_id', (int) $poolId);
+        }
+
+        $query = $builder
             ->order_by('position', 'ASC')
             ->order_by('id', 'ASC')
-            ->get('pool_questions');
+            ->get();
 
         if (!$query) {
             return [];
@@ -327,11 +407,16 @@ class Cricket extends User_Controller
             return [];
         }
 
-        $rows = $this->db
+        $pool = $this->getPoolWithMeta($poolId);
+        $builder = $this->db
             ->where('pool_id', (int) $poolId)
-            ->where('user_id', (int) $userId)
-            ->get('pool_question_answers')
-            ->result_array();
+            ->where('user_id', (int) $userId);
+
+        if ($pool && $this->poolAnswersUseMatchId() && (int) ($pool['match_id'] ?? 0) > 0) {
+            $builder->where('match_id', (int) $pool['match_id']);
+        }
+
+        $rows = $builder->get('pool_question_answers')->result_array();
 
         $answers = [];
 
@@ -348,10 +433,16 @@ class Cricket extends User_Controller
             return false;
         }
 
-        return $this->db
+        $pool = $this->getPoolWithMeta($poolId);
+        $builder = $this->db
             ->where('pool_id', (int) $poolId)
-            ->where('user_id', (int) $userId)
-            ->count_all_results('pool_question_answers') > 0;
+            ->where('user_id', (int) $userId);
+
+        if ($pool && $this->poolAnswersUseMatchId() && (int) ($pool['match_id'] ?? 0) > 0) {
+            $builder->where('match_id', (int) $pool['match_id']);
+        }
+
+        return $builder->count_all_results('pool_question_answers') > 0;
     }
 
     private function calculatePoolAnswerSummary(array $questions, array $userAnswers)
@@ -483,6 +574,7 @@ class Cricket extends User_Controller
         $matches = $this->getCricketPageMatches();
         $data['live_match'] = $matches['live_match'];
         $data['featured_match'] = $matches['featured_match'];
+        $data['header_matches'] = $matches['header_matches'];
         $data['completed_matches'] = $matches['completed_matches'];
         $data['upcoming'] = $matches['upcoming_matches'];
         $primaryLiveCard = $matches['primary_match'] ?? $matches['featured_match'];
@@ -589,37 +681,55 @@ class Cricket extends User_Controller
     {
         $user = $this->getCurrentUser();
 
+        // ✅ Auto deactivate old pools (24 hours)
         if ($this->db->field_exists('isActive', 'pools') && $this->db->field_exists('created_at', 'pools')) {
             $this->db->where('created_at <=', date('Y-m-d H:i:s', strtotime('-24 hours')))
                 ->where('isActive', 1)
                 ->update('pools', ['isActive' => 0]);
         }
 
+        // ✅ MAIN QUERY (FIXED + CLEAN)
         $this->db->select("
-                pools.*,
-                COALESCE(users.name, 'Host') as host_name,
-                (
-                    SELECT COUNT(*)
-                    FROM pool_joins
-                    WHERE pool_joins.pool_id = pools.id
-                    AND pool_joins.status = 'success'
-                ) as total_joined
-            ", false)
-            ->from('pools')
-            ->join('users', 'users.id = pools.user_id', 'left');
+        pools.*,
+        COALESCE(users.name, 'Host') as host_name,
+        cricket_matches.team_home,
+        cricket_matches.team_away,
+        cricket_matches.start_at as match_time,
+        (
+            SELECT COUNT(*)
+            FROM pool_joins
+            WHERE pool_joins.pool_id = pools.id
+            AND pool_joins.status = 'success'
+        ) as total_joined
+    ", false);
 
+        $this->db->from('pools');
+
+        // ✅ IMPORTANT JOIN (FIXED ERROR)
+        $this->db->join('users', 'users.id = pools.user_id', 'left');
+
+        // ✅ MATCH JOIN
+        $this->db->join('cricket_matches', 'cricket_matches.id = pools.match_id', 'left');
+
+        // ✅ ACTIVE FILTER
         if ($this->db->field_exists('isActive', 'pools')) {
             $this->db->where('pools.isActive', 1);
         }
 
-        $data['pools'] = $this->db->order_by('pools.id', 'DESC')
+        // ✅ GET DATA
+        $data['pools'] = $this->db
+            ->order_by('pools.id', 'DESC')
             ->get()
             ->result_array();
 
+        // ✅ MEMBERS
         $poolIds = array_map('intval', array_column($data['pools'], 'id'));
         $data['pool_members'] = $this->getPoolMembersMap($poolIds);
+
+        // ✅ SCHEDULE CHECK
         $data['pool_schedule_ready'] = $this->hasPoolScheduleColumns();
 
+        // ✅ USER JOINED POOLS
         $joinedRows = $this->db
             ->select('pool_id')
             ->from('pool_joins')
@@ -629,8 +739,10 @@ class Cricket extends User_Controller
             ->result_array();
 
         $data['joined_pool_ids'] = array_map('intval', array_column($joinedRows, 'pool_id'));
+
         $data['user'] = $user;
 
+        // ✅ LOAD VIEW
         $this->load->view('header', $data);
         $this->load->view('pool_view', $data);
         $this->load->view('footer');
@@ -744,6 +856,10 @@ class Cricket extends User_Controller
                 'updated_at' => $timestamp,
             ];
 
+            if ($this->poolAnswersUseMatchId()) {
+                $payload['match_id'] = (int) ($pool['match_id'] ?? 0);
+            }
+
             $this->db->insert('pool_question_answers', $payload);
         }
 
@@ -768,7 +884,18 @@ class Cricket extends User_Controller
         }
 
         $data['user'] = $user;
+
+        // ✅ ADD THIS (IMPORTANT FIX)
         $data['pool_schedule_ready'] = $this->hasPoolScheduleColumns();
+
+        // 🔥 TODAY MATCHES
+        $data['today_matches'] = $this->getTodayMatches();
+
+        if (empty($data['today_matches'])) {
+            $this->session->set_flashdata('error', 'No matches available today.');
+            redirect('cricket');
+            return;
+        }
 
         $this->load->view('header', $data);
         $this->load->view('pool_add', $data);
@@ -795,8 +922,8 @@ class Cricket extends User_Controller
         $userLimitRaw = trim((string) $this->input->post('user_limit'));
         $userLimit = $userLimitRaw === '' ? 0 : (int) $userLimitRaw;
         $price = (float) $this->input->post('price');
-        $matchDate = trim((string) $this->input->post('match_date'));
-        $matchTime = trim((string) $this->input->post('match_time'));
+        // $matchDate = trim((string) $this->input->post('match_date'));
+        // $matchTime = trim((string) $this->input->post('match_time'));
 
         if ($poolName === '' || strlen($poolName) < 3) {
             $this->session->set_flashdata('error', 'Pool name must be at least 3 characters.');
@@ -816,30 +943,53 @@ class Cricket extends User_Controller
             return;
         }
 
-        if ($matchDate === '' || $matchTime === '') {
-            $this->session->set_flashdata('error', 'Please select match date and match start time.');
+        $matchId = (int) $this->input->post('match_id');
+
+        $match = $this->db->get_where('cricket_matches', [
+            'id' => $matchId,
+            'admin_status !=' => 'cancelled'
+        ])->row_array();
+
+        if (!$match) {
+            $this->session->set_flashdata('error', 'Invalid match selected.');
             redirect('pool/add');
             return;
         }
 
-        $matchStartAt = strtotime($matchDate . ' ' . $matchTime);
-
-        if ($matchStartAt === false) {
-            $this->session->set_flashdata('error', 'Invalid match date or time.');
-            redirect('pool/add');
-            return;
-        }
-
+        $matchStartAt = strtotime($match['start_at']);
         $joinCloseAt = strtotime('-30 minutes', $matchStartAt);
 
         if ($joinCloseAt <= time()) {
-            $this->session->set_flashdata('error', 'Match start time must be at least 30 minutes in the future.');
+            $this->session->set_flashdata('error', 'Match already started or too close.');
             redirect('pool/add');
             return;
         }
 
+        // if ($matchDate === '' || $matchTime === '') {
+        //     $this->session->set_flashdata('error', 'Please select match date and match start time.');
+        //     redirect('pool/add');
+        //     return;
+        // }
+
+        // $matchStartAt = strtotime($matchDate . ' ' . $matchTime);
+
+        // if ($matchStartAt === false) {
+        //     $this->session->set_flashdata('error', 'Invalid match date or time.');
+        //     redirect('pool/add');
+        //     return;
+        // }
+
+        // $joinCloseAt = strtotime('-30 minutes', $matchStartAt);
+
+        // if ($joinCloseAt <= time()) {
+        //     $this->session->set_flashdata('error', 'Match start time must be at least 30 minutes in the future.');
+        //     redirect('pool/add');
+        //     return;
+        // }
+
         $data = [
             'user_id' => $user['id'],
+            'match_id' => $matchId, // 🔥 IMPORTANT
             'pool_name' => $poolName,
             'user_limit' => $userLimit,
             'price' => $price,
@@ -856,6 +1006,19 @@ class Cricket extends User_Controller
         }
 
         $this->db->insert('pools', $data);
+
+        if (!$this->db->affected_rows()) {
+            $dbError = $this->db->error();
+            $message = !empty($dbError['message'])
+                ? 'Pool not created: ' . $dbError['message']
+                : 'Pool not created due to a database error. Please try again.';
+
+            $this->session->set_flashdata('error', $message);
+            redirect('pool/add');
+            return;
+        }
+
+        $this->session->set_flashdata('success', 'Pool created successfully.');
 
         redirect('pool');
     }
@@ -903,6 +1066,29 @@ class Cricket extends User_Controller
 
         $amount = (float) $pool['price'];
 
+        $txnid = 'POOL' . uniqid();
+
+        $this->db->trans_start();
+
+        // Testing mode: skip wallet deduction and auto-join the pool.
+        // Keep the Razorpay flow below commented for later use.
+        $poolJoinId = $this->upsertPoolJoin($pool, $user, [
+            'txnid' => $txnid,
+            'status' => 'success',
+            'razorpay_order_id' => null,
+            'razorpay_payment_id' => null,
+            'razorpay_signature' => null
+        ]);
+
+        $this->savePoolPaymentLog($poolJoinId, $pool, $user, $amount, 'success', $txnid, 'test_skip');
+        $this->syncPoolJoinedCount($pool['id']);
+
+        $this->db->trans_complete();
+
+        $this->session->set_flashdata('success', 'Joined pool successfully. Payment is skipped for testing.');
+        redirect('pool');
+        return;
+
         if ($amount <= 0) {
             $txnid = 'POOLFREE' . uniqid();
 
@@ -915,6 +1101,25 @@ class Cricket extends User_Controller
                 'razorpay_payment_id' => null,
                 'razorpay_signature' => null
             ]);
+
+            // 🔥 ADD TRANSACTION ENTRY (DEBIT)
+            if ($amount > 0) {
+
+                $wallet = $this->db
+                    ->where('user_id', $user['id'])
+                    ->get('wallets')
+                    ->row_array();
+
+                if ($wallet) {
+                    $this->db->insert('transactions', [
+                        'wallet_id' => $wallet['id'],
+                        'type' => 'debit',
+                        'amount' => $amount,
+                        'status' => 'success',
+                        'created_at' => date('Y-m-d H:i:s')
+                    ]);
+                }
+            }
 
             $this->savePoolPaymentLog($poolJoinId, $pool, $user, 0, 'success', $txnid, 'free');
             $this->syncPoolJoinedCount($pool['id']);
@@ -937,46 +1142,48 @@ class Cricket extends User_Controller
             'razorpay_signature' => null
         ]);
 
-        $api = new Api($this->RAZORPAY_KEY_ID, $this->RAZORPAY_KEY_SECRET);
-        $razorpayOrder = $api->order->create([
-            'receipt' => $txnid,
-            'amount' => $amountPaise,
-            'currency' => 'INR',
-            'payment_capture' => 1
-        ]);
+        // $api = new Api($this->RAZORPAY_KEY_ID, $this->RAZORPAY_KEY_SECRET);
+        // $razorpayOrder = $api->order->create([
+        //     'receipt' => $txnid,
+        //     'amount' => $amountPaise,
+        //     'currency' => 'INR',
+        //     'payment_capture' => 1
+        // ]);
 
-        $this->db->where('id', $poolJoinId)->update('pool_joins', [
-            'razorpay_order_id' => $razorpayOrder['id'],
-            'updated_at' => date('Y-m-d H:i:s')
-        ]);
+        // $this->db->where('id', $poolJoinId)->update('pool_joins', [
+        //     'razorpay_order_id' => $razorpayOrder['id'],
+        //     'updated_at' => date('Y-m-d H:i:s')
+        // ]);
 
-        $data = [
-            'key' => $this->RAZORPAY_KEY_ID,
-            'amount' => $amountPaise,
-            'name' => 'Pool Join Payment',
-            'description' => $pool['pool_name'],
-            'image' => base_url('assets/logo.png'),
-            'order_id' => $razorpayOrder['id'],
-            'txnid' => $txnid,
-            'prefill' => [
-                'name' => $user['name'] ?? 'User',
-                'email' => $user['email'] ?? '',
-                'contact' => $user['mobile'] ?? ''
-            ],
-            'notes' => [
-                'pool_id' => (int) $pool['id'],
-                'pool_join_id' => $poolJoinId,
-                'user_id' => (int) $user['id']
-            ],
-            'theme' => [
-                'color' => '#3399cc'
-            ]
-        ];
+        // $data = [
+        //     'key' => $this->RAZORPAY_KEY_ID,
+        //     'amount' => $amountPaise,
+        //     'name' => 'Pool Join Payment',
+        //     'description' => $pool['pool_name'],
+        //     'image' => base_url('assets/logo.png'),
+        //     'order_id' => $razorpayOrder['id'],
+        //     'txnid' => $txnid,
+        //     'prefill' => [
+        //         'name' => $user['name'] ?? 'User',
+        //         'email' => $user['email'] ?? '',
+        //         'contact' => $user['mobile'] ?? ''
+        //     ],
+        //     'notes' => [
+        //         'pool_id' => (int) $pool['id'],
+        //         'pool_join_id' => $poolJoinId,
+        //         'user_id' => (int) $user['id']
+        //     ],
+        //     'theme' => [
+        //         'color' => '#3399cc'
+        //     ]
+        // ];
 
-        $this->load->view('header');
-        $this->load->view('razorpay_redirect_pool', $data);
-        $this->load->view('footer');
+        // $this->load->view('header');
+        // $this->load->view('razorpay_redirect_pool', $data);
+        // $this->load->view('footer');
     }
+
+
 
     public function pool_razorpay_callback()
     {
@@ -1074,6 +1281,19 @@ class Cricket extends User_Controller
         $final = [];
 
         foreach ($pools as $pool) {
+            $questionWhere = 'pq.pool_id = ?';
+            $questionParams = [$userId, $pool->id];
+
+            if ($this->poolQuestionsUseMatchId() && !empty($pool->match_id)) {
+                $questionWhere = 'pq.match_id = ?';
+                $questionParams = [$userId, (int) $pool->match_id];
+            }
+
+            $answerJoinExtra = '';
+            if ($this->poolAnswersUseMatchId() && !empty($pool->match_id)) {
+                $answerJoinExtra = ' AND pa.match_id = ' . (int) $pool->match_id;
+            }
+
             $questions = $this->db->query("
                 SELECT 
                     pq.id as question_id,
@@ -1084,9 +1304,11 @@ class Cricket extends User_Controller
                 LEFT JOIN pool_question_answers pa 
                     ON pa.pool_question_id = pq.id 
                     AND pa.user_id = ?
-                WHERE pq.pool_id = ?
+                    AND pa.pool_id = " . (int) $pool->id . "
+                    {$answerJoinExtra}
+                WHERE {$questionWhere}
                 ORDER BY pq.position ASC
-            ", [$userId, $pool->id])->result();
+            ", $questionParams)->result();
 
             $questionData = [];
             $correctCount = 0;
@@ -1166,5 +1388,39 @@ class Cricket extends User_Controller
         $this->load->view('header', $data);
         $this->load->view('pool_history_view', $data);
         $this->load->view('footer');
+    }
+
+    private function getTodayMatches()
+    {
+        return $this->db
+            ->where('DATE(start_at)', date('Y-m-d'))
+            ->where('admin_status !=', 'cancelled')
+            ->order_by('start_at', 'ASC')
+            ->get('cricket_matches')
+            ->result_array();
+    }
+
+    private function deductWallet($userId, $amount)
+    {
+        $wallet = $this->db->where('user_id', $userId)->get('wallets')->row_array();
+
+        if ($wallet['balance'] < $amount) {
+            return false;
+        }
+
+        // Transaction
+        $this->db->insert('transactions', [
+            'wallet_id' => $wallet['id'],
+            'type' => 'debit',
+            'amount' => $amount,
+            'status' => 'success'
+        ]);
+
+        // Deduct
+        $this->db->set('balance', 'balance - ' . $amount, false)
+            ->where('id', $wallet['id'])
+            ->update('wallets');
+
+        return true;
     }
 }

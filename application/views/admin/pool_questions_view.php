@@ -1,5 +1,16 @@
 <?php
 $completionPercent = (int) round(((int) $saved_question_count / max(1, (int) $max_questions)) * 100);
+$pageMode = $page_mode ?? 'view';
+$isManageMode = $pageMode === 'manage';
+$titleText = $isManageMode
+    ? trim((string) (($match['team_home'] ?? '') . ' vs ' . ($match['team_away'] ?? '')))
+    : ($pool['pool_name'] ?? 'Pool Questions');
+$heroKicker = $isManageMode ? 'Match Questions Workspace' : 'Pool Questions Preview';
+$heroDescription = $isManageMode
+    ? 'Add and update one shared question set for this match. Every pool linked to this match will use the same questions and answer key.'
+    : 'This pool uses the shared question set from its linked match. You can review the saved questions and final answer key here.';
+$primaryBackUrl = $isManageMode ? base_url('admin/cricket_questions') : base_url('admin/pools');
+$primaryBackLabel = $isManageMode ? 'All Matches' : 'All Pools';
 ?>
 
 <style>
@@ -405,16 +416,18 @@ $completionPercent = (int) round(((int) $saved_question_count / max(1, (int) $ma
         <div class="question-hero mb-4">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
                 <div>
-                    <div class="hero-kicker mb-2">Pool Questions Workspace</div>
-                    <h3 class="mb-2 text-white"><?= html_escape($pool['pool_name']) ?></h3>
-                    <p class="mb-0 opacity-75">Build the question set, review completion, and assign the final answer key without leaving the page.</p>
+                    <div class="hero-kicker mb-2"><?= html_escape($heroKicker) ?></div>
+                    <h3 class="mb-2 text-white"><?= html_escape($titleText) ?></h3>
+                    <p class="mb-0 opacity-75"><?= html_escape($heroDescription) ?></p>
                 </div>
                 <div class="hero-actions d-flex gap-2 flex-wrap">
-                    <a href="<?= base_url('admin/pool/leaderboard') ?>" class="btn btn-light">
-                        <i class="bx bx-bar-chart-alt-2"></i> Global Leaderboard
-                    </a>
-                    <a href="<?= base_url('admin/pools') ?>" class="btn btn-outline-light">
-                        <i class="bx bx-arrow-back"></i> All Pools
+                    <?php if (!$isManageMode) : ?>
+                        <a href="<?= base_url('admin/pool/leaderboard') ?>" class="btn btn-light">
+                            <i class="bx bx-bar-chart-alt-2"></i> Global Leaderboard
+                        </a>
+                    <?php endif; ?>
+                    <a href="<?= $primaryBackUrl ?>" class="btn btn-outline-light">
+                        <i class="bx bx-arrow-back"></i> <?= html_escape($primaryBackLabel) ?>
                     </a>
                 </div>
             </div>
@@ -428,8 +441,8 @@ $completionPercent = (int) round(((int) $saved_question_count / max(1, (int) $ma
                                 <div class="hero-progress-value"><?= (int) $completionPercent ?>%</div>
                             </div>
                             <div class="text-end">
-                                <div class="small opacity-75">Host</div>
-                                <div class="fw-bold"><?= html_escape($pool['host_name']) ?></div>
+                                <div class="small opacity-75"><?= $isManageMode ? 'Linked Pools' : 'Host' ?></div>
+                                <div class="fw-bold"><?= $isManageMode ? (int) ($match['linked_pool_count'] ?? 0) : html_escape($pool['host_name']) ?></div>
                             </div>
                         </div>
                         <div class="hero-progress-bar">
@@ -440,14 +453,14 @@ $completionPercent = (int) round(((int) $saved_question_count / max(1, (int) $ma
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <div class="hero-stat">
-                        <div class="hero-stat-label">Entry Price</div>
-                        <div class="hero-stat-value">Rs. <?= number_format((float) $pool['price'], 2) ?></div>
+                        <div class="hero-stat-label"><?= $isManageMode ? 'Competition' : 'Entry Price' ?></div>
+                        <div class="hero-stat-value"><?= $isManageMode ? html_escape($match['competition_name'] ?: 'Match') : 'Rs. ' . number_format((float) $pool['price'], 2) ?></div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-2">
                     <div class="hero-stat">
-                        <div class="hero-stat-label">User Limit</div>
-                        <div class="hero-stat-value"><?= (int) $pool['user_limit'] ?></div>
+                        <div class="hero-stat-label"><?= $isManageMode ? 'Match Date' : 'User Limit' ?></div>
+                        <div class="hero-stat-value"><?= $isManageMode ? (!empty($match['start_at']) ? date('d M', strtotime($match['start_at'])) : 'N/A') : (int) $pool['user_limit'] ?></div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3">
@@ -470,8 +483,8 @@ $completionPercent = (int) round(((int) $saved_question_count / max(1, (int) $ma
                 <div class="section-card">
                     <div class="section-header">
                         <div>
-                            <h4 class="section-title">Question Builder</h4>
-                            <p class="section-subtitle">Draft all questions here. Empty cards stay available so you can fill them later.</p>
+                            <h4 class="section-title"><?= $isManageMode ? 'Question Builder' : 'Questions' ?></h4>
+                            <p class="section-subtitle"><?= $isManageMode ? 'These questions are shared for every pool connected to this same match. Add once here and all linked pools will use them.' : 'This pool can only view the shared match questions here. Editing is available from Cricket > Add Questions.' ?></p>
                         </div>
                         <span class="section-chip">
                             <i class="bx bx-layer"></i>
@@ -479,41 +492,57 @@ $completionPercent = (int) round(((int) $saved_question_count / max(1, (int) $ma
                         </span>
                     </div>
 
-                    <form method="post" action="<?= base_url('admin/pool/' . (int) $pool['id'] . '/save_questions') ?>">
+                    <?php if ($isManageMode) : ?>
+                        <form method="post" action="<?= base_url('admin/cricket_questions/' . (int) ($match['id'] ?? 0) . '/save_questions') ?>">
+                            <?php for ($i = 0; $i < (int) $max_questions; $i++) : ?>
+                                <?php $currentQuestion = (string) ($question_texts[$i] ?? ''); ?>
+                                <div class="question-box">
+                                    <label class="question-label" for="question_<?= $i ?>">
+                                        <span class="question-index"><?= $i + 1 ?></span>
+                                        <span>Question <?= $i + 1 ?></span>
+                                    </label>
+                                    <textarea
+                                        id="question_<?= $i ?>"
+                                        name="questions[]"
+                                        class="form-control pool-question-input"
+                                        rows="3"
+                                        maxlength="255"
+                                        placeholder="Type question <?= $i + 1 ?> here..."><?= html_escape($currentQuestion) ?></textarea>
+                                    <div class="question-helper">
+                                        <span class="question-char-count"><?= strlen($currentQuestion) ?></span>/255 characters
+                                    </div>
+                                </div>
+                            <?php endfor; ?>
+
+                            <div class="submit-row">
+                                <small class="text-muted">Question order here will be used for players and answer checking.</small>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bx bx-save"></i> Save Questions
+                                </button>
+                            </div>
+                        </form>
+                    <?php else : ?>
                         <?php for ($i = 0; $i < (int) $max_questions; $i++) : ?>
                             <?php $currentQuestion = (string) ($question_texts[$i] ?? ''); ?>
                             <div class="question-box">
-                                <label class="question-label" for="question_<?= $i ?>">
+                                <label class="question-label">
                                     <span class="question-index"><?= $i + 1 ?></span>
                                     <span>Question <?= $i + 1 ?></span>
                                 </label>
-                                <textarea
-                                    id="question_<?= $i ?>"
-                                    name="questions[]"
-                                    class="form-control pool-question-input"
-                                    rows="3"
-                                    maxlength="255"
-                                    placeholder="Type question <?= $i + 1 ?> here..."><?= html_escape($currentQuestion) ?></textarea>
+                                <textarea class="form-control pool-question-input" rows="3" readonly><?= html_escape($currentQuestion) ?></textarea>
                                 <div class="question-helper">
-                                    <span class="question-char-count"><?= strlen($currentQuestion) ?></span>/255 characters
+                                    <?= trim($currentQuestion) !== '' ? 'Shared match question' : 'No question saved for this slot' ?>
                                 </div>
                             </div>
                         <?php endfor; ?>
-
-                        <div class="submit-row">
-                            <small class="text-muted">Question order here will be used for players and answer checking.</small>
-                            <button type="submit" class="btn btn-primary">
-                                <i class="bx bx-save"></i> Save Questions
-                            </button>
-                        </div>
-                    </form>
+                    <?php endif; ?>
                 </div>
 
                 <div class="section-card answer-panel-card">
                     <div class="section-header">
                         <div>
-                            <h4 class="section-title">Answer Key Panel</h4>
-                            <p class="section-subtitle">Set the final answer for each saved question from this focused side panel.</p>
+                            <h4 class="section-title"><?= $isManageMode ? 'Answer Key Panel' : 'Answer Key' ?></h4>
+                            <p class="section-subtitle"><?= $isManageMode ? 'This answer key is also shared match-wise, so all pools of the same match will use the same correct answers.' : 'Final answers are read-only here. To manage them, use Cricket > Add Questions.' ?></p>
                         </div>
                         <span class="section-chip">
                             <i class="bx bx-check-shield"></i>
@@ -521,36 +550,53 @@ $completionPercent = (int) round(((int) $saved_question_count / max(1, (int) $ma
                         </span>
                     </div>
 
-                    <form method="post" action="<?= base_url('admin/pool/' . (int) $pool['id'] . '/save_answer_key') ?>">
+                    <?php if ($isManageMode) : ?>
+                        <form method="post" action="<?= base_url('admin/cricket_questions/' . (int) ($match['id'] ?? 0) . '/save_answer_key') ?>">
+                            <?php if (!empty($questions)) : ?>
+                                <div class="answer-list">
+                                    <?php foreach ($questions as $index => $question) : ?>
+                                        <div class="answer-card <?= (($question['correct_answer'] ?? '') !== '') ? 'active' : '' ?>">
+                                            <div class="answer-title">Q<?= $index + 1 ?>. <?= html_escape($question['question']) ?></div>
+                                            <select name="correct_answers[<?= (int) $question['id'] ?>]" class="form-select">
+                                                <option value="">Select later</option>
+                                                <?php foreach ($answer_options as $option) : ?>
+                                                    <option value="<?= $option ?>" <?= (($question['correct_answer'] ?? '') === $option) ? 'selected' : '' ?>>
+                                                        <?= ucfirst($option) ?>
+                                                    </option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php else : ?>
+                                <div class="answer-empty">
+                                    Add questions first, then the answer key panel will automatically populate here.
+                                </div>
+                            <?php endif; ?>
+
+                            <div class="submit-row answer-panel-footer">
+                                <small class="text-muted">Choose `Yes` or `No` only for the questions you want to finalize now.</small>
+                                <button type="submit" class="btn btn-success" <?= empty($questions) ? 'disabled' : '' ?>>
+                                    <i class="bx bx-check-circle"></i> Save Answer Key
+                                </button>
+                            </div>
+                        </form>
+                    <?php else : ?>
                         <?php if (!empty($questions)) : ?>
                             <div class="answer-list">
                                 <?php foreach ($questions as $index => $question) : ?>
                                     <div class="answer-card <?= (($question['correct_answer'] ?? '') !== '') ? 'active' : '' ?>">
                                         <div class="answer-title">Q<?= $index + 1 ?>. <?= html_escape($question['question']) ?></div>
-                                        <select name="correct_answers[<?= (int) $question['id'] ?>]" class="form-select">
-                                            <option value="">Select later</option>
-                                            <?php foreach ($answer_options as $option) : ?>
-                                                <option value="<?= $option ?>" <?= (($question['correct_answer'] ?? '') === $option) ? 'selected' : '' ?>>
-                                                    <?= ucfirst($option) ?>
-                                                </option>
-                                            <?php endforeach; ?>
-                                        </select>
+                                        <input type="text" class="form-control" value="<?= html_escape(($question['correct_answer'] ?? '') !== '' ? ucfirst($question['correct_answer']) : 'Not set') ?>" readonly>
                                     </div>
                                 <?php endforeach; ?>
                             </div>
                         <?php else : ?>
                             <div class="answer-empty">
-                                Add questions first, then the answer key panel will automatically populate here.
+                                No shared match questions are available for this pool yet.
                             </div>
                         <?php endif; ?>
-
-                        <div class="submit-row answer-panel-footer">
-                            <small class="text-muted">Choose `Yes` or `No` only for the questions you want to finalize now.</small>
-                            <button type="submit" class="btn btn-success" <?= empty($questions) ? 'disabled' : '' ?>>
-                                <i class="bx bx-check-circle"></i> Save Answer Key
-                            </button>
-                        </div>
-                    </form>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -567,12 +613,12 @@ $completionPercent = (int) round(((int) $saved_question_count / max(1, (int) $ma
                         <p>Keep each question short and direct so users can answer quickly on mobile.</p>
                     </div>
                     <div class="helper-item">
-                        <h6>2. Save First</h6>
-                        <p>Save the question list before setting answers. Only saved questions appear in the answer panel.</p>
+                        <h6>2. Match-Based Flow</h6>
+                        <p><?= $isManageMode ? 'Save the question list before setting answers. Only saved questions appear in the answer panel.' : 'Questions are controlled match-wise from Cricket > Add Questions, then automatically reused across linked pools.' ?></p>
                     </div>
                     <div class="helper-item">
-                        <h6>3. Publish With Confidence</h6>
-                        <p>Use the single global leaderboard to review winners, users, and performance across all pools.</p>
+                        <h6>3. Review With Confidence</h6>
+                        <p><?= $isManageMode ? 'Use the single global leaderboard to review winners, users, and performance across all pools.' : 'This page is read-only for pools, so question editing stays centralized under the Cricket question manager.' ?></p>
                     </div>
                 </div>
             </div>

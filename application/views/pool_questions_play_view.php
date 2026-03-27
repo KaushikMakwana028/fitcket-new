@@ -463,7 +463,7 @@ $completionPercent = (int) round(((int) $summary['answered'] / max(1, (int) $sum
 
                         <?php if ($correctAnswer !== '') : ?>
                             <div class="correct-answer-note">
-                                Correct answer: <strong><?= ucfirst($correctAnswer) ?></strong>
+                                <!-- Correct answer: <strong><?= ucfirst($correctAnswer) ?></strong> -->
                             </div>
                         <?php endif; ?>
                     </div>

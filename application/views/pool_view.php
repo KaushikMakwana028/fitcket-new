@@ -218,7 +218,7 @@ $formatPoolDateTime = function ($dateTime) {
         margin-top: 2px;
     }
 
-    /* ========== SEARCH & FILTER BAR ========== */
+    /* ========== SEARCH & FILTER BAR - DESKTOP ========== */
     .filter-section {
         background: var(--card-bg);
         border-radius: var(--radius-lg);
@@ -382,6 +382,315 @@ $formatPoolDateTime = function ($dateTime) {
         font-weight: 500;
     }
 
+    /* ========== MOBILE FILTER BUTTON & MODAL ========== */
+    .mobile-filter-trigger {
+        display: none;
+    }
+
+    .mobile-filter-overlay {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 9998;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .mobile-filter-overlay.show {
+        opacity: 1;
+    }
+
+    .mobile-filter-panel {
+        display: none;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: #fff;
+        border-radius: 24px 24px 0 0;
+        z-index: 9999;
+        max-height: 75vh;
+        overflow-y: auto;
+        transform: translateY(100%);
+        transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+        box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .mobile-filter-panel.show {
+        transform: translateY(0);
+    }
+
+    .mobile-filter-handle {
+        width: 40px;
+        height: 4px;
+        background: #ddd;
+        border-radius: 4px;
+        margin: 12px auto 0;
+    }
+
+    .mobile-filter-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 20px 12px;
+        border-bottom: 1px solid var(--border);
+    }
+
+    .mobile-filter-header h5 {
+        font-size: 1rem;
+        font-weight: 700;
+        margin: 0;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .mobile-filter-close {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: none;
+        background: #f1f3f8;
+        color: var(--text-secondary);
+        font-size: 1rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+
+    .mobile-filter-close:hover {
+        background: #e2e5ea;
+    }
+
+    .mobile-filter-body {
+        padding: 20px;
+    }
+
+    .mobile-filter-group {
+        margin-bottom: 20px;
+    }
+
+    .mobile-filter-group-label {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .mobile-filter-chips {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .mobile-filter-chips .filter-chip {
+        padding: 10px 18px;
+        font-size: 0.84rem;
+        border-radius: 12px;
+    }
+
+    .mobile-filter-group .sort-select {
+        width: 100%;
+        min-width: unset;
+        padding: 12px 16px;
+        font-size: 0.88rem;
+        border-radius: 14px;
+    }
+
+    .mobile-filter-group .search-box {
+        min-width: unset;
+        width: 100%;
+    }
+
+    .mobile-filter-group .search-box input {
+        padding: 12px 14px 12px 42px;
+        font-size: 0.88rem;
+        border-radius: 14px;
+    }
+
+    .mobile-filter-actions {
+        padding: 16px 20px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        gap: 10px;
+    }
+
+    .mobile-filter-apply {
+        flex: 1;
+        padding: 12px;
+        border: none;
+        border-radius: 14px;
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        color: #fff;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 14px rgba(78, 84, 200, 0.3);
+    }
+
+    .mobile-filter-apply:hover {
+        transform: translateY(-1px);
+    }
+
+    .mobile-filter-reset {
+        padding: 12px 20px;
+        border: 2px solid var(--border);
+        border-radius: 14px;
+        background: #fff;
+        color: var(--text-secondary);
+        font-family: 'Poppins', sans-serif;
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .mobile-filter-reset:hover {
+        border-color: var(--danger);
+        color: var(--danger);
+    }
+
+    /* ========== MOBILE COMPACT SEARCH + FILTER BAR ========== */
+    .mobile-search-bar {
+        display: none;
+        gap: 10px;
+        margin-bottom: 14px;
+        align-items: center;
+    }
+
+    .mobile-search-bar .search-box {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .mobile-search-bar .search-box input {
+        width: 100%;
+        padding: 11px 14px 11px 40px;
+        border: 2px solid var(--border);
+        border-radius: 14px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.84rem;
+        outline: none;
+        transition: all 0.3s ease;
+        background: #fff;
+        color: var(--text-primary);
+    }
+
+    .mobile-search-bar .search-box input:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(78, 84, 200, 0.1);
+    }
+
+    .mobile-filter-trigger {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        border: 2px solid var(--border);
+        background: #fff;
+        color: var(--text-secondary);
+        font-size: 1rem;
+        cursor: pointer;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+        position: relative;
+        flex-shrink: 0;
+    }
+
+    .mobile-filter-trigger:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        background: var(--primary-ultra);
+    }
+
+    .mobile-filter-trigger .filter-badge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: var(--accent);
+        color: #fff;
+        font-size: 0.6rem;
+        font-weight: 700;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        border: 2px solid #fff;
+    }
+
+    .mobile-filter-trigger .filter-badge.show {
+        display: flex;
+    }
+
+    /* ========== MOBILE PRICE FILTER (Separate, always visible) ========== */
+    .mobile-price-bar {
+        display: none;
+        background: var(--card-bg);
+        border-radius: 14px;
+        padding: 12px 16px;
+        margin-bottom: 14px;
+        box-shadow: var(--shadow-sm);
+        border: 1px solid var(--border);
+        align-items: center;
+        gap: 8px;
+    }
+
+    .mobile-price-bar .price-label-mobile {
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+    }
+
+    .mobile-price-bar .price-inputs {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex: 1;
+    }
+
+    .mobile-price-bar .price-input {
+        flex: 1;
+        min-width: 0;
+        padding: 8px 10px;
+        border: 2px solid var(--border);
+        border-radius: 10px;
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.8rem;
+        outline: none;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .mobile-price-bar .price-input:focus {
+        border-color: var(--primary);
+    }
+
+    .mobile-price-bar .price-separator {
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 0.8rem;
+    }
+
     .results-info {
         display: flex;
         align-items: center;
@@ -431,7 +740,7 @@ $formatPoolDateTime = function ($dateTime) {
         box-shadow: 0 2px 8px rgba(78, 84, 200, 0.3);
     }
 
-    /* ========== POOL CARDS (CARD VIEW) ========== */
+    /* ========== POOL CARDS ========== */
     .pools-grid {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -534,7 +843,11 @@ $formatPoolDateTime = function ($dateTime) {
     }
 
     .pool-price-tag.free {
-        background: linear-gradient(135deg, #3498db, #2980b9);
+        background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+        position: relative;
+        padding: 5px 16px;
+        font-size: 0.82rem;
+        letter-spacing: 0.5px;
     }
 
     .pool-card-stats {
@@ -997,7 +1310,7 @@ $formatPoolDateTime = function ($dateTime) {
     }
 
     .table-price.free {
-        color: #3498db;
+        color: #6c5ce7;
     }
 
     .table-progress {
@@ -1203,22 +1516,29 @@ $formatPoolDateTime = function ($dateTime) {
             font-size: 1.1rem;
         }
 
-        .filter-row-1 {
-            flex-direction: column;
+        /* Hide desktop filter section on mobile */
+        .filter-section {
+            display: none !important;
         }
 
-        .sort-select {
-            min-width: 100%;
+        /* Show mobile search bar + filter button */
+        .mobile-search-bar {
+            display: flex;
         }
 
-        .filter-row-2 {
-            flex-direction: column;
-            align-items: flex-start;
+        .mobile-filter-trigger {
+            display: flex;
         }
 
-        .price-filter {
-            margin-left: 0;
-            margin-top: 6px;
+        /* Show mobile price bar */
+        .mobile-price-bar {
+            display: flex;
+        }
+
+        /* Mobile filter panel */
+        .mobile-filter-overlay,
+        .mobile-filter-panel {
+            display: block;
         }
 
         .pools-grid {
@@ -1227,6 +1547,25 @@ $formatPoolDateTime = function ($dateTime) {
 
         .pool-card-stats {
             grid-template-columns: 1fr 1fr;
+        }
+
+        /* FREE tag mobile enhancement */
+        .pool-price-tag.free {
+            padding: 6px 18px;
+            font-size: 0.78rem;
+            background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+            box-shadow: 0 3px 12px rgba(108, 92, 231, 0.3);
+            animation: freeGlow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes freeGlow {
+            from {
+                box-shadow: 0 3px 12px rgba(108, 92, 231, 0.3);
+            }
+
+            to {
+                box-shadow: 0 3px 20px rgba(108, 92, 231, 0.5);
+            }
         }
     }
 
@@ -1337,7 +1676,7 @@ if (!empty($pools)) {
             </div>
         </div>
 
-        <!-- ========== FILTERS ========== -->
+        <!-- ========== DESKTOP FILTERS (hidden on mobile) ========== -->
         <div class="filter-section animate-in delay-3">
             <div class="filter-row-1">
                 <div class="search-box">
@@ -1373,6 +1712,86 @@ if (!empty($pools)) {
                     <span class="price-separator">—</span>
                     <input type="number" class="price-input" id="priceMax" placeholder="Max" oninput="applyFilters()">
                 </div>
+            </div>
+        </div>
+
+        <!-- ========== MOBILE SEARCH BAR + FILTER BUTTON ========== -->
+        <div class="mobile-search-bar animate-in delay-3">
+            <div class="search-box">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="mobileSearchInput" placeholder="Search pools..." oninput="syncMobileSearch()">
+            </div>
+            <button class="mobile-filter-trigger" onclick="openMobileFilter()" id="mobileFilterBtn">
+                <i class="fas fa-sliders-h"></i>
+                <span class="filter-badge" id="filterBadge">0</span>
+            </button>
+        </div>
+
+        <!-- ========== MOBILE PRICE BAR (separate, always visible on mobile) ========== -->
+        <div class="mobile-price-bar animate-in delay-3">
+            <span class="price-label-mobile">💰 Price</span>
+            <div class="price-inputs">
+                <input type="number" class="price-input" id="mobilePriceMin" placeholder="Min" oninput="syncMobilePrice()">
+                <span class="price-separator">—</span>
+                <input type="number" class="price-input" id="mobilePriceMax" placeholder="Max" oninput="syncMobilePrice()">
+            </div>
+        </div>
+
+        <!-- ========== MOBILE FILTER OVERLAY ========== -->
+        <div class="mobile-filter-overlay" id="mobileFilterOverlay" onclick="closeMobileFilter()"></div>
+
+        <!-- ========== MOBILE FILTER BOTTOM SHEET ========== -->
+        <div class="mobile-filter-panel" id="mobileFilterPanel">
+            <div class="mobile-filter-handle"></div>
+            <div class="mobile-filter-header">
+                <h5><i class="fas fa-filter"></i> Filters</h5>
+                <button class="mobile-filter-close" onclick="closeMobileFilter()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="mobile-filter-body">
+                <!-- Sort -->
+                <div class="mobile-filter-group">
+                    <div class="mobile-filter-group-label">
+                        <i class="fas fa-sort"></i> Sort By
+                    </div>
+                    <select class="sort-select" id="mobileSortSelect">
+                        <option value="default">Default</option>
+                        <option value="name-asc">Name A-Z</option>
+                        <option value="name-desc">Name Z-A</option>
+                        <option value="price-low">Price: Low to High</option>
+                        <option value="price-high">Price: High to Low</option>
+                        <option value="joined-high">Most Joined</option>
+                        <option value="joined-low">Least Joined</option>
+                        <option value="spots-left">Spots Left</option>
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="mobile-filter-group">
+                    <div class="mobile-filter-group-label">
+                        <i class="fas fa-toggle-on"></i> Status
+                    </div>
+                    <div class="mobile-filter-chips">
+                        <button class="filter-chip active" data-filter="all" onclick="setMobileFilter('all', this)">
+                            All <span class="chip-count"><?= $totalPools ?></span>
+                        </button>
+                        <button class="filter-chip" data-filter="open" onclick="setMobileFilter('open', this)">
+                            <i class="fas fa-door-open"></i> Open <span class="chip-count"><?= $activePools ?></span>
+                        </button>
+                        <button class="filter-chip" data-filter="full" onclick="setMobileFilter('full', this)">
+                            <i class="fas fa-lock"></i> Full <span class="chip-count"><?= $fullPools ?></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="mobile-filter-actions">
+                <button class="mobile-filter-reset" onclick="resetMobileFilters()">
+                    <i class="fas fa-undo"></i> Reset
+                </button>
+                <button class="mobile-filter-apply" onclick="applyMobileFilters()">
+                    Apply Filters
+                </button>
             </div>
         </div>
 
@@ -1449,6 +1868,9 @@ if (!empty($pools)) {
                             <div class="pool-card-top">
                                 <div class="pool-name-section">
                                     <div class="pool-name"><?= $p['pool_name'] ?></div>
+                                    <div style="font-size:12px; color:#6c757d; font-weight:600;">
+                                        <?= $p['team_home'] ?> vs <?= $p['team_away'] ?>
+                                    </div>
                                     <div class="pool-host">
                                         <span class="host-avatar"><?= strtoupper(substr($p['host_name'], 0, 1)) ?></span>
                                         <?= $p['host_name'] ?>
@@ -1457,7 +1879,7 @@ if (!empty($pools)) {
                                 <div class="pool-card-meta">
                                     <span class="pool-status-badge <?= $statusClass ?>"><?= $statusText ?></span>
                                     <div class="pool-price-tag <?= $p['price'] == 0 ? 'free' : '' ?>">
-                                        <?= $p['price'] == 0 ? 'FREE' : '₹' . number_format($p['price']) ?>
+                                        <?= $p['price'] == 0 ? '✨ FREE' : '₹' . number_format($p['price']) ?>
                                     </div>
                                 </div>
 
@@ -1550,6 +1972,10 @@ if (!empty($pools)) {
                                             <div class="detail-value"><?= html_escape($statusText) ?></div>
                                         </div>
                                         <div class="pool-detail-card">
+                                            <div class="detail-label">Match</div>
+                                            <div class="detail-value"><?= $p['team_home'] ?> vs <?= $p['team_away'] ?></div>
+                                        </div>
+                                        <div class="pool-detail-card">
                                             <div class="detail-label">Match Start</div>
                                             <div class="detail-value"><?= html_escape($formatPoolDateTime($matchStartAt)) ?></div>
                                         </div>
@@ -1599,6 +2025,7 @@ if (!empty($pools)) {
                                 <th>Host <i class="fas fa-sort sort-icon"></i></th>
                                 <th>Price <i class="fas fa-sort sort-icon"></i></th>
                                 <th>Capacity</th>
+                                <th>Match</th>
                                 <th>Status</th>
                                 <th>Action</th>
                             </tr>
@@ -1641,7 +2068,7 @@ if (!empty($pools)) {
 
                                     <td>
                                         <span class="table-price <?= $p['price'] == 0 ? 'free' : '' ?>">
-                                            <?= $p['price'] == 0 ? 'Free' : '₹' . number_format($p['price']) ?>
+                                            <?= $p['price'] == 0 ? '✨ Free' : '₹' . number_format($p['price']) ?>
                                         </span>
                                     </td>
 
@@ -1650,10 +2077,23 @@ if (!empty($pools)) {
                                             <div class="table-progress-bar">
                                                 <div class="table-progress-fill" style="width:<?= $percent ?>%; background:<?= $fillColor ?>"></div>
                                             </div>
-                                            <span class="table-progress-text"><?= $hasLimit ? ($p['total_joined'] . '/' . $p['user_limit']) : ($p['total_joined'] . '/Unlimited') ?></span>
+                                            <span class="table-progress-text"><?= $hasLimit ? ($p['total_joined'] . '/' . $p['user_limit']) : ($p['total_joined'] . '/∞') ?></span>
                                         </div>
                                     </td>
 
+                                    <td>
+                                        <div style="
+                                            font-size:11px;
+                                            background:#eef2ff;
+                                            color:#4e54c8;
+                                            padding:3px 8px;
+                                            border-radius:6px;
+                                            display:inline-block;
+                                            margin-top:4px;
+                                        ">
+                                            <?= $p['team_home'] ?> vs <?= $p['team_away'] ?>
+                                        </div>
+                                    </td>
                                     <td>
                                         <?php if ($hasJoined): ?>
                                             <span class="pool-status-badge open" style="position:static;">JOINED</span>
@@ -1666,7 +2106,7 @@ if (!empty($pools)) {
                                         <?php else: ?>
                                             <span class="pool-status-badge open" style="position:static;">OPEN</span>
                                         <?php endif; ?>
-                                    </td>A
+                                    </td>
 
                                     <td>
                                         <?php if ($hasJoined): ?>
@@ -1717,6 +2157,7 @@ if (!empty($pools)) {
 <script>
     let currentFilter = 'all';
     let currentView = 'card';
+    let mobileFilterOpen = false;
 
     // ========== VIEW TOGGLE ==========
     function switchView(view) {
@@ -1739,12 +2180,109 @@ if (!empty($pools)) {
         }
     }
 
-    // ========== FILTER CHIPS ==========
+    // ========== FILTER CHIPS (Desktop) ==========
     function setFilter(filter, btn) {
         currentFilter = filter;
-        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+        document.querySelectorAll('.filter-section .filter-chip').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         applyFilters();
+    }
+
+    // ========== FILTER CHIPS (Mobile Panel) ==========
+    function setMobileFilter(filter, btn) {
+        currentFilter = filter;
+        document.querySelectorAll('.mobile-filter-chips .filter-chip').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        // Also sync desktop chips
+        document.querySelectorAll('.filter-section .filter-chip').forEach(c => {
+            c.classList.toggle('active', c.dataset.filter === filter);
+        });
+    }
+
+    // ========== MOBILE FILTER PANEL ==========
+    function openMobileFilter() {
+        mobileFilterOpen = true;
+        const overlay = document.getElementById('mobileFilterOverlay');
+        const panel = document.getElementById('mobileFilterPanel');
+        overlay.style.display = 'block';
+        panel.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+
+        requestAnimationFrame(() => {
+            overlay.classList.add('show');
+            panel.classList.add('show');
+        });
+    }
+
+    function closeMobileFilter() {
+        mobileFilterOpen = false;
+        const overlay = document.getElementById('mobileFilterOverlay');
+        const panel = document.getElementById('mobileFilterPanel');
+        overlay.classList.remove('show');
+        panel.classList.remove('show');
+        document.body.style.overflow = '';
+
+        setTimeout(() => {
+            overlay.style.display = 'none';
+            panel.style.display = 'none';
+        }, 350);
+    }
+
+    function applyMobileFilters() {
+        // Sync sort
+        const mobileSortVal = document.getElementById('mobileSortSelect').value;
+        document.getElementById('sortSelect').value = mobileSortVal;
+
+        applyFilters();
+        closeMobileFilter();
+        updateFilterBadge();
+    }
+
+    function resetMobileFilters() {
+        document.getElementById('mobileSortSelect').value = 'default';
+        document.getElementById('sortSelect').value = 'default';
+        document.getElementById('mobileSearchInput').value = '';
+        document.getElementById('searchInput').value = '';
+        document.getElementById('mobilePriceMin').value = '';
+        document.getElementById('mobilePriceMax').value = '';
+        document.getElementById('priceMin').value = '';
+        document.getElementById('priceMax').value = '';
+
+        currentFilter = 'all';
+        document.querySelectorAll('.filter-chip').forEach(c => {
+            c.classList.toggle('active', c.dataset.filter === 'all');
+        });
+
+        applyFilters();
+        updateFilterBadge();
+    }
+
+    function syncMobileSearch() {
+        const val = document.getElementById('mobileSearchInput').value;
+        document.getElementById('searchInput').value = val;
+        applyFilters();
+    }
+
+    function syncMobilePrice() {
+        const minVal = document.getElementById('mobilePriceMin').value;
+        const maxVal = document.getElementById('mobilePriceMax').value;
+        document.getElementById('priceMin').value = minVal;
+        document.getElementById('priceMax').value = maxVal;
+        applyFilters();
+    }
+
+    function updateFilterBadge() {
+        let activeCount = 0;
+        if (currentFilter !== 'all') activeCount++;
+        if (document.getElementById('mobileSortSelect').value !== 'default') activeCount++;
+
+        const badge = document.getElementById('filterBadge');
+        if (activeCount > 0) {
+            badge.textContent = activeCount;
+            badge.classList.add('show');
+        } else {
+            badge.classList.remove('show');
+        }
     }
 
     // ========== MAIN FILTER FUNCTION ==========
@@ -1754,13 +2292,11 @@ if (!empty($pools)) {
         const priceMin = parseFloat(document.getElementById('priceMin').value) || 0;
         const priceMax = parseFloat(document.getElementById('priceMax').value) || Infinity;
 
-        // Get all pool elements
         const cards = document.querySelectorAll('.pool-card');
         const rows = document.querySelectorAll('.pools-table tbody tr');
 
         let visibleCount = 0;
 
-        // Filter function
         function shouldShow(el) {
             const name = el.dataset.name || '';
             const host = el.dataset.host || '';
@@ -1774,27 +2310,22 @@ if (!empty($pools)) {
             return matchesSearch && matchesFilter && matchesPrice;
         }
 
-        // Apply to cards
         cards.forEach(card => {
             const show = shouldShow(card);
             card.style.display = show ? '' : 'none';
             if (show) visibleCount++;
         });
 
-        // Apply to table rows
         rows.forEach(row => {
             row.style.display = shouldShow(row) ? '' : 'none';
         });
 
-        // Sort
         if (sort !== 'default') {
             sortElements(sort);
         }
 
-        // Update count
         document.getElementById('visibleCount').textContent = visibleCount;
 
-        // Show/hide no results
         const noResults = document.getElementById('noResults');
         const cardView = document.getElementById('cardView');
         const tableView = document.getElementById('tableView');
@@ -1850,14 +2381,19 @@ if (!empty($pools)) {
         document.getElementById('sortSelect').value = 'default';
         document.getElementById('priceMin').value = '';
         document.getElementById('priceMax').value = '';
+        document.getElementById('mobileSearchInput').value = '';
+        document.getElementById('mobileSortSelect').value = 'default';
+        document.getElementById('mobilePriceMin').value = '';
+        document.getElementById('mobilePriceMax').value = '';
 
         currentFilter = 'all';
-        document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-        document.querySelector('.filter-chip[data-filter="all"]')?.classList.add('active');
+        document.querySelectorAll('.filter-chip').forEach(c => {
+            c.classList.toggle('active', c.dataset.filter === 'all');
+        });
 
         applyFilters();
+        updateFilterBadge();
 
-        // Restore view
         if (currentView === 'card') {
             document.getElementById('cardView')?.classList.add('active');
         } else {
@@ -1865,8 +2401,21 @@ if (!empty($pools)) {
         }
     }
 
-    // Initialize card view as default
+    // Initialize
     document.addEventListener('DOMContentLoaded', () => {
         switchView('card');
+    });
+
+    // Handle swipe down to close mobile filter
+    let touchStartY = 0;
+    document.getElementById('mobileFilterPanel')?.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+    });
+
+    document.getElementById('mobileFilterPanel')?.addEventListener('touchmove', (e) => {
+        const diff = e.touches[0].clientY - touchStartY;
+        if (diff > 80) {
+            closeMobileFilter();
+        }
     });
 </script>

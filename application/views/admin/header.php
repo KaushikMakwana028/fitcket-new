@@ -318,6 +318,11 @@
 								<i class='bx bx-radio-circle'></i>Add Match
 							</a>
 						</li>
+						<li>
+							<a href="<?= base_url('admin/cricket_questions') ?>">
+								<i class='bx bx-radio-circle'></i>Add Questions
+							</a>
+						</li>
 					</ul>
 				</li>
 
@@ -442,6 +447,19 @@
 						</div>
 
 						<div class="menu-title">Payment</div>
+
+					</a>
+
+				</li>
+				<li class="">
+
+					<a href="<?= base_url('admin/user_wallet'); ?>" aria-expanded="false">
+
+						<div class="parent-icon"><i class="bx bx-wallet"></i>
+
+						</div>
+
+						<div class="menu-title">User Wallet</div>
 
 					</a>
 

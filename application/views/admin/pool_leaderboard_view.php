@@ -546,6 +546,16 @@ $buildPageUrl = function ($pageNumber) use ($query_params, $baseLeaderboardUrl) 
                                     <div class="fw-bold"><?= html_escape($leader['pool_name']) ?></div>
                                 </div>
                                 <div class="podium-meta-item">
+                                    <div class="small opacity-75">Match</div>
+                                    <div class="fw-bold">
+                                        <?php if (!empty($leader['team_home']) && !empty($leader['team_away'])): ?>
+                                            <?= html_escape($leader['team_home']) ?> vs <?= html_escape($leader['team_away']) ?>
+                                        <?php else: ?>
+                                            <span class="text-muted">Match Not Assigned</span>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                                <div class="podium-meta-item">
                                     <div class="small opacity-75">Host</div>
                                     <div class="fw-bold"><?= html_escape($leader['host_name']) ?></div>
                                 </div>
@@ -582,6 +592,7 @@ $buildPageUrl = function ($pageNumber) use ($query_params, $baseLeaderboardUrl) 
                                 <th>User</th>
                                 <th>Mobile</th>
                                 <th>Pool</th>
+                                <th>Match</th>
                                 <th>Host</th>
                                 <th>Entry</th>
                                 <th>Limit</th>
@@ -603,7 +614,21 @@ $buildPageUrl = function ($pageNumber) use ($query_params, $baseLeaderboardUrl) 
                                     <td><span class="info-pill"><?= html_escape($leader['user_mobile'] ?: 'N/A') ?></span></td>
                                     <td>
                                         <div class="fw-semibold"><?= html_escape($leader['pool_name']) ?></div>
-                                        <div class="subtext">Pool ID: #<?= (int) $leader['pool_id'] ?></div>
+                                        <!-- <div class="subtext"><?= (int) $leader['pool_id'] ?></div> -->
+                                    </td>
+                                    <td>
+                                        <div class="fw-semibold">
+                                            <?= !empty($leader['team_home']) ? html_escape($leader['team_home']) : 'TBD' ?>
+                                            vs
+                                            <?= !empty($leader['team_away']) ? html_escape($leader['team_away']) : 'TBD' ?>
+                                        </div>
+                                        <div class="subtext">
+                                            <?php if (!empty($leader['match_time'])): ?>
+                                                <?= date('d M Y', strtotime($leader['match_time'])) ?>
+                                            <?php else: ?>
+                                                N/A
+                                            <?php endif; ?>
+                                        </div>
                                     </td>
                                     <td><?= html_escape($leader['host_name']) ?></td>
                                     <td>Rs. <?= number_format((float) $leader['entry_price'], 2) ?></td>
@@ -796,10 +821,10 @@ $buildPageUrl = function ($pageNumber) use ($query_params, $baseLeaderboardUrl) 
             root.classList.add('is-loading');
 
             fetch(requestUrl, {
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            })
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
                 .then(function(response) {
                     return response.text();
                 })

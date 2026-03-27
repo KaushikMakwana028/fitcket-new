@@ -18,6 +18,7 @@ class Api extends CI_Controller
     private $razorpay_key_secret;
     private $api;
     private $poolAnswerOptions = ['yes', 'no'];
+    private $cricketMatchDurationHours = 10;
 
     public function __construct()
     {
@@ -41,6 +42,362 @@ class Api extends CI_Controller
         $this->load->library('email');
         $this->load->library(['form_validation']);
         $this->load->library('Firebase_messaging');
+    }
+
+    private function hasCricketMatchesTable()
+    {
+        return $this->db->table_exists('cricket_matches');
+    }
+
+    private function getCricketLogoUrl($path)
+    {
+        $path = trim((string) $path);
+
+        if ($path === '') {
+            return '';
+        }
+
+        $path = str_replace('\\', '/', $path);
+
+        if (preg_match('#^https?://#i', $path)) {
+            return $path;
+        }
+
+        if (strpos($path, base_url()) === 0) {
+            return $path;
+        }
+
+        return base_url(ltrim($path, '/'));
+    }
+
+    private function getCricketMatchEndAt($startAt, $nextStartAt = false)
+    {
+        if ($startAt === false) {
+            return false;
+        }
+
+        $defaultEndAt = strtotime('+' . (int) $this->cricketMatchDurationHours . ' hours', $startAt);
+
+        if ($nextStartAt !== false && $nextStartAt > $startAt && $nextStartAt < $defaultEndAt) {
+            return $nextStartAt;
+        }
+
+        return $defaultEndAt;
+    }
+
+    private function getCricketMatchBucket(array $match, $nextStartAt = false)
+    {
+        $status = strtolower((string) ($match['admin_status'] ?? 'scheduled'));
+        $startAt = strtotime((string) ($match['start_at'] ?? ''));
+        $now = time();
+        $today = date('Y-m-d');
+
+        if ($startAt === false || $status === 'cancelled') {
+            return 'hidden';
+        }
+
+        $endAt = $this->getCricketMatchEndAt($startAt, $nextStartAt);
+
+        if ($status === 'completed' || $endAt < $now) {
+            return 'completed';
+        }
+
+        if ($status === 'live' || ($startAt <= $now && $endAt >= $now)) {
+            return 'live';
+        }
+
+        if (date('Y-m-d', $startAt) === $today) {
+            return 'today';
+        }
+
+        if ($startAt > $now) {
+            return 'upcoming';
+        }
+
+        return 'completed';
+    }
+
+    private function mapCricketMatchCard(array $match, $bucket)
+    {
+        $startAt = strtotime((string) ($match['start_at'] ?? ''));
+        $scoreLine = $bucket === 'live'
+            ? 'Match in progress'
+            : ($startAt ? 'Starts at ' . date('g:i A', $startAt) : 'Schedule not set');
+
+        return [
+            'id' => (int) ($match['id'] ?? 0),
+            'competition_name' => trim((string) ($match['competition_name'] ?? '')),
+            'team1' => trim((string) ($match['team_home'] ?? 'Team A')),
+            'team2' => trim((string) ($match['team_away'] ?? 'Team B')),
+            'team1_logo' => $this->getCricketLogoUrl($match['home_logo'] ?? ''),
+            'team2_logo' => $this->getCricketLogoUrl($match['away_logo'] ?? ''),
+            'score' => $scoreLine,
+            'venue' => trim((string) ($match['venue'] ?? '')),
+            'bucket' => $bucket,
+            'status' => strtolower((string) ($match['admin_status'] ?? 'scheduled')),
+            'start_label' => $startAt ? date('d M Y, h:i A', $startAt) : 'Not scheduled',
+            'date_label' => $startAt ? date('d M Y', $startAt) : 'Not scheduled',
+            'time_label' => $startAt ? date('h:i A', $startAt) : '',
+            'teams' => trim((string) ($match['team_home'] ?? '')) . ' vs ' . trim((string) ($match['team_away'] ?? '')),
+            'match_result' => trim((string) ($match['match_result'] ?? '')),
+        ];
+    }
+
+    private function getCricketPageMatches()
+    {
+        $result = [
+            'live_match' => null,
+            'primary_match' => null,
+            'completed_matches' => [],
+            'upcoming_matches' => [],
+            'featured_match' => null,
+        ];
+
+        if (!$this->hasCricketMatchesTable()) {
+            return $result;
+        }
+
+        $rows = $this->db
+            ->from('cricket_matches')
+            ->where('admin_status !=', 'cancelled')
+            ->order_by('start_at', 'ASC')
+            ->order_by('id', 'DESC')
+            ->get()
+            ->result_array();
+
+        $liveMatches = [];
+        $completedMatches = [];
+        $upcomingMatches = [];
+        $visibleMatches = [];
+        $totalRows = count($rows);
+
+        foreach ($rows as $index => $row) {
+            $nextStartAt = false;
+
+            for ($nextIndex = $index + 1; $nextIndex < $totalRows; $nextIndex++) {
+                $candidateStartAt = strtotime((string) ($rows[$nextIndex]['start_at'] ?? ''));
+                if ($candidateStartAt !== false) {
+                    $nextStartAt = $candidateStartAt;
+                    break;
+                }
+            }
+
+            $bucket = $this->getCricketMatchBucket($row, $nextStartAt);
+
+            if ($bucket === 'hidden') {
+                continue;
+            }
+
+            $card = $this->mapCricketMatchCard($row, $bucket);
+
+            if ($bucket !== 'completed') {
+                $visibleMatches[] = $card;
+            }
+
+            if ($bucket === 'live') {
+                $liveMatches[] = $card;
+            } elseif ($bucket === 'completed') {
+                $completedMatches[] = $card;
+            } elseif ($bucket === 'today' || $bucket === 'upcoming') {
+                $upcomingMatches[] = $card;
+            }
+        }
+
+        $result['live_match'] = !empty($liveMatches) ? $liveMatches[0] : null;
+        $result['completed_matches'] = array_slice(array_reverse($completedMatches), 0, 4);
+        $result['upcoming_matches'] = array_slice($upcomingMatches, 0, 4);
+        $result['primary_match'] = $result['live_match']
+            ?: (!empty($upcomingMatches) ? $upcomingMatches[0] : null);
+
+        if (!empty($result['primary_match'])) {
+            $primaryId = (int) ($result['primary_match']['id'] ?? 0);
+
+            foreach ($visibleMatches as $index => $matchCard) {
+                if ((int) ($matchCard['id'] ?? 0) === $primaryId) {
+                    $result['featured_match'] = $visibleMatches[$index + 1] ?? null;
+                    break;
+                }
+            }
+        }
+
+        if (empty($result['featured_match'])) {
+            $result['featured_match'] = $result['primary_match'];
+        }
+
+        return $result;
+    }
+
+    private function getAuthorizedApiUser()
+    {
+        $authHeader = $this->input->get_request_header('Authorization', true);
+        $token = null;
+
+        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        $decoded = $this->verify_jwt($token);
+        if (!$decoded || empty($decoded->data->id)) {
+            return [null, $decoded];
+        }
+
+        $user = $this->db->get_where('users', ['id' => (int) $decoded->data->id])->row_array();
+
+        return [$user, $decoded];
+    }
+
+    private function getUserWalletRow($userId)
+    {
+        return $this->db
+            ->where('user_id', (int) $userId)
+            ->get('wallets')
+            ->row_array();
+    }
+
+    private function getOrCreateUserWalletRow($userId)
+    {
+        $wallet = $this->getUserWalletRow($userId);
+
+        if ($wallet) {
+            return $wallet;
+        }
+
+        $this->db->insert('wallets', [
+            'user_id' => (int) $userId,
+            'balance' => 0,
+        ]);
+
+        return $this->getUserWalletRow($userId);
+    }
+
+    private function getWalletTransactionsByWalletId($walletId)
+    {
+        return $this->db
+            ->where('wallet_id', (int) $walletId)
+            ->where_in('type', ['winning', 'withdraw'])
+            ->order_by('id', 'DESC')
+            ->get('transactions')
+            ->result_array();
+    }
+
+    private function buildWalletSummary($walletId)
+    {
+        $transactions = $this->getWalletTransactionsByWalletId($walletId);
+        $totalWinning = 0;
+        $totalWithdraw = 0;
+
+        foreach ($transactions as $transaction) {
+            $type = strtolower((string) ($transaction['type'] ?? ''));
+            $status = strtolower((string) ($transaction['status'] ?? ''));
+            $amount = (float) ($transaction['amount'] ?? 0);
+
+            if ($type === 'winning' && $status === 'success') {
+                $totalWinning += $amount;
+            }
+
+            if ($type === 'withdraw' && $status !== 'failed') {
+                $totalWithdraw += $amount;
+            }
+        }
+
+        return [
+            'transactions' => $transactions,
+            'total_winning' => $totalWinning,
+            'total_withdraw' => $totalWithdraw,
+            'available_withdraw' => max(0, $totalWinning - $totalWithdraw),
+        ];
+    }
+
+    private function walletTransactionColumnExists($column)
+    {
+        return $this->db->field_exists($column, 'transactions');
+    }
+
+    private function getUserBankAccountById($userId, $bankId)
+    {
+        if ((int) $bankId <= 0 || !$this->db->table_exists('provider_bank_details')) {
+            return null;
+        }
+
+        return $this->db
+            ->where('id', (int) $bankId)
+            ->where('provider_id', (int) $userId)
+            ->get('provider_bank_details')
+            ->row_array();
+    }
+
+    private function getUserBankAccountsList($userId)
+    {
+        if (!$this->db->table_exists('provider_bank_details')) {
+            return [];
+        }
+
+        return $this->db
+            ->where('provider_id', (int) $userId)
+            ->order_by('id', 'DESC')
+            ->get('provider_bank_details')
+            ->result_array();
+    }
+
+    private function normalizeBankAccountData(array $inputData, $userId)
+    {
+        return [
+            'provider_id' => (int) $userId,
+            'account_holder_name' => trim((string) ($inputData['account_holder_name'] ?? '')),
+            'bank_name' => trim((string) ($inputData['bank_name'] ?? '')),
+            'account_number' => preg_replace('/\s+/', '', (string) ($inputData['account_number'] ?? '')),
+            'ifsc_code' => strtoupper(trim((string) ($inputData['ifsc_code'] ?? ''))),
+            'account_type' => strtolower(trim((string) ($inputData['account_type'] ?? ''))),
+            'branch_name' => trim((string) ($inputData['branch_name'] ?? '')),
+        ];
+    }
+
+    private function validateBankAccountData(array $data)
+    {
+        $errors = [];
+
+        if ($data['account_holder_name'] === '' || strlen($data['account_holder_name']) < 3) {
+            $errors[] = 'Account holder name is required.';
+        }
+
+        if ($data['bank_name'] === '' || strlen($data['bank_name']) < 3) {
+            $errors[] = 'Bank name is required.';
+        }
+
+        if ($data['account_number'] === '' || !preg_match('/^[0-9]{8,20}$/', $data['account_number'])) {
+            $errors[] = 'Account number must be 8 to 20 digits.';
+        }
+
+        if ($data['ifsc_code'] === '' || !preg_match('/^[A-Z]{4}0[A-Z0-9]{6}$/', $data['ifsc_code'])) {
+            $errors[] = 'Please enter a valid IFSC code.';
+        }
+
+        if (!in_array($data['account_type'], ['savings', 'current', 'salary'], true)) {
+            $errors[] = 'Account type must be savings, current or salary.';
+        }
+
+        return [
+            'valid' => empty($errors),
+            'errors' => $errors,
+        ];
+    }
+
+    private function formatWalletTransaction(array $transaction)
+    {
+        return [
+            'id' => (int) ($transaction['id'] ?? 0),
+            'type' => (string) ($transaction['type'] ?? ''),
+            'amount' => (float) ($transaction['amount'] ?? 0),
+            'status' => (string) ($transaction['status'] ?? ''),
+            'payment_id' => (string) ($transaction['payment_id'] ?? ''),
+            'match_id' => isset($transaction['match_id']) ? (int) $transaction['match_id'] : 0,
+            'remark' => (string) ($transaction['remark'] ?? ($transaction['description'] ?? '')),
+            'withdraw_method' => (string) ($transaction['withdraw_method'] ?? ''),
+            'bank_name' => (string) ($transaction['bank_name'] ?? ''),
+            'account_number' => (string) ($transaction['account_number'] ?? ''),
+            'account_holder_name' => (string) ($transaction['account_holder_name'] ?? ''),
+            'created_at' => (string) ($transaction['created_at'] ?? ''),
+        ];
     }
 
     public function register_user()
@@ -538,15 +895,8 @@ class Api extends CI_Controller
         header('Content-Type: application/json');
 
         // 1️⃣ Verify JWT Token
-        $authHeader = $this->input->get_request_header('Authorization', TRUE);
-        $token = null;
-
-        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            $token = $matches[1];
-        }
-
-        $decoded = $this->verify_jwt($token);
-        if (!$decoded || empty($decoded->data->id)) {
+        list($user) = $this->getAuthorizedApiUser();
+        if (!$user) {
             return $this->output
                 ->set_status_header(400)
                 ->set_output(json_encode([
@@ -1859,15 +2209,8 @@ class Api extends CI_Controller
         header('Content-Type: application/json');
 
         // ✅ 1. Verify JWT Token
-        $authHeader = $this->input->get_request_header('Authorization', TRUE);
-        $token = null;
-
-        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            $token = $matches[1];
-        }
-
-        $decoded = $this->verify_jwt($token);
-        if (!$decoded || empty($decoded->data->id)) {
+        list($user) = $this->getAuthorizedApiUser();
+        if (!$user) {
             return $this->output
                 ->set_status_header(400)
                 ->set_output(json_encode([
@@ -1956,15 +2299,8 @@ class Api extends CI_Controller
         header('Content-Type: application/json');
 
         // ✅ 1. Verify JWT Token
-        $authHeader = $this->input->get_request_header('Authorization', TRUE);
-        $token = null;
-
-        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            $token = $matches[1];
-        }
-
-        $decoded = $this->verify_jwt($token);
-        if (!$decoded || empty($decoded->data->id)) {
+        list($user) = $this->getAuthorizedApiUser();
+        if (!$user) {
             return $this->output
                 ->set_status_header(400)
                 ->set_output(json_encode([
@@ -3679,13 +4015,14 @@ class Api extends CI_Controller
                 ]));
         }
 
-        $user_id = $decoded->data->id;
+        $accounts = $this->getUserBankAccountsList($user['id']);
 
-        $accounts = $this->db
-            ->where('provider_id', $user_id)
-            ->order_by('id', 'DESC')
-            ->get('provider_bank_details')
-            ->result();
+        foreach ($accounts as &$account) {
+            $validation = $this->validateBankAccountData($account);
+            $account['is_valid_for_withdraw'] = $validation['valid'];
+            $account['validation_errors'] = $validation['errors'];
+        }
+        unset($account);
 
         if (empty($accounts)) {
             return $this->output
@@ -3731,9 +4068,6 @@ class Api extends CI_Controller
                 ]));
         }
 
-        $user_id = $decoded->data->id;
-
-
         $input_data = json_decode($this->input->raw_input_stream, true);
         if (empty($input_data)) {
             return $this->output
@@ -3748,31 +4082,23 @@ class Api extends CI_Controller
 
         $id = $input_data['id'] ?? null;
 
-        $data = [
-            'provider_id' => $user_id,
-            'account_holder_name' => $input_data['account_holder_name'] ?? '',
-            'bank_name' => $input_data['bank_name'] ?? '',
-            'account_number' => $input_data['account_number'] ?? '',
-            'ifsc_code' => strtoupper($input_data['ifsc_code'] ?? ''),
-            'account_type' => $input_data['account_type'] ?? '',
-            'branch_name' => $input_data['branch_name'] ?? ''
-        ];
+        $data = $this->normalizeBankAccountData($input_data, $user['id']);
+        $validation = $this->validateBankAccountData($data);
 
-        foreach ($data as $key => $val) {
-            if ($key != 'branch_name' && empty($val)) {
-                return $this->output
-                    ->set_status_header(400)
-                    ->set_output(json_encode([
-                        'status' => false,
-                        'code' => 400,
-                        'message' => ucfirst(str_replace('_', ' ', $key)) . ' is required',
-                        'data' => null
-                    ]));
-            }
+        if (!$validation['valid']) {
+            return $this->output
+                ->set_status_header(400)
+                ->set_output(json_encode([
+                    'status' => false,
+                    'code' => 400,
+                    'message' => $validation['errors'][0],
+                    'errors' => $validation['errors'],
+                    'data' => null
+                ]));
         }
 
         if ($id) {
-            $exists = $this->db->where('id', $id)->where('provider_id', $user_id)->get('provider_bank_details')->row();
+            $exists = $this->db->where('id', $id)->where('provider_id', (int) $user['id'])->get('provider_bank_details')->row();
             if (!$exists) {
                 return $this->output
                     ->set_status_header(404)
@@ -3797,7 +4123,10 @@ class Api extends CI_Controller
                 'status' => true,
                 'code' => 200,
                 'message' => $message,
-                'data' => $data
+                'data' => array_merge($data, [
+                    'is_valid_for_withdraw' => true,
+                    'validation_errors' => []
+                ])
             ]));
     }
 
@@ -3826,10 +4155,8 @@ class Api extends CI_Controller
                 ]));
         }
 
-        $user_id = $decoded->data->id;
-
         $deleted = $this->db->where('id', $id)
-            ->where('provider_id', $user_id)
+            ->where('provider_id', (int) $user['id'])
             ->delete('provider_bank_details');
 
         if ($deleted) {
@@ -3849,6 +4176,266 @@ class Api extends CI_Controller
                 ]));
         }
     }
+
+    public function wallet()
+    {
+        header('Content-Type: application/json');
+
+        list($user) = $this->getAuthorizedApiUser();
+        if (!$user) {
+            return $this->output->set_status_header(401)->set_output(json_encode([
+                'status' => false,
+                'code' => 401,
+                'message' => 'Invalid token or user ID missing',
+                'data' => null
+            ]));
+        }
+
+        $wallet = $this->getOrCreateUserWalletRow($user['id']);
+        $summary = $this->buildWalletSummary($wallet['id']);
+        $bankAccounts = $this->getUserBankAccountsList($user['id']);
+
+        foreach ($bankAccounts as &$account) {
+            $validation = $this->validateBankAccountData($account);
+            $account['is_valid_for_withdraw'] = $validation['valid'];
+            $account['validation_errors'] = $validation['errors'];
+        }
+        unset($account);
+
+        $pendingWithdraws = 0;
+        foreach ($summary['transactions'] as $transaction) {
+            if (
+                strtolower((string) ($transaction['type'] ?? '')) === 'withdraw'
+                && strtolower((string) ($transaction['status'] ?? '')) === 'pending'
+            ) {
+                $pendingWithdraws++;
+            }
+        }
+
+        return $this->output->set_status_header(200)->set_output(json_encode([
+            'status' => true,
+            'code' => 200,
+            'message' => 'Wallet fetched successfully.',
+            'data' => [
+                'wallet' => [
+                    'id' => (int) ($wallet['id'] ?? 0),
+                    'balance' => (float) ($wallet['balance'] ?? 0),
+                    'total_winning' => (float) $summary['total_winning'],
+                    'total_withdraw' => (float) $summary['total_withdraw'],
+                    'available_withdraw' => (float) $summary['available_withdraw'],
+                    'pending_withdraw_count' => $pendingWithdraws,
+                ],
+                'withdraw_options' => [
+                    [
+                        'code' => 'bank_transfer',
+                        'label' => 'Bank Transfer',
+                        'description' => 'Withdraw to your verified bank account. Admin can pay by RazorpayX or manual real bank transfer.'
+                    ],
+                    [
+                        'code' => 'manual_review',
+                        'label' => 'Manual Review',
+                        'description' => 'Admin reviews and settles manually if RazorpayX is unavailable.'
+                    ],
+                ],
+                'bank_accounts' => $bankAccounts,
+                'transactions' => array_map([$this, 'formatWalletTransaction'], array_slice($summary['transactions'], 0, 20))
+            ]
+        ]));
+    }
+
+    public function wallet_withdraw()
+    {
+        header('Content-Type: application/json');
+
+        list($user) = $this->getAuthorizedApiUser();
+        if (!$user) {
+            return $this->output->set_status_header(401)->set_output(json_encode([
+                'status' => false,
+                'code' => 401,
+                'message' => 'Invalid token or user ID missing',
+                'data' => null
+            ]));
+        }
+
+        $inputData = json_decode($this->input->raw_input_stream, true);
+        if (!is_array($inputData)) {
+            $inputData = $this->input->post() ?: [];
+        }
+
+        $amount = (float) ($inputData['amount'] ?? 0);
+        $bankId = (int) ($inputData['bank_account_id'] ?? 0);
+        $withdrawMethod = strtolower(trim((string) ($inputData['withdraw_method'] ?? 'bank_transfer')));
+        $allowedMethods = ['bank_transfer', 'manual_review'];
+
+        if ($amount <= 0) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Please enter a valid withdraw amount.',
+                'data' => null
+            ]));
+        }
+
+        if (!in_array($withdrawMethod, $allowedMethods, true)) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Invalid withdraw method selected.',
+                'data' => null
+            ]));
+        }
+
+        $bankAccount = $this->getUserBankAccountById($user['id'], $bankId);
+        if (!$bankAccount) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Please select your bank account before withdraw.',
+                'data' => null
+            ]));
+        }
+
+        $bankValidation = $this->validateBankAccountData($bankAccount);
+        if (!$bankValidation['valid']) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Bank details are incomplete or invalid. Please update them first.',
+                'errors' => $bankValidation['errors'],
+                'data' => null
+            ]));
+        }
+
+        $wallet = $this->getOrCreateUserWalletRow($user['id']);
+        $summary = $this->buildWalletSummary($wallet['id']);
+
+        if ((float) $summary['available_withdraw'] < $amount) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'You can withdraw only real winning amount.',
+                'data' => null
+            ]));
+        }
+
+        if ((float) ($wallet['balance'] ?? 0) < $amount) {
+            return $this->output->set_status_header(400)->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Insufficient wallet balance.',
+                'data' => null
+            ]));
+        }
+
+        $this->db->trans_start();
+
+        $transactionData = [
+            'wallet_id' => (int) $wallet['id'],
+            'type' => 'withdraw',
+            'amount' => $amount,
+            'status' => 'pending',
+            'created_at' => date('Y-m-d H:i:s')
+        ];
+
+        if ($this->walletTransactionColumnExists('bank_detail_id')) {
+            $transactionData['bank_detail_id'] = (int) $bankAccount['id'];
+        }
+
+        if ($this->walletTransactionColumnExists('account_holder_name')) {
+            $transactionData['account_holder_name'] = (string) ($bankAccount['account_holder_name'] ?? '');
+        }
+
+        if ($this->walletTransactionColumnExists('bank_name')) {
+            $transactionData['bank_name'] = (string) ($bankAccount['bank_name'] ?? '');
+        }
+
+        if ($this->walletTransactionColumnExists('account_number')) {
+            $transactionData['account_number'] = (string) ($bankAccount['account_number'] ?? '');
+        }
+
+        if ($this->walletTransactionColumnExists('ifsc_code')) {
+            $transactionData['ifsc_code'] = (string) ($bankAccount['ifsc_code'] ?? '');
+        }
+
+        if ($this->walletTransactionColumnExists('account_type')) {
+            $transactionData['account_type'] = (string) ($bankAccount['account_type'] ?? '');
+        }
+
+        if ($this->walletTransactionColumnExists('branch_name')) {
+            $transactionData['branch_name'] = (string) ($bankAccount['branch_name'] ?? '');
+        }
+
+        if ($this->walletTransactionColumnExists('withdraw_method')) {
+            $transactionData['withdraw_method'] = $withdrawMethod;
+        }
+
+        if ($this->walletTransactionColumnExists('remark')) {
+            $transactionData['remark'] = $withdrawMethod === 'manual_review'
+                ? 'Manual withdraw review requested'
+                : 'Bank transfer withdraw requested';
+        }
+
+        if ($this->walletTransactionColumnExists('description')) {
+            $transactionData['description'] = $withdrawMethod === 'manual_review'
+                ? 'Manual withdraw review requested'
+                : 'Bank transfer withdraw requested';
+        }
+
+        $this->db->insert('transactions', $transactionData);
+        $transactionId = (int) $this->db->insert_id();
+
+        $this->db->set('balance', 'balance - ' . $amount, false)
+            ->where('id', (int) $wallet['id'])
+            ->update('wallets');
+
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === false) {
+            return $this->output->set_status_header(500)->set_output(json_encode([
+                'status' => false,
+                'code' => 500,
+                'message' => 'Unable to submit withdraw request right now.',
+                'data' => null
+            ]));
+        }
+
+        return $this->output->set_status_header(200)->set_output(json_encode([
+            'status' => true,
+            'code' => 200,
+            'message' => 'Withdraw request submitted successfully.',
+            'data' => [
+                'transaction_id' => $transactionId,
+                'amount' => $amount,
+                'withdraw_method' => $withdrawMethod
+            ]
+        ]));
+    }
+
+    public function wallet_transactions()
+    {
+        header('Content-Type: application/json');
+
+        list($user) = $this->getAuthorizedApiUser();
+        if (!$user) {
+            return $this->output->set_status_header(401)->set_output(json_encode([
+                'status' => false,
+                'code' => 401,
+                'message' => 'Invalid token or user ID missing',
+                'data' => null
+            ]));
+        }
+
+        $wallet = $this->getOrCreateUserWalletRow($user['id']);
+        $transactions = $this->getWalletTransactionsByWalletId($wallet['id']);
+
+        return $this->output->set_status_header(200)->set_output(json_encode([
+            'status' => true,
+            'code' => 200,
+            'message' => 'Wallet transactions fetched successfully.',
+            'data' => array_map([$this, 'formatWalletTransaction'], $transactions)
+        ]));
+    }
+
     private function generate_jwt($user)
     {
         $payload = [
@@ -5951,11 +6538,23 @@ class Api extends CI_Controller
         }
 
         $questions = [];
+        $useMatchQuestions = $this->db->table_exists('pool_questions')
+            && $this->db->field_exists('match_id', 'pool_questions');
+        $useMatchAnswers = $this->db->table_exists('pool_question_answers')
+            && $this->db->field_exists('match_id', 'pool_question_answers');
+
         if ($this->db->table_exists('pool_questions')) {
-            $questions = $this->db
-                ->where('pool_id', $pool_id)
+            $builder = $this->db
                 ->order_by('position', 'ASC')
-                ->order_by('id', 'ASC')
+                ->order_by('id', 'ASC');
+
+            if ($useMatchQuestions && !empty($pool['match_id'])) {
+                $builder->where('match_id', (int) $pool['match_id']);
+            } else {
+                $builder->where('pool_id', $pool_id);
+            }
+
+            $questions = $builder
                 ->get('pool_questions')
                 ->result_array();
         }
@@ -5966,9 +6565,15 @@ class Api extends CI_Controller
         $userAnswers = [];
         $answers_locked = $match_started;
         if ($this->db->table_exists('pool_question_answers')) {
-            $rows = $this->db
+            $builder = $this->db
                 ->where('pool_id', $pool_id)
-                ->where('user_id', $user_id)
+                ->where('user_id', $user_id);
+
+            if ($useMatchAnswers && !empty($pool['match_id'])) {
+                $builder->where('match_id', (int) $pool['match_id']);
+            }
+
+            $rows = $builder
                 ->get('pool_question_answers')
                 ->result_array();
 
@@ -6115,10 +6720,20 @@ class Api extends CI_Controller
             ]));
         }
 
-        $alreadySubmitted = $this->db
+        $useMatchQuestions = $this->db->table_exists('pool_questions')
+            && $this->db->field_exists('match_id', 'pool_questions');
+        $useMatchAnswers = $this->db->table_exists('pool_question_answers')
+            && $this->db->field_exists('match_id', 'pool_question_answers');
+
+        $alreadySubmittedBuilder = $this->db
             ->where('pool_id', $pool_id)
-            ->where('user_id', $user_id)
-            ->count_all_results('pool_question_answers') > 0;
+            ->where('user_id', $user_id);
+
+        if ($useMatchAnswers && !empty($pool['match_id'])) {
+            $alreadySubmittedBuilder->where('match_id', (int) $pool['match_id']);
+        }
+
+        $alreadySubmitted = $alreadySubmittedBuilder->count_all_results('pool_question_answers') > 0;
 
         if ($alreadySubmitted) {
             return $this->output->set_status_header(400)->set_output(json_encode([
@@ -6131,8 +6746,15 @@ class Api extends CI_Controller
 
         $questions = [];
         if ($this->db->table_exists('pool_questions')) {
-            $questions = $this->db
-                ->where('pool_id', $pool_id)
+            $builder = $this->db;
+
+            if ($useMatchQuestions && !empty($pool['match_id'])) {
+                $builder->where('match_id', (int) $pool['match_id']);
+            } else {
+                $builder->where('pool_id', $pool_id);
+            }
+
+            $questions = $builder
                 ->get('pool_questions')
                 ->result_array();
         }
@@ -6163,6 +6785,10 @@ class Api extends CI_Controller
                 'created_at' => $timestamp,
                 'updated_at' => $timestamp,
             ];
+
+            if ($useMatchAnswers) {
+                $payload['match_id'] = (int) ($pool['match_id'] ?? 0);
+            }
 
             $this->db->insert('pool_question_answers', $payload);
             $validInserts++;
@@ -6229,6 +6855,23 @@ class Api extends CI_Controller
         $final = [];
 
         foreach ($pools as $pool) {
+            $useMatchQuestions = $this->db->table_exists('pool_questions')
+                && $this->db->field_exists('match_id', 'pool_questions');
+            $useMatchAnswers = $this->db->table_exists('pool_question_answers')
+                && $this->db->field_exists('match_id', 'pool_question_answers');
+
+            $questionWhere = 'pq.pool_id = ?';
+            $questionParams = [$user_id, $pool->id];
+
+            if ($useMatchQuestions && !empty($pool->match_id)) {
+                $questionWhere = 'pq.match_id = ?';
+                $questionParams = [$user_id, (int) $pool->match_id];
+            }
+
+            $answerJoinExtra = '';
+            if ($useMatchAnswers && !empty($pool->match_id)) {
+                $answerJoinExtra = ' AND pa.match_id = ' . (int) $pool->match_id;
+            }
 
             // ✅ STEP 2: Get questions + user answers + correct answers
             $questions = $this->db->query("
@@ -6241,9 +6884,11 @@ class Api extends CI_Controller
                 LEFT JOIN pool_question_answers pa 
                     ON pa.pool_question_id = pq.id 
                     AND pa.user_id = ?
-                WHERE pq.pool_id = ?
+                    AND pa.pool_id = " . (int) $pool->id . "
+                    {$answerJoinExtra}
+                WHERE {$questionWhere}
                 ORDER BY pq.position ASC
-            ", [$user_id, $pool->id])->result();
+            ", $questionParams)->result();
 
             $questionData = [];
             $correctCount = 0;
