@@ -13,6 +13,8 @@ $formatPoolDateTime = function ($dateTime) {
 };
 ?>
 
+<?php $popup = $this->session->flashdata('popup'); ?>
+
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 
@@ -639,7 +641,7 @@ $formatPoolDateTime = function ($dateTime) {
         display: flex;
     }
 
-    /* ========== MOBILE PRICE FILTER (Separate, always visible) ========== */
+    /* ========== MOBILE PRICE FILTER ========== */
     .mobile-price-bar {
         display: none;
         background: var(--card-bg);
@@ -738,6 +740,296 @@ $formatPoolDateTime = function ($dateTime) {
         background: var(--primary);
         color: #fff;
         box-shadow: 0 2px 8px rgba(78, 84, 200, 0.3);
+    }
+
+    /* ========== GAME RULES BUTTON ========== */
+    .game-rules-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 8px 20px;
+        border-radius: 50px;
+        border: 2px solid var(--primary);
+        background: linear-gradient(135deg, var(--primary-ultra), #fff);
+        color: var(--primary);
+        font-family: 'Poppins', sans-serif;
+        font-size: 0.82rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+        text-decoration: none;
+        letter-spacing: 0.3px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .game-rules-btn:hover {
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        color: #fff;
+        border-color: var(--primary);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 18px rgba(78, 84, 200, 0.35);
+    }
+
+    .game-rules-btn:active {
+        transform: translateY(0);
+    }
+
+    .game-rules-btn .rules-btn-icon {
+        font-size: 1rem;
+        line-height: 1;
+    }
+
+    .game-rules-btn .rules-btn-text {
+        line-height: 1;
+    }
+
+    .game-rules-btn .rules-btn-shine {
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.5s ease;
+    }
+
+    .game-rules-btn:hover .rules-btn-shine {
+        left: 100%;
+    }
+
+    /* ========== RULES MODAL ENHANCED ========== */
+    #rulesModal .modal-content {
+        border: none;
+        border-radius: var(--radius-xl);
+        overflow: hidden;
+        box-shadow: var(--shadow-lg);
+    }
+
+    #rulesModal .modal-header {
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        color: #fff;
+        border-bottom: 0;
+        padding: 22px 24px;
+        position: relative;
+    }
+
+    #rulesModal .modal-header::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--accent), var(--gold), var(--success), var(--primary));
+    }
+
+    #rulesModal .modal-title {
+        font-family: 'Poppins', sans-serif;
+        font-weight: 700;
+        font-size: 1.15rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    #rulesModal .btn-close-white {
+        filter: brightness(0) invert(1);
+        opacity: 0.9;
+    }
+
+    #rulesModal .btn-close-white:hover {
+        opacity: 1;
+    }
+
+    #rulesModal .modal-body {
+        padding: 24px;
+        background: linear-gradient(180deg, #f8f9ff, #ffffff);
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .rules-section {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius-md);
+        padding: 16px 18px;
+        margin-bottom: 14px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .rules-section::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        border-radius: 0 4px 4px 0;
+    }
+
+    .rules-section:hover {
+        box-shadow: var(--shadow-sm);
+        transform: translateX(2px);
+    }
+
+    .rules-section.format::before {
+        background: var(--primary);
+    }
+
+    .rules-section.scoring::before {
+        background: var(--success);
+    }
+
+    .rules-section.winner::before {
+        background: var(--gold);
+    }
+
+    .rules-section.tie::before {
+        background: var(--accent);
+    }
+
+    .rules-section.bonus::before {
+        background: #9b59b6;
+    }
+
+    .rules-section.fairplay::before {
+        background: var(--danger);
+    }
+
+    .rules-section.wallet::before {
+        background: var(--success);
+    }
+
+    .rules-section-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+    }
+
+    .rules-section-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .rules-section-icon.format {
+        background: var(--primary-ultra);
+    }
+
+    .rules-section-icon.scoring {
+        background: var(--success-light);
+    }
+
+    .rules-section-icon.winner {
+        background: var(--warning-light);
+    }
+
+    .rules-section-icon.tie {
+        background: var(--danger-light);
+    }
+
+    .rules-section-icon.bonus {
+        background: #f3e8ff;
+    }
+
+    .rules-section-icon.fairplay {
+        background: var(--danger-light);
+    }
+
+    .rules-section-icon.wallet {
+        background: var(--success-light);
+    }
+
+    .rules-section-title {
+        font-weight: 700;
+        font-size: 0.9rem;
+        color: var(--text-primary);
+        margin: 0;
+    }
+
+    .rules-section ul {
+        margin: 0;
+        padding-left: 18px;
+        list-style: none;
+    }
+
+    .rules-section ul li {
+        position: relative;
+        padding: 4px 0 4px 12px;
+        font-size: 0.82rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+
+    .rules-section ul li::before {
+        content: '▸';
+        position: absolute;
+        left: 0;
+        color: var(--primary);
+        font-weight: 700;
+        font-size: 0.7rem;
+        top: 6px;
+    }
+
+    .rules-section p {
+        margin: 0;
+        font-size: 0.82rem;
+        color: var(--text-secondary);
+        line-height: 1.6;
+    }
+
+    .rules-highlight-box {
+        background: linear-gradient(135deg, #fef9e7, #fff9db);
+        border: 1px solid #f9e79f;
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-top: 8px;
+        font-size: 0.8rem;
+        color: #7d6608;
+        line-height: 1.7;
+    }
+
+    .rules-highlight-box .example-label {
+        font-weight: 700;
+        color: #d4a017;
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: block;
+        margin-bottom: 4px;
+    }
+
+    #rulesModal .modal-footer {
+        border-top: 1px solid var(--border);
+        padding: 14px 24px;
+        background: #fafbff;
+    }
+
+    #rulesModal .modal-footer .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--primary-light));
+        border: none;
+        border-radius: 50px;
+        padding: 10px 28px;
+        font-family: 'Poppins', sans-serif;
+        font-weight: 700;
+        font-size: 0.88rem;
+        box-shadow: 0 4px 14px rgba(78, 84, 200, 0.3);
+        transition: all 0.3s ease;
+    }
+
+    #rulesModal .modal-footer .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(78, 84, 200, 0.4);
     }
 
     /* ========== POOL CARDS ========== */
@@ -1455,6 +1747,63 @@ $formatPoolDateTime = function ($dateTime) {
         color: #fff;
     }
 
+    /* ========== REFUNDED POOL CARD ========== */
+    .pool-card.refunded {
+        border-color: #f0c060;
+        background: linear-gradient(180deg, #fffdf5 0%, #ffffff 100%);
+    }
+
+    .pool-card.refunded .pool-card-accent {
+        background: linear-gradient(90deg, #f39c12, #f1c40f) !important;
+    }
+
+    .pool-card.refunded:hover {
+        box-shadow: 0 12px 40px rgba(243, 156, 18, 0.18);
+    }
+
+    .refund-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: #fef9e7;
+        border: 1.5px solid #f9e79f;
+        color: #b7770d;
+        font-size: 0.67rem;
+        font-weight: 700;
+        padding: 3px 9px;
+        border-radius: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 5px;
+        line-height: 1.4;
+    }
+
+    /* Table row refunded style */
+    .pools-table tbody tr.refunded-row {
+        background: linear-gradient(90deg, #fffdf5, #ffffff) !important;
+    }
+
+    .pools-table tbody tr.refunded-row td:first-child {
+        border-left: 3px solid #f39c12;
+    }
+
+    .table-refund-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        background: #fef9e7;
+        border: 1px solid #f9e79f;
+        color: #b7770d;
+        font-size: 0.64rem;
+        font-weight: 700;
+        padding: 2px 7px;
+        border-radius: 5px;
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-top: 3px;
+        white-space: nowrap;
+    }
+
     /* ========== ANIMATIONS ========== */
     @keyframes fadeInUp {
         from {
@@ -1567,6 +1916,40 @@ $formatPoolDateTime = function ($dateTime) {
                 box-shadow: 0 3px 20px rgba(108, 92, 231, 0.5);
             }
         }
+
+        .game-rules-btn {
+            padding: 7px 14px;
+            font-size: 0.76rem;
+            gap: 5px;
+        }
+
+        .game-rules-btn .rules-btn-icon {
+            font-size: 0.9rem;
+        }
+
+        #rulesModal .modal-body {
+            padding: 16px;
+        }
+
+        .rules-section {
+            padding: 14px 14px 14px 16px;
+            margin-bottom: 10px;
+        }
+
+        .rules-section-icon {
+            width: 32px;
+            height: 32px;
+            font-size: 0.85rem;
+        }
+
+        .rules-section-title {
+            font-size: 0.84rem;
+        }
+
+        .rules-section ul li,
+        .rules-section p {
+            font-size: 0.78rem;
+        }
     }
 
     @media (max-width: 480px) {
@@ -1594,6 +1977,7 @@ $formatPoolDateTime = function ($dateTime) {
 <?php
 // Calculate stats
 $joinedPoolIds = array_map('intval', $joined_pool_ids ?? []);
+
 $totalPools = count($pools ?? []);
 $totalPlayers = 0;
 $fullPools = 0;
@@ -1615,6 +1999,54 @@ if (!empty($pools)) {
     }
 }
 ?>
+
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<?php
+// Build a unique key based on all refunded+joined pool IDs so popup only shows once per unique set
+$refundedJoinedIds = [];
+if (!empty($pools)) {
+    foreach ($pools as $p) {
+        if (!empty($p['is_refunded']) && in_array((int)$p['id'], $joinedPoolIds)) {
+            $refundedJoinedIds[] = (int)$p['id'];
+        }
+    }
+}
+$showRefundPopup = !empty($refundedJoinedIds);
+?>
+
+<?php if ($showRefundPopup): ?>
+
+    <?php
+    $matchName = '';
+
+    foreach ($pools as $p) {
+        if (in_array((int)$p['id'], $refundedJoinedIds)) {
+
+            $matchName = $p['team_home'] . ' vs ' . $p['team_away'];
+            break;
+        }
+    }
+
+    $refundPopupText = 'No other players joined "' . addslashes($matchName) . '". Your amount has been refunded to your wallet.';
+    ?>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var refundKey = 'refund_shown_<?= md5(implode(',', $refundedJoinedIds)) ?>';
+            if (!sessionStorage.getItem(refundKey)) {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Pool Cancelled',
+                    text: '<?= $refundPopupText ?>',
+                    confirmButtonColor: '#4e54c8',
+                    confirmButtonText: 'Got it'
+                }).then(function() {
+                    sessionStorage.setItem(refundKey, '1');
+                });
+            }
+        });
+    </script>
+<?php endif; ?>
 
 <div class="pools-page">
     <div class="container">
@@ -1727,7 +2159,7 @@ if (!empty($pools)) {
             </button>
         </div>
 
-        <!-- ========== MOBILE PRICE BAR (separate, always visible on mobile) ========== -->
+        <!-- ========== MOBILE PRICE BAR ========== -->
         <div class="mobile-price-bar animate-in delay-3">
             <span class="price-label-mobile">💰 Price</span>
             <div class="price-inputs">
@@ -1796,18 +2228,35 @@ if (!empty($pools)) {
         </div>
 
         <!-- ========== RESULTS INFO ========== -->
-        <div class="results-info animate-in delay-4">
+        <div class="results-info animate-in delay-4 d-flex justify-content-between align-items-center">
+
+            <!-- LEFT SIDE -->
             <div class="results-count">
                 Showing <span id="visibleCount"><?= $totalPools ?></span> of <span><?= $totalPools ?></span> pools
             </div>
-            <div class="view-toggle">
-                <button class="view-btn active" id="cardViewBtn" onclick="switchView('card')" title="Card View">
-                    <i class="fas fa-th-large"></i>
+
+            <!-- RIGHT SIDE -->
+            <div class="d-flex align-items-center gap-3">
+
+                <!-- GAME RULES BUTTON -->
+                <button type="button" class="game-rules-btn" data-bs-toggle="modal" data-bs-target="#rulesModal">
+                    <span class="rules-btn-icon">📜</span>
+                    <span class="rules-btn-text">Game Rules</span>
+                    <span class="rules-btn-shine"></span>
                 </button>
-                <button class="view-btn" id="tableViewBtn" onclick="switchView('table')" title="Table View">
-                    <i class="fas fa-list"></i>
-                </button>
+
+                <!-- Toggle Buttons -->
+                <div class="view-toggle">
+                    <button class="view-btn active" id="cardViewBtn" onclick="switchView('card')" title="Card View">
+                        <i class="fas fa-th-large"></i>
+                    </button>
+                    <button class="view-btn" id="tableViewBtn" onclick="switchView('table')" title="Table View">
+                        <i class="fas fa-list"></i>
+                    </button>
+                </div>
+
             </div>
+
         </div>
 
         <?php if (!empty($pools)): ?>
@@ -1821,6 +2270,7 @@ if (!empty($pools)) {
                     $isFull = $hasLimit && $spotsLeft <= 0;
                     $isAlmostFull = !$isFull && $percent >= 80;
                     $hasJoined = in_array((int) $p['id'], $joinedPoolIds, true);
+                    $isRefunded = !empty($p['is_refunded']) && $hasJoined;
                     $matchStartAt = trim((string) ($p['match_start_at'] ?? ''));
                     $joinCloseAt = trim((string) ($p['join_close_at'] ?? ''));
                     $isClosed = $joinCloseAt !== '' ? strtotime($joinCloseAt) <= time() : false;
@@ -1853,7 +2303,7 @@ if (!empty($pools)) {
                         $statusClass = 'open';
                     }
                 ?>
-                    <div class="pool-card"
+                    <div class="pool-card <?= $isRefunded ? 'refunded' : '' ?>"
                         data-name="<?= strtolower($p['pool_name']) ?>"
                         data-host="<?= strtolower($p['host_name']) ?>"
                         data-price="<?= $p['price'] ?>"
@@ -1875,6 +2325,11 @@ if (!empty($pools)) {
                                         <span class="host-avatar"><?= strtoupper(substr($p['host_name'], 0, 1)) ?></span>
                                         <?= $p['host_name'] ?>
                                     </div>
+                                    <?php if ($isRefunded): ?>
+                                        <div class="refund-badge">
+                                            💰 Amount Refunded
+                                        </div>
+                                    <?php endif; ?>
                                 </div>
                                 <div class="pool-card-meta">
                                     <span class="pool-status-badge <?= $statusClass ?>"><?= $statusText ?></span>
@@ -1943,6 +2398,7 @@ if (!empty($pools)) {
                         </div>
                     </div>
 
+                    <!-- Pool Details Modal -->
                     <div class="modal fade pool-details-modal" id="poolDetailsModal<?= (int) $p['id'] ?>" tabindex="-1" aria-hidden="true">
                         <div class="modal-dialog modal-lg modal-dialog-centered">
                             <div class="modal-content">
@@ -1983,6 +2439,12 @@ if (!empty($pools)) {
                                             <div class="detail-label">Join Close</div>
                                             <div class="detail-value"><?= html_escape($formatPoolDateTime($joinCloseAt)) ?></div>
                                         </div>
+                                        <?php if ($isRefunded): ?>
+                                            <div class="pool-detail-card" style="border-color:#f9e79f; background:#fffdf5;">
+                                                <div class="detail-label" style="color:#b7770d;">Refund Status</div>
+                                                <div class="detail-value" style="color:#b7770d;">💰 Amount Refunded to Wallet</div>
+                                            </div>
+                                        <?php endif; ?>
                                         <div class="pool-detail-card" style="grid-column: 1 / -1;">
                                             <div class="detail-label">Description</div>
                                             <div class="detail-value"><?= html_escape(trim((string) ($p['description'] ?? '')) !== '' ? $p['description'] : 'No extra description added by host.') ?></div>
@@ -2037,12 +2499,14 @@ if (!empty($pools)) {
                                 $spotsLeft = $hasLimit ? ((int) $p['user_limit'] - (int) $p['total_joined']) : null;
                                 $isFull = $hasLimit && $spotsLeft <= 0;
                                 $hasJoined = in_array((int) $p['id'], $joinedPoolIds, true);
+                                $isRefunded = !empty($p['is_refunded']) && $hasJoined;
                                 $joinCloseAt = trim((string) ($p['join_close_at'] ?? ''));
                                 $isClosed = $joinCloseAt !== '' ? strtotime($joinCloseAt) <= time() : false;
                                 $barClass = $isFull ? 'full' : ($percent >= 80 ? 'danger' : ($percent >= 50 ? 'warning' : ''));
                                 $fillColor = $isFull ? 'var(--success)' : ($percent >= 80 ? 'var(--danger)' : ($percent >= 50 ? 'var(--warning)' : 'var(--primary)'));
                             ?>
-                                <tr data-name="<?= strtolower($p['pool_name']) ?>"
+                                <tr class="<?= $isRefunded ? 'refunded-row' : '' ?>"
+                                    data-name="<?= strtolower($p['pool_name']) ?>"
                                     data-host="<?= strtolower($p['host_name']) ?>"
                                     data-price="<?= $p['price'] ?>"
                                     data-joined="<?= $p['total_joined'] ?>"
@@ -2055,7 +2519,12 @@ if (!empty($pools)) {
                                     <td>
                                         <div class="table-pool-name">
                                             <div class="table-pool-icon">🏏</div>
-                                            <span class="table-pool-title"><?= $p['pool_name'] ?></span>
+                                            <div>
+                                                <span class="table-pool-title"><?= $p['pool_name'] ?></span>
+                                                <?php if ($isRefunded): ?>
+                                                    <div class="table-refund-badge">💰 Refunded</div>
+                                                <?php endif; ?>
+                                            </div>
                                         </div>
                                     </td>
 
@@ -2094,6 +2563,7 @@ if (!empty($pools)) {
                                             <?= $p['team_home'] ?> vs <?= $p['team_away'] ?>
                                         </div>
                                     </td>
+
                                     <td>
                                         <?php if ($hasJoined): ?>
                                             <span class="pool-status-badge open" style="position:static;">JOINED</span>
@@ -2151,6 +2621,121 @@ if (!empty($pools)) {
             </button>
         </div>
 
+    </div>
+</div>
+
+<!-- ========== GAME RULES MODAL ========== -->
+<div class="modal fade" id="rulesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <!-- Header -->
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    🏆 Fitcket Winner Rules
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body">
+
+                <!-- 1. Game Format -->
+                <div class="rules-section format">
+                    <div class="rules-section-header">
+                        <div class="rules-section-icon format">📌</div>
+                        <h6 class="rules-section-title">Game Format</h6>
+                    </div>
+                    <ul>
+                        <li>Each pool contains 10 match-based questions</li>
+                        <li>All users must submit answers before match start</li>
+                        <li>Each question has only 1 correct answer</li>
+                    </ul>
+                </div>
+
+                <!-- 2. Scoring System -->
+                <div class="rules-section scoring">
+                    <div class="rules-section-header">
+                        <div class="rules-section-icon scoring">🎯</div>
+                        <h6 class="rules-section-title">Scoring System</h6>
+                    </div>
+                    <ul>
+                        <li>✅ Correct Answer = <strong>+1 point</strong></li>
+                        <li>❌ Wrong Answer = <strong>0 points</strong></li>
+                        <li>Total maximum score = <strong>10 points</strong></li>
+                    </ul>
+                </div>
+
+                <!-- 3. Winner Selection -->
+                <div class="rules-section winner">
+                    <div class="rules-section-header">
+                        <div class="rules-section-icon winner">🥇</div>
+                        <h6 class="rules-section-title">Winner Selection</h6>
+                    </div>
+                    <p>The user with the <strong>highest total correct answers</strong> wins the pool prize.</p>
+                </div>
+
+                <!-- 4. Tie Rule -->
+                <div class="rules-section tie">
+                    <div class="rules-section-header">
+                        <div class="rules-section-icon tie">⚖️</div>
+                        <h6 class="rules-section-title">Tie Rule (Important)</h6>
+                    </div>
+                    <p>If multiple users have the same highest score, the prize pool is <strong>equally distributed</strong> among all winners.</p>
+                    <div class="rules-highlight-box">
+                        <span class="example-label">Example</span>
+                        ₹10,000 prize pool → 5 winners with same score → <strong>₹2,000 each</strong>
+                    </div>
+                </div>
+
+                <!-- 5. No Bonus -->
+                <div class="rules-section bonus">
+                    <div class="rules-section-header">
+                        <div class="rules-section-icon bonus">🚫</div>
+                        <h6 class="rules-section-title">No Bonus / No Time Advantage</h6>
+                    </div>
+                    <ul>
+                        <li>No extra points for early submission</li>
+                        <li>No bonus questions available</li>
+                        <li>Only <strong>accuracy</strong> matters for winning</li>
+                    </ul>
+                </div>
+
+                <!-- 6. Fair Play -->
+                <div class="rules-section fairplay">
+                    <div class="rules-section-header">
+                        <div class="rules-section-icon fairplay">🔒</div>
+                        <h6 class="rules-section-title">Fair Play Rules</h6>
+                    </div>
+                    <ul>
+                        <li>Answers <strong>cannot be changed</strong> after submission</li>
+                        <li>Suspicious activity leads to <strong>disqualification</strong></li>
+                        <li>Platform decision will be <strong>final</strong></li>
+                    </ul>
+                </div>
+
+                <!-- 7. Wallet -->
+                <div class="rules-section wallet">
+                    <div class="rules-section-header">
+                        <div class="rules-section-icon wallet">💰</div>
+                        <h6 class="rules-section-title">Wallet & Withdrawal</h6>
+                    </div>
+                    <ul>
+                        <li>Winning amount is <strong>credited instantly</strong> to your wallet</li>
+                        <li>Withdraw anytime as per platform withdrawal rules</li>
+                    </ul>
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer">
+                <button class="btn btn-primary" data-bs-dismiss="modal">
+                    Got it 👍
+                </button>
+            </div>
+
+        </div>
     </div>
 </div>
 

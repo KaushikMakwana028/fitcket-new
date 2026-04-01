@@ -39,7 +39,7 @@ class UserWallet extends User_Controller
     {
         return $this->db
             ->where('wallet_id', $walletId)
-            ->where_in('type', ['winning', 'withdraw'])
+            ->where_in('type', ['winning', 'withdraw', 'refund'])
             ->order_by('id', 'DESC')
             ->get('transactions')
             ->result_array();

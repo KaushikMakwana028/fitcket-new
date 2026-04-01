@@ -372,6 +372,13 @@ $buildPoolPageUrl = function ($pageNumber) {
                                             <a href="<?= base_url('admin/pool/prize/' . (int) $pool['id']) ?>" class="btn btn-sm action-btn prize" data-label="<?= $prizeInfo ? 'Edit Winner Amount' : 'Add Winner Amount' ?>" title="<?= $prizeInfo ? 'Edit Winner Amount' : 'Add Winner Amount' ?>">
                                                 <i class="bx bx-trophy"></i>
                                             </a>
+                                            <a href="<?= base_url('admin/pool/users/' . (int) $pool['id']) ?>"
+                                                class="btn btn-sm action-btn"
+                                                style="background:#7c3aed;color:#fff;"
+                                                data-label="View Users"
+                                                title="View Users">
+                                                <i class="bx bx-group"></i>
+                                            </a>
                                             <a href="<?= base_url('admin/pool/' . (int) $pool['id']) ?>" class="btn btn-sm action-btn manage" data-label="See Questions" title="See Questions">
                                                 <i class="bx bx-show"></i>
                                             </a>

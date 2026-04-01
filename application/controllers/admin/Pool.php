@@ -816,9 +816,63 @@ class Pool extends Admin_Controller
 
     public function declare_winner($poolId)
     {
-        return $this->settlePoolPrize($poolId);
+        $pool = $this->db->where('id', $poolId)->get('pools')->row_array();
+        if (!$pool) return;
 
-        // 🔥 GET USERS OF THIS POOL ONLY
+        $totalJoined = (int)($pool['total_joined'] ?? 0);
+
+        // 🚨 ONLY 1 PLAYER OR LESS → REFUND
+        if ($totalJoined <= 1) {
+            $refundAmount = (float)($pool['price'] ?? 0);
+
+            if ($refundAmount > 0) {
+                // Refund anyone who joined (even if they didn't answer)
+                $joinedUsers = $this->db->where('pool_id', $poolId)->where('status', 'success')->get('pool_joins')->result_array();
+
+                foreach ($joinedUsers as $user) {
+                    $userId = (int)$user['user_id'];
+                    $wallet = $this->getOrCreateWallet($userId);
+
+                    if ($wallet) {
+                        $alreadyRefunded = $this->db
+                            ->where('wallet_id', $wallet['id'])
+                            ->where('pool_id', $poolId)
+                            ->where('type', 'refund')
+                            ->where('status', 'success')
+                            ->get('transactions')
+                            ->row_array();
+
+                        if (!$alreadyRefunded) {
+                            $this->db->trans_start();
+
+                            $this->db->set('balance', 'balance + ' . $refundAmount, false)
+                                ->where('id', $wallet['id'])
+                                ->update('wallets');
+
+                            $this->db->insert('transactions', [
+                                'wallet_id' => $wallet['id'],
+                                'type' => 'refund',
+                                'amount' => $refundAmount,
+                                'status' => 'success',
+                                'pool_id' => $poolId,
+                                'created_at' => date('Y-m-d H:i:s')
+                            ]);
+
+                            $this->db->trans_complete();
+                        }
+                    }
+                }
+            }
+
+            // 🔥 mark refunded
+            $this->db->where('id', $poolId)->update('pools', [
+                'is_refunded' => 1
+            ]);
+
+            return;
+        }
+
+        // 🔥 GET USERS OF THIS POOL
         $rows = $this->getAllPoolAnswerRows();
 
         $poolUsers = array_values(array_filter($rows, function ($r) use ($poolId) {
@@ -827,7 +881,7 @@ class Pool extends Admin_Controller
 
         if (empty($poolUsers)) return;
 
-        // 🔥 SORT (RIGHT DESC, WRONG ASC)
+        // 🔥 SORT USERS
         usort($poolUsers, function ($a, $b) {
             $aRight = $a['summary']['right'] ?? 0;
             $bRight = $b['summary']['right'] ?? 0;
@@ -839,11 +893,9 @@ class Pool extends Admin_Controller
             return $bRight <=> $aRight;
         });
 
-        // 🏆 TOP SCORE
         $topScore = $poolUsers[0]['summary']['right'] ?? 0;
 
-        // 🚫 NO VALID WINNER
-        // ensure answers are checked
+        // 🔥 CHECK ANSWERS
         $hasChecked = false;
         foreach ($poolUsers as $u) {
             if (($u['summary']['checked'] ?? 0) > 0) {
@@ -852,26 +904,18 @@ class Pool extends Admin_Controller
             }
         }
 
-        if (!$hasChecked) {
-            return; // no answer key set
-        }
+        if (!$hasChecked) return;
 
-        // 🔥 WINNERS (HANDLE TIE)
+        // 🔥 WINNERS
         $winners = array_filter($poolUsers, function ($u) use ($topScore) {
             return ($u['summary']['right'] ?? 0) === $topScore;
         });
 
         if (empty($winners)) return;
 
-        // 🔥 GET POOL
-        $pool = $this->db->where('id', $poolId)->get('pools')->row_array();
+        if (empty($pool['price'])) return;
 
-        if (!$pool || empty($pool['price'])) return;
-
-        // 💰 TOTAL PRIZE (DOUBLE ENTRY)
-        $totalPrize = (float)$pool['price'] * count($poolUsers);
-
-        // 💰 SPLIT AMONG WINNERS
+        $totalPrize = (float)$pool['price'] * $totalJoined;
         $winningAmount = $totalPrize / count($winners);
 
         if ($winningAmount <= 0) return;
@@ -879,29 +923,10 @@ class Pool extends Admin_Controller
         foreach ($winners as $winner) {
 
             $userId = (int)$winner['user_id'];
+            $wallet = $this->getOrCreateWallet($userId);
 
-            $wallet = $this->db
-                ->where('user_id', $userId)
-                ->get('wallets')
-                ->row_array();
+            if (!$wallet) continue;
 
-            if (!$wallet) {
-                $this->db->insert('wallets', [
-                    'user_id' => $userId,
-                    'balance' => 0,
-                ]);
-
-                $wallet = $this->db
-                    ->where('user_id', $userId)
-                    ->get('wallets')
-                    ->row_array();
-            }
-
-            if (!$wallet) {
-                continue;
-            }
-
-            // 🚫 PREVENT DUPLICATE
             $alreadyPaid = $this->db
                 ->where('wallet_id', $wallet['id'])
                 ->where('pool_id', $poolId)
@@ -912,15 +937,12 @@ class Pool extends Admin_Controller
 
             if ($alreadyPaid) continue;
 
-            // 🔥 TRANSACTION SAFE
             $this->db->trans_start();
 
-            // 💰 UPDATE WALLET
             $this->db->set('balance', 'balance + ' . $winningAmount, false)
                 ->where('id', $wallet['id'])
                 ->update('wallets');
 
-            // 🧾 INSERT TRANSACTION
             $this->db->insert('transactions', [
                 'wallet_id' => $wallet['id'],
                 'type' => 'winning',
@@ -933,7 +955,7 @@ class Pool extends Admin_Controller
             $this->db->trans_complete();
         }
     }
-
+    
     public function test_winner($poolId)
     {
         $summary = $this->declare_winner($poolId);
@@ -1598,5 +1620,152 @@ class Pool extends Admin_Controller
 
         $this->session->set_flashdata('success', $message);
         redirect('admin/cricket_questions/' . (int) $matchId);
+    }
+
+    public function users($poolId = 0)
+    {
+        if ((int)$poolId <= 0) {
+            redirect('admin/pools');
+            return;
+        }
+
+        // 🔥 Get pool info
+        $pool = $this->db
+            ->select('pools.*, users.name as host_name')
+            ->from('pools')
+            ->join('users', 'users.id = pools.user_id', 'left')
+            ->where('pools.id', (int)$poolId)
+            ->get()
+            ->row_array();
+
+        if (!$pool) {
+            $this->session->set_flashdata('error', 'Pool not found');
+            redirect('admin/pools');
+            return;
+        }
+
+        // 🔥 Get users who joined this pool
+        $users = $this->db
+            ->select('users.id, users.name, users.email, users.mobile')
+            ->from('pool_question_answers')
+            ->join('users', 'users.id = pool_question_answers.user_id', 'left')
+            ->where('pool_question_answers.pool_id', (int)$poolId)
+            ->group_by('users.id')
+            ->order_by('users.name', 'ASC')
+            ->get()
+            ->result_array();
+
+        $data['pool'] = $pool;
+        $data['users'] = $users;
+
+        $this->load->view('admin/header');
+        $this->load->view('admin/pool_users_view', $data);
+        $this->load->view('admin/footer');
+    }
+
+    public function edit_user_answers($poolId = 0, $userId = 0)
+    {
+        if ($poolId <= 0 || $userId <= 0) {
+            redirect('admin/pools');
+            return;
+        }
+
+        // 🔥 Pool
+        $pool = $this->getPoolWithMeta($poolId);
+
+        if (!$pool) {
+            redirect('admin/pools');
+            return;
+        }
+
+        // 🔥 Questions
+        $questions = $this->getPoolQuestions($poolId);
+
+        // 🔥 User answers (same like Cricket.php logic)
+        $answers = $this->db
+            ->where('pool_id', $poolId)
+            ->where('user_id', $userId)
+            ->get('pool_question_answers')
+            ->result_array();
+
+        $answersMap = [];
+        foreach ($answers as $a) {
+            $answersMap[$a['pool_question_id']] = $a;
+        }
+
+        $user = $this->db->where('id', $userId)->get('users')->row_array();
+
+        $data['pool'] = $pool;
+        $data['questions'] = $questions;
+        $data['answers'] = $answersMap;
+        $data['user'] = $user;
+        $data['answer_options'] = ['yes', 'no'];
+
+        $this->load->view('admin/header');
+        $this->load->view('admin/edit_user_answers_view', $data);
+        $this->load->view('admin/footer');
+    }
+
+    public function update_user_answers()
+    {
+        $poolId = (int)$this->input->post('pool_id');
+        $userId = (int)$this->input->post('user_id');
+        $answers = $this->input->post('answers');
+
+        if (!$poolId || !$userId) {
+            redirect('admin/pools');
+            return;
+        }
+
+        $questions = $this->getPoolQuestions($poolId);
+
+        $timestamp = date('Y-m-d H:i:s');
+
+        $this->db->trans_start();
+
+        foreach ($questions as $q) {
+
+            $qid = (int)$q['id'];
+            $answer = strtolower(trim($answers[$qid] ?? ''));
+
+            if (!in_array($answer, ['yes', 'no'])) {
+                continue;
+            }
+
+            // 🔥 check exist
+            $existing = $this->db
+                ->where('pool_id', $poolId)
+                ->where('user_id', $userId)
+                ->where('pool_question_id', $qid)
+                ->get('pool_question_answers')
+                ->row_array();
+
+            if ($existing) {
+                // UPDATE
+                $this->db->where('id', $existing['id'])->update('pool_question_answers', [
+                    'answer' => $answer,
+                    'updated_at' => $timestamp
+                ]);
+            } else {
+                // INSERT
+                $this->db->insert('pool_question_answers', [
+                    'pool_id' => $poolId,
+                    'user_id' => $userId,
+                    'pool_question_id' => $qid,
+                    'answer' => $answer,
+                    'created_at' => $timestamp,
+                    'updated_at' => $timestamp
+                ]);
+            }
+        }
+
+        $this->db->trans_complete();
+
+        // 🔥 OPTIONAL: Recalculate winner
+        $this->declare_winner($poolId);
+
+        $this->session->set_flashdata('success', 'User answers updated successfully');
+
+        redirect('admin/pool/users/' . $poolId);
     }
 }
