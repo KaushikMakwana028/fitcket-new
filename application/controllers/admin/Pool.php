@@ -9,11 +9,13 @@ class Pool extends Admin_Controller
     private $answerOptions = ['yes', 'no'];
     private $leaderboardPerPage = 10;
     private $poolListPerPage = 10;
+    private $questionAnchorDescription = 'Auto-created hidden pool for shared cricket match questions.';
 
     public function __construct()
     {
         parent::__construct();
         $this->load->model('general_model');
+        $this->load->library('pagination');
     }
 
     private function prizeTablesReady()
@@ -48,6 +50,12 @@ class Pool extends Admin_Controller
         ]);
 
         return $this->db->where('user_id', (int) $userId)->get('wallets')->row_array();
+    }
+
+    private function isQuestionAnchorPool($pool)
+    {
+        $description = trim((string) ($pool['description'] ?? ''));
+        return $description === $this->questionAnchorDescription;
     }
 
     private function getPoolPrize($poolId)
@@ -294,7 +302,10 @@ class Pool extends Admin_Controller
 
         if ($this->poolQuestionsUseMatchId()) {
             return '(
-                SELECT COUNT(*)
+                SELECT COUNT(DISTINCT CASE
+                    WHEN pool_questions.position IS NOT NULL AND pool_questions.position > 0 THEN pool_questions.position
+                    ELSE pool_questions.id
+                END)
                 FROM pool_questions
                 WHERE pool_questions.match_id = pools.match_id
             ) as question_count';
@@ -380,7 +391,7 @@ class Pool extends Admin_Controller
             'user_id' => $adminId > 0 ? $adminId : 1,
             'match_id' => (int) $matchId,
             'pool_name' => trim((string) (($match['team_home'] ?? 'Team A') . ' vs ' . ($match['team_away'] ?? 'Team B'))) . ' Question Anchor',
-            'description' => 'Auto-created hidden pool for shared cricket match questions.',
+            'description' => $this->questionAnchorDescription,
             'user_limit' => 0,
             'price' => 0,
             'match_start_at' => $matchStartAt,
@@ -404,6 +415,9 @@ class Pool extends Admin_Controller
 
         if ($this->poolQuestionsUseMatchId()) {
             $builder->where('match_id', (int) $matchId);
+            $builder->select('COUNT(DISTINCT CASE WHEN position IS NOT NULL AND position > 0 THEN position ELSE id END) AS total_count', false);
+            $row = $builder->get()->row_array();
+            return (int) ($row['total_count'] ?? 0);
         } else {
             $defaultPoolId = $this->getDefaultPoolIdForMatch($matchId);
 
@@ -491,6 +505,35 @@ class Pool extends Admin_Controller
             ->group_by('cricket_matches.id')
             ->get()
             ->row_array();
+    }
+
+    private function getLinkedPoolsForMatch($matchId)
+    {
+        if ((int) $matchId <= 0 || !$this->db->table_exists('pools')) {
+            return [];
+        }
+
+        $rows = $this->db
+            ->select("
+                pools.id,
+                pools.pool_name,
+                COALESCE(users.name, 'Host') AS host_name,
+                COUNT(DISTINCT CASE WHEN pool_joins.status = 'success' THEN pool_joins.user_id END) AS joined_users
+            ", false)
+            ->from('pools')
+            ->join('users', 'users.id = pools.user_id', 'left')
+            ->join('pool_joins', 'pool_joins.pool_id = pools.id', 'left')
+            ->where('pools.match_id', (int) $matchId)
+            ->group_start()
+            ->where('pools.description IS NULL', null, false)
+            ->or_where('pools.description !=', $this->questionAnchorDescription)
+            ->group_end()
+            ->group_by('pools.id')
+            ->order_by('pools.pool_name', 'ASC')
+            ->get()
+            ->result_array();
+
+        return is_array($rows) ? $rows : [];
     }
 
     private function calculateSummaryForRows(array $questions, array $answersByQuestion)
@@ -817,18 +860,41 @@ class Pool extends Admin_Controller
     public function declare_winner($poolId)
     {
         $pool = $this->db->where('id', $poolId)->get('pools')->row_array();
-        if (!$pool) return;
+        if (!$pool) {
+            return [
+                'configured' => false,
+                'credited' => 0,
+                'refunded' => 0,
+                'joined' => 0,
+            ];
+        }
 
-        $totalJoined = (int)($pool['total_joined'] ?? 0);
+        $joinedUsers = $this->db
+            ->where('pool_id', (int) $poolId)
+            ->where('status', 'success')
+            ->get('pool_joins')
+            ->result_array();
+
+        $totalJoined = count($joinedUsers);
+        if ($this->db->field_exists('total_joined', 'pools')) {
+            $this->db->where('id', (int) $poolId)->update('pools', [
+                'total_joined' => $totalJoined
+            ]);
+        }
+
+        $summary = [
+            'configured' => !empty($pool['price']) && (float) $pool['price'] > 0,
+            'credited' => 0,
+            'refunded' => 0,
+            'joined' => $totalJoined,
+        ];
 
         // 🚨 ONLY 1 PLAYER OR LESS → REFUND
         if ($totalJoined <= 1) {
             $refundAmount = (float)($pool['price'] ?? 0);
 
             if ($refundAmount > 0) {
-                // Refund anyone who joined (even if they didn't answer)
-                $joinedUsers = $this->db->where('pool_id', $poolId)->where('status', 'success')->get('pool_joins')->result_array();
-
+                // Refund only when exactly one real user joined this pool.
                 foreach ($joinedUsers as $user) {
                     $userId = (int)$user['user_id'];
                     $wallet = $this->getOrCreateWallet($userId);
@@ -859,6 +925,9 @@ class Pool extends Admin_Controller
                             ]);
 
                             $this->db->trans_complete();
+                            if ($this->db->trans_status() !== false) {
+                                $summary['refunded']++;
+                            }
                         }
                     }
                 }
@@ -869,8 +938,12 @@ class Pool extends Admin_Controller
                 'is_refunded' => 1
             ]);
 
-            return;
+            return $summary;
         }
+
+        $this->db->where('id', $poolId)->update('pools', [
+            'is_refunded' => 0
+        ]);
 
         // 🔥 GET USERS OF THIS POOL
         $rows = $this->getAllPoolAnswerRows();
@@ -879,7 +952,7 @@ class Pool extends Admin_Controller
             return isset($r['pool_id']) && (int)$r['pool_id'] === (int)$poolId;
         }));
 
-        if (empty($poolUsers)) return;
+        if (empty($poolUsers)) return $summary;
 
         // 🔥 SORT USERS
         usort($poolUsers, function ($a, $b) {
@@ -904,21 +977,21 @@ class Pool extends Admin_Controller
             }
         }
 
-        if (!$hasChecked) return;
+        if (!$hasChecked) return $summary;
 
         // 🔥 WINNERS
         $winners = array_filter($poolUsers, function ($u) use ($topScore) {
             return ($u['summary']['right'] ?? 0) === $topScore;
         });
 
-        if (empty($winners)) return;
+        if (empty($winners)) return $summary;
 
-        if (empty($pool['price'])) return;
+        if (empty($pool['price'])) return $summary;
 
         $totalPrize = (float)$pool['price'] * $totalJoined;
         $winningAmount = $totalPrize / count($winners);
 
-        if ($winningAmount <= 0) return;
+        if ($winningAmount <= 0) return $summary;
 
         foreach ($winners as $winner) {
 
@@ -953,9 +1026,14 @@ class Pool extends Admin_Controller
             ]);
 
             $this->db->trans_complete();
+            if ($this->db->trans_status() !== false) {
+                $summary['credited']++;
+            }
         }
+
+        return $summary;
     }
-    
+
     public function test_winner($poolId)
     {
         $summary = $this->declare_winner($poolId);
@@ -1005,6 +1083,10 @@ class Pool extends Admin_Controller
 
             // 🔥 IMPORTANT (NEW)
             ->join('cricket_matches', 'cricket_matches.id = pools.match_id', 'left')
+            ->group_start()
+            ->where('pools.description IS NULL', null, false)
+            ->or_where('pools.description !=', $this->questionAnchorDescription)
+            ->group_end()
 
             ->order_by('pools.id', 'DESC')
             ->get()
@@ -1204,27 +1286,246 @@ class Pool extends Admin_Controller
         $this->load->view('admin/footer');
     }
 
+    public function delete($poolId = 0)
+    {
+        $poolId = (int) $poolId;
+
+        if ($poolId <= 0) {
+            $this->session->set_flashdata('error', 'Pool not found.');
+            redirect('admin/pools');
+            return;
+        }
+
+        $pool = $this->db
+            ->from('pools')
+            ->where('id', $poolId)
+            ->get()
+            ->row_array();
+
+        if (!$pool) {
+            $this->session->set_flashdata('error', 'Pool not found.');
+            redirect('admin/pools');
+            return;
+        }
+
+        if ($this->isQuestionAnchorPool($pool)) {
+            $this->session->set_flashdata('error', 'Question anchor pool cannot be deleted from the pool list.');
+            redirect('admin/pools');
+            return;
+        }
+
+        $this->db->trans_start();
+
+        if ($this->db->table_exists('pool_prize_logs') && $this->db->table_exists('pool_prizes')) {
+            $prizeIds = $this->db
+                ->select('id')
+                ->from('pool_prizes')
+                ->where('pool_id', $poolId)
+                ->get()
+                ->result_array();
+
+            foreach ($prizeIds as $prizeRow) {
+                $prizeId = (int) ($prizeRow['id'] ?? 0);
+                if ($prizeId > 0) {
+                    $this->db->where('prize_id', $prizeId)->delete('pool_prize_logs');
+                }
+            }
+        }
+
+        if ($this->db->table_exists('pool_prize_items') && $this->db->table_exists('pool_prizes')) {
+            $prizeIds = isset($prizeIds) ? $prizeIds : $this->db
+                ->select('id')
+                ->from('pool_prizes')
+                ->where('pool_id', $poolId)
+                ->get()
+                ->result_array();
+
+            foreach ($prizeIds as $prizeRow) {
+                $prizeId = (int) ($prizeRow['id'] ?? 0);
+                if ($prizeId > 0) {
+                    $this->db->where('prize_id', $prizeId)->delete('pool_prize_items');
+                }
+            }
+        }
+
+        if ($this->db->table_exists('pool_prizes')) {
+            $this->db->where('pool_id', $poolId)->delete('pool_prizes');
+        }
+
+        if ($this->db->table_exists('pool_question_answers')) {
+            $this->db->where('pool_id', $poolId)->delete('pool_question_answers');
+        }
+
+        if ($this->db->table_exists('pool_joins')) {
+            $this->db->where('pool_id', $poolId)->delete('pool_joins');
+        }
+
+        if ($this->db->table_exists('pool_questions')) {
+            $this->db->where('pool_id', $poolId)->delete('pool_questions');
+        }
+
+        if ($this->db->table_exists('transactions') && $this->db->field_exists('pool_id', 'transactions')) {
+            $this->db->where('pool_id', $poolId)->delete('transactions');
+        }
+
+        $this->db->where('id', $poolId)->delete('pools');
+        $this->db->trans_complete();
+
+        if ($this->db->trans_status() === false) {
+            $this->session->set_flashdata('error', 'Unable to delete pool right now. Please try again.');
+            redirect('admin/pools');
+            return;
+        }
+
+        $this->session->set_flashdata('success', 'Pool deleted successfully.');
+        redirect('admin/pools');
+    }
+
     public function question_matches()
     {
-        $matches = $this->db
+        $perPage = 12;                    // cards per page
+        $pageParam = $this->input->get('page');
+        $pageParam = is_numeric($pageParam) ? (int)$pageParam : 0;
+
+        // 🔥 VERY IMPORTANT (fix for ctype_digit error)
+        $_GET['page'] = (string)$pageParam;
+
+        $page = max(0, $pageParam);
+        $search  = trim((string) $this->input->get('search'));
+
+        // ── Fetch all matches with pool count ──────────────────────
+        $builder = $this->db
             ->select("
-                cricket_matches.*,
-                COUNT(DISTINCT pools.id) as linked_pool_count
-            ", false)
+            cricket_matches.*,
+            COUNT(DISTINCT pools.id) AS linked_pool_count
+        ", false)
             ->from('cricket_matches')
             ->join('pools', 'pools.match_id = cricket_matches.id', 'left')
-            ->group_by('cricket_matches.id')
+            ->group_by('cricket_matches.id');
+
+        if ($search !== '') {
+            $builder->group_start()
+                ->like('cricket_matches.competition_name', $search)
+                ->or_like('cricket_matches.team_home',     $search)
+                ->or_like('cricket_matches.team_away',     $search)
+                ->or_like('cricket_matches.venue',         $search)
+                ->group_end();
+        }
+
+        $allMatches = $builder
             ->order_by('cricket_matches.start_at', 'DESC')
             ->get()
             ->result_array();
 
-        foreach ($matches as &$match) {
-            $match['question_count'] = $this->getQuestionCountForMatch((int) $match['id']);
+        // ── Attach question counts ─────────────────────────────────
+        foreach ($allMatches as &$m) {
+            $m['question_count'] = $this->getQuestionCountForMatch((int) $m['id']);
+            $m['linked_pools'] = $this->getLinkedPoolsForMatch((int) $m['id']);
+            $m['linked_pool_count'] = count($m['linked_pools']);
         }
-        unset($match);
+        unset($m);
 
-        $data['matches'] = $matches;
+        // ── Bucket & sort ──────────────────────────────────────────
+        //   Priority: live → today → upcoming → completed
+        $now       = time();
+        $todayStart = mktime(0, 0, 0);
+        $todayEnd   = mktime(23, 59, 59);
+
+        $live      = [];
+        $today     = [];
+        $upcoming  = [];
+        $completed = [];
+
+        foreach ($allMatches as $m) {
+            $ts     = strtotime((string)($m['start_at'] ?? '')) ?: 0;
+            $status = strtolower((string)($m['admin_status'] ?? ''));
+
+            if ($status === 'live' || ($ts > 0 && $ts <= $now && $ts >= ($now - 8 * 3600) && $status !== 'completed')) {
+                $live[] = $m;
+            } elseif ($ts >= $todayStart && $ts <= $todayEnd && $status !== 'completed') {
+                $today[] = $m;
+            } elseif ($ts > $now && $status !== 'completed') {
+                $upcoming[] = $m;
+            } else {
+                $completed[] = $m;
+            }
+        }
+
+        // Within each bucket sort by start_at ASC (soonest first), completed DESC
+        $sortAsc  = function ($a, $b) {
+            $aTime = strtotime(isset($a['start_at']) ? $a['start_at'] : '');
+            $bTime = strtotime(isset($b['start_at']) ? $b['start_at'] : '');
+
+            if ($aTime == $bTime) {
+                return 0;
+            }
+
+            return ($aTime < $bTime) ? -1 : 1;
+        };
+        $sortDesc = function ($a, $b) {
+            $aTime = strtotime(isset($a['start_at']) ? $a['start_at'] : '');
+            $bTime = strtotime(isset($b['start_at']) ? $b['start_at'] : '');
+
+            if ($aTime == $bTime) {
+                return 0;
+            }
+
+            return ($aTime > $bTime) ? -1 : 1;
+        };
+        usort($live,      $sortAsc);
+        usort($today,     $sortAsc);
+        usort($upcoming,  $sortAsc);
+        usort($completed, $sortDesc);
+
+        $sorted    = array_merge($live, $today, $upcoming, $completed);
+        $totalRows = count($sorted);
+
+        // ── Stats for hero strip ───────────────────────────────────
+        $data['stats'] = [
+            'total'     => $totalRows,
+            'live'      => count($live),
+            'today'     => count($today),
+            'upcoming'  => count($upcoming),
+            'completed' => count($completed),
+        ];
+
+        // ── Paginate ───────────────────────────────────────────────
+        $data['matches']       = array_slice($sorted, $page, $perPage);
+        $data['search']        = $search;
         $data['max_questions'] = $this->maxQuestionsPerPool;
+        $data['per_page']      = $perPage;
+        $data['current_page']  = $page;
+        $data['total_rows']    = $totalRows;
+
+        // CI pagination (Bootstrap 5 style)
+        $config = [
+            'base_url'             => base_url('admin/cricket_questions'),
+            'total_rows'           => $totalRows,
+            'per_page'             => $perPage,
+            'cur_page'             => (string) $page,
+            'reuse_query_string'   => true,
+            'page_query_string'    => true,
+            'query_string_segment' => 'page',
+            'full_tag_open'        => '<ul class="pagination mb-0">',
+            'full_tag_close'       => '</ul>',
+            'attributes'           => ['class' => 'page-link'],
+            'cur_tag_open'         => '<li class="page-item active"><span class="page-link">',
+            'cur_tag_close'        => '</span></li>',
+            'num_tag_open'         => '<li class="page-item">',
+            'num_tag_close'        => '</li>',
+            'prev_link'            => '&lsaquo;',
+            'prev_tag_open'        => '<li class="page-item">',
+            'prev_tag_close'       => '</li>',
+            'next_link'            => '&rsaquo;',
+            'next_tag_open'        => '<li class="page-item">',
+            'next_tag_close'       => '</li>',
+            'first_tag_open'       => '<li class="page-item">',
+            'first_tag_close'      => '</li>',
+            'last_tag_open'        => '<li class="page-item">',
+            'last_tag_close'       => '</li>',
+        ];
+        $this->pagination->initialize($config);
+        $data['pagination'] = $this->pagination->create_links();
 
         $this->load->view('admin/header');
         $this->load->view('admin/cricket_question_matches_view', $data);
@@ -1452,7 +1753,9 @@ class Pool extends Admin_Controller
         $settlement = $this->declare_winner($poolId);
         $message = 'Correct answers updated successfully.';
 
-        if (!(bool) ($settlement['configured'] ?? false)) {
+        if ((int) ($settlement['refunded'] ?? 0) > 0) {
+            $message .= ' Refund sent to ' . (int) ($settlement['refunded'] ?? 0) . ' user wallet because only one user joined this pool.';
+        } elseif (!(bool) ($settlement['configured'] ?? false)) {
             $message .= ' Prize amount is not set for this pool yet.';
         } elseif ((int) ($settlement['credited'] ?? 0) > 0) {
             $message .= ' Winner amount credited to ' . (int) ($settlement['credited'] ?? 0) . ' user wallet(s).';
@@ -1595,11 +1898,16 @@ class Pool extends Admin_Controller
             ->select('id')
             ->from('pools')
             ->where('match_id', (int) $matchId)
+            ->group_start()
+            ->where('description IS NULL', null, false)
+            ->or_where('description !=', $this->questionAnchorDescription)
+            ->group_end()
             ->get()
             ->result_array();
 
         $configuredPools = 0;
         $creditedCount = 0;
+        $refundedCount = 0;
 
         foreach ($poolIds as $poolRow) {
             $settlement = $this->declare_winner((int) $poolRow['id']);
@@ -1607,10 +1915,15 @@ class Pool extends Admin_Controller
                 $configuredPools++;
             }
             $creditedCount += (int) ($settlement['credited'] ?? 0);
+            $refundedCount += (int) ($settlement['refunded'] ?? 0);
         }
 
         $message = 'Match answer key updated successfully.';
-        if ($configuredPools === 0) {
+        if ($refundedCount > 0 && $creditedCount > 0) {
+            $message .= ' Winner amount credited to ' . $creditedCount . ' user wallet(s), and refund sent to ' . $refundedCount . ' single-user pool participant(s).';
+        } elseif ($refundedCount > 0) {
+            $message .= ' Refund sent to ' . $refundedCount . ' single-user pool participant(s).';
+        } elseif ($configuredPools === 0) {
             $message .= ' No pool prize setup found yet.';
         } elseif ($creditedCount > 0) {
             $message .= ' Winner amount credited to ' . $creditedCount . ' user wallet(s).';

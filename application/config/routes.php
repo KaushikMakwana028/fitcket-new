@@ -109,6 +109,7 @@ $route['admin/delete_fittv_video/(:num)'] = 'admin/fittv/delete_video/$1';
 $route['admin/fittv_course_settings'] = 'admin/fittv/course_settings';
 $route['admin/update_fittv_course_settings'] = 'admin/fittv/update_course_settings';
 $route['admin/pools'] = 'admin/pool/index';
+$route['admin/pool/delete/(:num)'] = 'admin/pool/delete/$1';
 $route['admin/pool/users/(:num)'] = 'admin/pool/users/$1';
 $route['admin/pool/edit_user_answers/(:num)/(:num)'] = 'admin/pool/edit_user_answers/$1/$2';
 $route['admin/pool/update_user_answers'] = 'admin/pool/update_user_answers';

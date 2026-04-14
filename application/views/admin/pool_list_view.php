@@ -185,6 +185,16 @@ $buildPoolPageUrl = function ($pageNumber) {
         color: #fff;
     }
 
+    .admin-pool-list .action-btn.delete {
+        background: linear-gradient(135deg, #dc2626, #ef4444);
+        border-color: transparent;
+        color: #fff;
+    }
+
+    .admin-pool-list .inline-delete-form {
+        margin: 0;
+    }
+
     .admin-pool-list .action-btn::after {
         content: attr(data-label);
         position: absolute;
@@ -385,6 +395,11 @@ $buildPoolPageUrl = function ($pageNumber) {
                                             <a href="<?= base_url('admin/pool/leaderboard') ?>" class="btn btn-sm action-btn board" data-label="Global Leaderboard" title="Global Leaderboard">
                                                 <i class="bx bx-bar-chart-alt-2"></i>
                                             </a>
+                                            <form method="post" action="<?= base_url('admin/pool/delete/' . (int) $pool['id']) ?>" class="inline-delete-form" onsubmit="return confirm('Delete this pool permanently?');">
+                                                <button type="submit" class="btn btn-sm action-btn delete" data-label="Delete Pool" title="Delete Pool">
+                                                    <i class="bx bx-trash"></i>
+                                                </button>
+                                            </form>
                                         </div>
                                     </td>
                                 </tr>

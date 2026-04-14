@@ -1085,46 +1085,6 @@ class Cricket extends User_Controller
 
         $this->syncPoolJoinedCount($pool['id']);
 
-        // 🔥 ADD THIS BLOCK (REFUND LOGIC)
-        $totalPlayers = $this->db
-            ->where('pool_id', $pool['id'])
-            ->where('status', 'success')
-            ->count_all_results('pool_joins');
-
-        if ($totalPlayers <= 1) {
-
-            $wallet = $this->db->where('user_id', $user['id'])->get('wallets')->row_array();
-
-            if ($wallet) {
-
-                // ✅ INSERT REFUND TRANSACTION
-                $this->db->insert('transactions', [
-                    'wallet_id' => $wallet['id'],
-                    'type' => 'refund',
-                    'amount' => $pool['price'],
-                    'status' => 'success',
-                    'pool_id' => $pool['id'],
-                    'match_id' => $pool['match_id'],
-                    // 'description' => 'Pool cancelled refund',
-                    'created_at' => date('Y-m-d H:i:s')
-                ]);
-
-                // ✅ UPDATE WALLET
-                $this->db->set('balance', 'balance + ' . $pool['price'], false)
-                    ->where('id', $wallet['id'])
-                    ->update('wallets');
-            }
-
-            // ✅ POPUP DATA
-            $matchName = $pool['team_home'] . ' vs ' . $pool['team_away'];
-
-            $this->session->set_flashdata('popup', [
-                'type' => 'cancel',
-                'match' => $matchName,
-                'amount' => $pool['price']
-            ]);
-        }
-
         $this->db->trans_complete();
 
         $this->session->set_flashdata('success', 'Joined pool successfully. Payment is skipped for testing.');

@@ -1,118 +1,175 @@
 <?php
 
+
+
+
+
+
+
 defined('BASEPATH') or exit('No direct script access allowed');
+
 
 
 require_once(APPPATH . 'core/User_Controller.php');
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class Profile extends User_Controller
 
 {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     public function __construct()
 
     {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         parent::__construct();
     }
 
+
+
+
+
     public function index($offset = 0)
     {
-
         $limit = 9;
 
         $lat = floatval($this->session->userdata('user_lat') ?? 0);
         $lng = floatval($this->session->userdata('user_lng') ?? 0);
 
-        // Get filters
-        $price    = $this->input->get('price');
-        $rating   = $this->input->get('rating');
-        $exp      = $this->input->get('exp');
-        $category = $this->input->get('category');
-        $language = $this->input->get('language');
-        $service  = $this->input->get('service');
+        // ── GET FILTERS ──────────────────────────────────────────────────────────
+        $search   = trim($this->input->get('search')   ?? '');
+        $price    = $this->input->get('price')    ?? '';
+        $rating   = $this->input->get('rating')   ?? '';
+        $exp      = $this->input->get('exp')      ?? '';
+        $category = $this->input->get('category') ?? '';
+        $language = $this->input->get('language') ?? '';
+        $service  = $this->input->get('service')  ?? '';
 
-        // ✅ ADD THIS: Get search parameter
-        $search   = $this->input->get('search');
+        // ── FIX 1: Unify offset — AJAX sends ?page=N, normal load uses URI segment
+        $page   = (int)($this->input->get('page') ?? 0);
+        if ($page > 1) {
+            $offset = ($page - 1) * $limit; // AJAX path: derive offset from page
+        }
+        // Normal path: $offset comes from URI segment as-is (already correct)
+        $offset = max(0, (int)$offset); // safety: never negative
+
+        // ── HELPER: apply shared WHERE/HAVING filters ────────────────────────────
+        $applyFilters = function ($includeHaving = true) use (
+            $search,
+            $category,
+            $language,
+            $service,
+            $exp,
+            $rating
+        ) {
+            if (!empty($search)) {
+                $this->db->group_start();
+                $this->db->like('users.gym_name', $search, 'both');
+                $this->db->or_like('users.name',  $search, 'both');
+                $this->db->group_end();
+            }
+            if (!empty($category)) {
+                $this->db->where('provider.category', $category);
+            }
+            if (!empty($language)) {
+                $this->db->where(
+                    "FIND_IN_SET('" . $this->db->escape_str($language) . "', provider.language) >",
+                    0,
+                    false
+                );
+            }
+            if (!empty($service)) {
+                $this->db->where('provider.service_type', $service);
+            }
+            if (!empty($exp)) {
+                switch ($exp) {
+                    case '0_2':
+                        $this->db->where('provider.exp >=', 0);
+                        $this->db->where('provider.exp <=', 2);
+                        break;
+                    case '3_5':
+                        $this->db->where('provider.exp >=', 3);
+                        $this->db->where('provider.exp <=', 5);
+                        break;
+                    case '5_10':
+                        $this->db->where('provider.exp >=', 5);
+                        $this->db->where('provider.exp <=', 10);
+                        break;
+                    case '10_plus':
+                        $this->db->where('provider.exp >=', 10);
+                        break;
+                }
+            }
+            if ($includeHaving && !empty($rating) && $rating !== 'top_rated') {
+                $min = ['4_plus' => 4, '3_plus' => 3, '2_plus' => 2][$rating] ?? 0;
+                if ($min > 0) {
+                    if ($includeHaving && !empty($rating) && $rating !== 'top_rated') {
+                        $min = ['4_plus' => 4, '3_plus' => 3, '2_plus' => 2][$rating] ?? 0;
+                        if ($min > 0) {
+                            $this->db->having('AVG(reviews.rating) >= ' . $min);
+                        }
+                    }
+                }
+            }
+        };
 
         /* ======================================================
-       COUNT TOTAL RECORDS (WITH FILTERS)
+       COUNT TOTAL (with filters)
     ====================================================== */
         $this->db->select('provider.id');
         $this->db->from('provider');
-        $this->db->join('users', 'users.id = provider.provider_id', 'left');
+        $this->db->join('users',   'users.id = provider.provider_id',            'left');
         $this->db->join('reviews', 'reviews.provider_id = provider.provider_id', 'left');
         $this->db->where('users.isActive', 1);
-
-        // ✅ ADD THIS: Search filter for COUNT
-        if (!empty($search)) {
-            $this->db->group_start();
-            $this->db->like('users.gym_name', $search, 'both');
-            $this->db->or_like('users.name', $search, 'both'); // if you have provider name
-            $this->db->group_end();
-        }
-
-        /* Category */
-        if (!empty($category)) {
-            $this->db->where('provider.category', $category);
-        }
-
-        /* Language (CSV field) */
-        if (!empty($language)) {
-            $this->db->where("FIND_IN_SET('" . $this->db->escape_str($language) . "', provider.language) >", 0, false);
-        }
-
-        /* Service Type */
-        if (!empty($service)) {
-            $this->db->where('provider.service_type', $service);
-        }
-
-        /* Experience */
-        if (!empty($exp)) {
-            switch ($exp) {
-                case '0_2':
-                    $this->db->where('provider.exp >=', 0);
-                    $this->db->where('provider.exp <=', 2);
-                    break;
-                case '3_5':
-                    $this->db->where('provider.exp >=', 3);
-                    $this->db->where('provider.exp <=', 5);
-                    break;
-                case '5_10':
-                    $this->db->where('provider.exp >=', 5);
-                    $this->db->where('provider.exp <=', 10);
-                    break;
-                case '10_plus':
-                    $this->db->where('provider.exp >=', 10);
-                    break;
-            }
-        }
-
+        $applyFilters(true);
         $this->db->group_by('provider.id');
 
-        /* Rating Filter with HAVING */
-        if (!empty($rating) && $rating != 'top_rated') {
-            $min_rating = 0;
-            switch ($rating) {
-                case '4_plus':
-                    $min_rating = 4;
-                    break;
-                case '3_plus':
-                    $min_rating = 3;
-                    break;
-                case '2_plus':
-                    $min_rating = 2;
-                    break;
-            }
-            if ($min_rating > 0) {
-                $this->db->having('IFNULL(AVG(reviews.rating), 0) >=', $min_rating, false);
-            }
-        }
-
-        $count_query = $this->db->get_compiled_select();
-        $count_result = $this->db->query("SELECT COUNT(*) as total FROM ($count_query) as count_table");
+        $count_query   = $this->db->get_compiled_select();
+        $count_result  = $this->db->query("SELECT COUNT(*) as total FROM ($count_query) as count_table");
         $total_records = $count_result->row()->total;
 
         /* ======================================================
-       FETCH PROVIDERS (WITH FILTERS)
+       FETCH PROVIDERS (with filters + sort + pagination)
     ====================================================== */
         $this->db->select("
         provider.id,
@@ -123,16 +180,16 @@ class Profile extends User_Controller
         provider.exp,
         provider.latitude,
         provider.longitude,
-        provider.day_price,        
+        provider.day_price,
         provider.month_price,
         provider.description,
         provider.profile_image,
         provider.created_on,
         MAX(users.gym_name) AS gym_name,
-        MAX(users.name) AS provider_name,
-        COUNT(DISTINCT service.id) AS service_count,
+        MAX(users.name)     AS provider_name,
+        COUNT(DISTINCT service.id)  AS service_count,
         ROUND(IFNULL(AVG(reviews.rating), 0), 1) AS avg_rating,
-        COUNT(DISTINCT reviews.id) AS total_reviews,
+        COUNT(DISTINCT reviews.id)  AS total_reviews,
         (6371 * acos(
             cos(radians($lat)) * cos(radians(provider.latitude)) *
             cos(radians(provider.longitude) - radians($lng)) +
@@ -141,81 +198,19 @@ class Profile extends User_Controller
     ", false);
 
         $this->db->from('provider');
-        $this->db->join('users', 'users.id = provider.provider_id', 'left');
-        $this->db->join('service', 'service.provider_id = provider.provider_id', 'left');
-        $this->db->join('reviews', 'reviews.provider_id = provider.provider_id', 'left');
-        $this->db->order_by('id', 'DESC');
-
+        $this->db->join('users',    'users.id = provider.provider_id',            'left');
+        $this->db->join('service',  'service.provider_id = provider.provider_id', 'left');
+        $this->db->join('reviews',  'reviews.provider_id = provider.provider_id', 'left');
         $this->db->where('users.isActive', 1);
-
-        // ✅ ADD THIS: Search filter for main query
-        if (!empty($search)) {
-            $this->db->group_start();
-            $this->db->like('users.gym_name', $search, 'both');
-            $this->db->or_like('users.name', $search, 'both');
-            $this->db->group_end();
-        }
-
-        /* Apply same filters again */
-        if (!empty($category)) {
-            $this->db->where('provider.category', $category);
-        }
-
-        if (!empty($language)) {
-            $this->db->where("FIND_IN_SET('" . $this->db->escape_str($language) . "', provider.language) >", 0, false);
-        }
-
-        if (!empty($service)) {
-            $this->db->where('provider.service_type', $service);
-        }
-
-        if (!empty($exp)) {
-            switch ($exp) {
-                case '0_2':
-                    $this->db->where('provider.exp >=', 0);
-                    $this->db->where('provider.exp <=', 2);
-                    break;
-                case '3_5':
-                    $this->db->where('provider.exp >=', 3);
-                    $this->db->where('provider.exp <=', 5);
-                    break;
-                case '5_10':
-                    $this->db->where('provider.exp >=', 5);
-                    $this->db->where('provider.exp <=', 10);
-                    break;
-                case '10_plus':
-                    $this->db->where('provider.exp >=', 10);
-                    break;
-            }
-        }
-
+        $applyFilters(true);
         $this->db->group_by('provider.id');
 
-        /* Rating Filter with HAVING */
-        if (!empty($rating) && $rating != 'top_rated') {
-            $min_rating = 0;
-            switch ($rating) {
-                case '4_plus':
-                    $min_rating = 4;
-                    break;
-                case '3_plus':
-                    $min_rating = 3;
-                    break;
-                case '2_plus':
-                    $min_rating = 2;
-                    break;
-            }
-            if ($min_rating > 0) {
-                $this->db->having('IFNULL(AVG(reviews.rating), 0) >=', $min_rating, false);
-            }
-        }
-
-        /* SORTING */
-        if ($price == 'low_to_high') {
+        // Sorting
+        if ($price === 'low_to_high') {
             $this->db->order_by('provider.day_price', 'ASC');
-        } elseif ($price == 'high_to_low') {
+        } elseif ($price === 'high_to_low') {
             $this->db->order_by('provider.day_price', 'DESC');
-        } elseif ($rating == 'top_rated') {
+        } elseif ($rating === 'top_rated') {
             $this->db->order_by('avg_rating', 'DESC');
         } else {
             $this->db->order_by('distance', 'ASC');
@@ -224,7 +219,7 @@ class Profile extends User_Controller
         $this->db->limit($limit, $offset);
         $providers = $this->db->get()->result_array();
 
-        /* ---------------- FORMAT DISTANCE ---------------- */
+        // Format distance
         foreach ($providers as &$p) {
             if (!empty($p['distance']) && is_numeric($p['distance'])) {
                 $p['distance'] = ($p['distance'] < 1)
@@ -234,39 +229,43 @@ class Profile extends User_Controller
                 $p['distance'] = 'N/A';
             }
         }
+        unset($p);
 
         $data['provider'] = $providers;
 
         /* ======================================================
        PAGINATION
     ====================================================== */
-        $current_page = ($offset / $limit) + 1;
-        $total_pages  = max(1, ceil($total_records / $limit));
+        $current_page = (int)floor($offset / $limit) + 1;
+        $total_pages  = max(1, (int)ceil($total_records / $limit));
 
-        $queryString = http_build_query(array_filter($this->input->get() ?: []));
-        $pagination  = '<ul class="pagination">';
+        // ── FIX 2: Remove 'page' from query string to avoid duplicates ───────────
+        $gets = $this->input->get() ?: [];
+        unset($gets['page']);
+        $queryString = http_build_query(array_filter($gets));
+        $qs          = $queryString ? '?' . $queryString : '';
 
-        /* Prev */
-        $prev = ($current_page - 2) * $limit;
-        $prevUrl = site_url("profile/index/$prev") . ($queryString ? "?$queryString" : "");
+        $pagination = '<ul class="pagination mb-0">';
+
+        // Prev
+        $prevOffset = max(0, ($current_page - 2) * $limit); // FIX 3: never negative
         $pagination .= ($current_page > 1)
-            ? '<li class="page-item"><a class="page-link" href="' . $prevUrl . '">&laquo;</a></li>'
+            ? '<li class="page-item"><a class="page-link" href="' . site_url("profile/index/$prevOffset") . $qs . '">&laquo;</a></li>'
             : '<li class="page-item disabled"><span class="page-link">&laquo;</span></li>';
 
+        // Page numbers (show current ±1)
         for ($i = max(1, $current_page - 1); $i <= min($total_pages, $current_page + 1); $i++) {
-            $off = ($i - 1) * $limit;
-            $active = ($i == $current_page) ? 'active' : '';
-            $pageUrl = site_url("profile/index/$off") . ($queryString ? "?$queryString" : "");
-            $pagination .= '<li class="page-item ' . $active . '">
-            <a class="page-link" href="' . $pageUrl . '">' . $i . '</a>
-        </li>';
+            $off    = ($i - 1) * $limit;
+            $active = ($i === $current_page) ? 'active' : '';
+            $pagination .= '<li class="page-item ' . $active . '">'
+                . '<a class="page-link" href="' . site_url("profile/index/$off") . $qs . '">' . $i . '</a>'
+                . '</li>';
         }
 
-        /* Next */
-        $next = $current_page * $limit;
-        $nextUrl = site_url("profile/index/$next") . ($queryString ? "?$queryString" : "");
+        // Next
+        $nextOffset = $current_page * $limit;
         $pagination .= ($current_page < $total_pages)
-            ? '<li class="page-item"><a class="page-link" href="' . $nextUrl . '">&raquo;</a></li>'
+            ? '<li class="page-item"><a class="page-link" href="' . site_url("profile/index/$nextOffset") . $qs . '">&raquo;</a></li>'
             : '<li class="page-item disabled"><span class="page-link">&raquo;</span></li>';
 
         $pagination .= '</ul>';
@@ -276,25 +275,21 @@ class Profile extends User_Controller
        AJAX RESPONSE
     ====================================================== */
         if ($this->input->is_ajax_request()) {
-
+            if (ob_get_level()) ob_clean();
+            header('Content-Type: application/json');
             echo json_encode([
                 'html'       => $this->load->view('provider_list', $data, true),
-                'pagination' => $pagination
+                'pagination' => $pagination,
+                'total'      => $total_records
             ]);
             return;
         }
 
-
-
-        // echo "<pre>";
-        // print_r($data);
-        // die;
-        /* ---------------- NORMAL PAGE LOAD ---------------- */
+        /* Normal page load */
         $this->load->view('header');
         $this->load->view('profile_view', $data);
         $this->load->view('footer');
     }
-
 
 
 
@@ -368,20 +363,6 @@ class Profile extends User_Controller
 
             $this->data['can_add_review'] = $has_order ? true : false;
 
-            $this->data['gallery_images'] = $this->db
-                ->where('provider_id', $id)
-                ->where('status', 1)
-                ->order_by('id', 'DESC')
-                ->get('gym_gallery')
-                ->result();
-
-            $this->data['certifications'] = $this->db
-                ->where('provider_id', $id)
-                ->where('is_active', 1)
-                ->order_by('id', 'DESC')
-                ->get('certifications')
-                ->result();
-
             $this->load->view('header');
             $this->load->view('profile_details', $this->data);
             $this->load->view('footer');
@@ -400,7 +381,7 @@ class Profile extends User_Controller
 
         // Count total
 
-        $this->db->where(['provider_id' => $provider_id, 'isActive' => 1]);
+        $this->db->where(['provider_id' => $provider_id, 'isactive' => 1]);
 
         $totalServices = $this->db->count_all_results('service');
 
@@ -414,18 +395,11 @@ class Profile extends User_Controller
 
         // Fetch services with limit
 
-        $this->db->select('service.*, provider.city');
-        $this->db->from('service');
-        $this->db->join('provider', 'provider.provider_id = service.provider_id', 'left');
-
-        $this->db->where([
-            'service.provider_id' => $provider_id,
-            'service.isActive' => 1
-        ]);
+        $this->db->where(['provider_id' => $provider_id, 'isactive' => 1]);
 
         $this->db->limit($perPage, $offset);
 
-        $services = $this->db->get()->result();
+        $services = $this->db->get('service')->result();
 
 
 
