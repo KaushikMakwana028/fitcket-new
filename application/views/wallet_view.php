@@ -862,7 +862,7 @@
     <div class="card-box">
         <div class="withdraw-inner">
             <div class="sec-title">Withdraw Winning Amount</div>
-            <div class="sec-sub">Only real winning amounts can be withdrawn. Demo or testing balances are not eligible for withdrawal.</div>
+            <div class="sec-sub">Withdraw your winnings directly to your bank account. Requests are processed promptly following admin authorization.</div>
 
             <form method="post" action="<?= base_url('wallet/withdraw') ?>" class="withdraw-form">
                 <div class="wf-field">

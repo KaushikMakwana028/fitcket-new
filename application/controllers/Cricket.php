@@ -333,6 +333,8 @@ class Cricket extends User_Controller
             ->select("
                 pools.*,
                 COALESCE(users.name, 'Host') as host_name,
+                cricket_matches.team_home,
+                cricket_matches.team_away,
                 (
                     SELECT COUNT(*)
                     FROM pool_joins
@@ -342,6 +344,7 @@ class Cricket extends User_Controller
             ", false)
             ->from('pools')
             ->join('users', 'users.id = pools.user_id', 'left')
+            ->join('cricket_matches', 'cricket_matches.id = pools.match_id', 'left')
             ->where('pools.id', (int) $poolId)
             ->get()
             ->row_array();
@@ -507,6 +510,7 @@ class Cricket extends User_Controller
             'user_id' => (int) $user['id'],
             'host_user_id' => (int) $pool['user_id'],
             'amount' => (float) $pool['price'],
+            'status' => 'pending',
             'updated_at' => $timestamp
         ], $data);
 
@@ -527,39 +531,67 @@ class Cricket extends User_Controller
 
     private function savePoolPaymentLog($poolJoinId, $pool, $user, $amount, $status, $txnid, $paymentMethod = 'razorpay', $razorpayOrderId = null, $razorpayPaymentId = null)
     {
-        $existing = $this->db->get_where('pool_join_payments', [
+        // If a SUCCESS record already exists for this join, do nothing
+        $existingSuccess = $this->db->get_where('pool_join_payments', [
             'pool_join_id' => (int) $poolJoinId,
-            'status' => 'success'
+            'status'       => 'success',
         ])->row_array();
 
-        if ($existing) {
+        if ($existingSuccess) {
             return;
         }
 
+        // Check if a PENDING record already exists for this txnid
+        $existingPending = $this->db
+            ->where('txnid', $txnid)
+            ->get('pool_join_payments')
+            ->row_array();
+
+        if ($existingPending) {
+            // Update the existing pending record instead of inserting a duplicate
+            $this->db->where('id', $existingPending['id'])
+                ->update('pool_join_payments', [
+                    'status'               => $status,
+                    'razorpay_order_id'    => $razorpayOrderId,
+                    'razorpay_payment_id'  => $razorpayPaymentId,
+                ]);
+            return;
+        }
+
+        // Insert new record
         $this->db->insert('pool_join_payments', [
-            'pool_join_id' => (int) $poolJoinId,
-            'pool_id' => (int) $pool['id'],
-            'user_id' => (int) $user['id'],
-            'amount' => (float) $amount,
-            'payment_method' => $paymentMethod,
-            'txnid' => $txnid,
-            'razorpay_order_id' => $razorpayOrderId,
-            'razorpay_payment_id' => $razorpayPaymentId,
-            'status' => $status,
-            'created_at' => date('Y-m-d H:i:s')
+            'pool_join_id'         => (int) $poolJoinId,
+            'pool_id'              => (int) $pool['id'],
+            'user_id'              => (int) $user['id'],
+            'amount'               => (float) $amount,
+            'payment_method'       => $paymentMethod,
+            'txnid'                => $txnid,
+            'razorpay_order_id'    => $razorpayOrderId,
+            'razorpay_payment_id'  => $razorpayPaymentId,
+            'status'               => $status,
+            'created_at'           => date('Y-m-d H:i:s'),
         ]);
     }
 
     private function deletePendingPoolJoinByTxnid($txnid)
     {
-        if (empty($txnid)) {
-            return;
-        }
+        if (empty($txnid)) return;
 
-        $this->db
+        $payment = $this->db
             ->where('txnid', $txnid)
-            ->where_in('status', ['pending', 'failed'])
-            ->delete('pool_joins');
+            ->get('pool_join_payments')
+            ->row_array();
+
+        if (!$payment) return;
+
+        $poolJoinId = (int)$payment['pool_join_id'];
+
+        // 🔥 DELETE ALL (IMPORTANT FIX)
+        $this->db->where('txnid', $txnid)->delete('pool_join_payments');
+
+        if ($poolJoinId > 0) {
+            $this->db->where('id', $poolJoinId)->delete('pool_joins');
+        }
     }
 
     public function index()
@@ -878,7 +910,7 @@ class Cricket extends User_Controller
     public function pool_add()
     {
         $user = $this->getCurrentUser();
-
+// print_r($user['is_host']); die;
         if ((int) $user['is_host'] !== 1) {
             redirect('cricket');
         }
@@ -892,6 +924,8 @@ class Cricket extends User_Controller
         $data['today_matches'] = $this->getTodayMatches();
 
         if (empty($data['today_matches'])) {
+            // echo "h";
+            // die;
             $this->session->set_flashdata('error', 'No matches available today.');
             redirect('cricket');
             return;
@@ -922,8 +956,6 @@ class Cricket extends User_Controller
         $userLimitRaw = trim((string) $this->input->post('user_limit'));
         $userLimit = $userLimitRaw === '' ? 0 : (int) $userLimitRaw;
         $price = (float) $this->input->post('price');
-        // $matchDate = trim((string) $this->input->post('match_date'));
-        // $matchTime = trim((string) $this->input->post('match_time'));
 
         if ($poolName === '' || strlen($poolName) < 3) {
             $this->session->set_flashdata('error', 'Pool name must be at least 3 characters.');
@@ -964,28 +996,6 @@ class Cricket extends User_Controller
             redirect('pool/add');
             return;
         }
-
-        // if ($matchDate === '' || $matchTime === '') {
-        //     $this->session->set_flashdata('error', 'Please select match date and match start time.');
-        //     redirect('pool/add');
-        //     return;
-        // }
-
-        // $matchStartAt = strtotime($matchDate . ' ' . $matchTime);
-
-        // if ($matchStartAt === false) {
-        //     $this->session->set_flashdata('error', 'Invalid match date or time.');
-        //     redirect('pool/add');
-        //     return;
-        // }
-
-        // $joinCloseAt = strtotime('-30 minutes', $matchStartAt);
-
-        // if ($joinCloseAt <= time()) {
-        //     $this->session->set_flashdata('error', 'Match start time must be at least 30 minutes in the future.');
-        //     redirect('pool/add');
-        //     return;
-        // }
 
         $data = [
             'user_id' => $user['id'],
@@ -1043,7 +1053,7 @@ class Cricket extends User_Controller
         $existingJoin = $this->db->get_where('pool_joins', [
             'pool_id' => (int) $pool['id'],
             'user_id' => (int) $user['id'],
-            'status' => 'success'
+            'status'  => 'success'
         ])->row_array();
 
         if ($existingJoin) {
@@ -1066,62 +1076,21 @@ class Cricket extends User_Controller
 
         $amount = (float) $pool['price'];
 
-        $txnid = 'POOL' . uniqid();
-
-        $this->db->trans_start();
-
-        // Testing mode: skip wallet deduction and auto-join the pool.
-        // Keep the Razorpay flow below commented for later use.
-        $poolJoinId = $this->upsertPoolJoin($pool, $user, [
-            'txnid' => $txnid,
-            'status' => 'success',
-            'razorpay_order_id' => null,
-            'razorpay_payment_id' => null,
-            'razorpay_signature' => null
-        ]);
-
-        $this->savePoolPaymentLog($poolJoinId, $pool, $user, $amount, 'success', $txnid, 'test_skip');
-        $this->syncPoolJoinedCount($pool['id']);
-
-        $this->syncPoolJoinedCount($pool['id']);
-
-        $this->db->trans_complete();
-
-        $this->session->set_flashdata('success', 'Joined pool successfully. Payment is skipped for testing.');
-        redirect('pool');
-        return;
-
+        // -------------------------------------------------------
+        // FREE POOL — join directly, no payment needed
+        // -------------------------------------------------------
         if ($amount <= 0) {
             $txnid = 'POOLFREE' . uniqid();
 
             $this->db->trans_start();
 
             $poolJoinId = $this->upsertPoolJoin($pool, $user, [
-                'txnid' => $txnid,
-                'status' => 'success',
-                'razorpay_order_id' => null,
+                'txnid'               => $txnid,
+                'status'              => 'success',
+                'razorpay_order_id'   => null,
                 'razorpay_payment_id' => null,
-                'razorpay_signature' => null
+                'razorpay_signature'  => null,
             ]);
-
-            // 🔥 ADD TRANSACTION ENTRY (DEBIT)
-            if ($amount > 0) {
-
-                $wallet = $this->db
-                    ->where('user_id', $user['id'])
-                    ->get('wallets')
-                    ->row_array();
-
-                if ($wallet) {
-                    $this->db->insert('transactions', [
-                        'wallet_id' => $wallet['id'],
-                        'type' => 'debit',
-                        'amount' => $amount,
-                        'status' => 'success',
-                        'created_at' => date('Y-m-d H:i:s')
-                    ]);
-                }
-            }
 
             $this->savePoolPaymentLog($poolJoinId, $pool, $user, 0, 'success', $txnid, 'free');
             $this->syncPoolJoinedCount($pool['id']);
@@ -1133,56 +1102,76 @@ class Cricket extends User_Controller
             return;
         }
 
-        $txnid = 'POOL' . uniqid();
-        $amountPaise = (int) round($amount * 100);
+        // -------------------------------------------------------
+        // PAID POOL — create PENDING join, open Razorpay
+        // NO refund logic here. Refunds are handled by declare_winner()
+        // only after the match ends and results are checked.
+        // -------------------------------------------------------
+        $txnid        = 'POOL' . uniqid();
+        $amountPaise  = (int) round($amount * 100);
 
+        // Create a single pending join record
         $poolJoinId = $this->upsertPoolJoin($pool, $user, [
-            'txnid' => $txnid,
-            'status' => 'pending',
-            'razorpay_order_id' => null,
+            'txnid'               => $txnid,
+            'status'              => 'pending',
+            'razorpay_order_id'   => null,
             'razorpay_payment_id' => null,
-            'razorpay_signature' => null
+            'razorpay_signature'  => null,
         ]);
 
-        // $api = new Api($this->RAZORPAY_KEY_ID, $this->RAZORPAY_KEY_SECRET);
-        // $razorpayOrder = $api->order->create([
-        //     'receipt' => $txnid,
-        //     'amount' => $amountPaise,
-        //     'currency' => 'INR',
-        //     'payment_capture' => 1
-        // ]);
+        // Create Razorpay order
+        $api = new Api($this->RAZORPAY_KEY_ID, $this->RAZORPAY_KEY_SECRET);
+        $razorpayOrder = $api->order->create([
+            'receipt'         => $txnid,
+            'amount'          => $amountPaise,
+            'currency'        => 'INR',
+            'payment_capture' => 1,
+        ]);
 
-        // $this->db->where('id', $poolJoinId)->update('pool_joins', [
-        //     'razorpay_order_id' => $razorpayOrder['id'],
-        //     'updated_at' => date('Y-m-d H:i:s')
-        // ]);
+        // Store order ID on the join record
+        $this->db->where('id', $poolJoinId)->update('pool_joins', [
+            'razorpay_order_id' => $razorpayOrder['id'],
+            'updated_at'        => date('Y-m-d H:i:s'),
+        ]);
 
-        // $data = [
-        //     'key' => $this->RAZORPAY_KEY_ID,
-        //     'amount' => $amountPaise,
-        //     'name' => 'Pool Join Payment',
-        //     'description' => $pool['pool_name'],
-        //     'image' => base_url('assets/logo.png'),
-        //     'order_id' => $razorpayOrder['id'],
-        //     'txnid' => $txnid,
-        //     'prefill' => [
-        //         'name' => $user['name'] ?? 'User',
-        //         'email' => $user['email'] ?? '',
-        //         'contact' => $user['mobile'] ?? ''
-        //     ],
-        //     'notes' => [
-        //         'pool_id' => (int) $pool['id'],
-        //         'pool_join_id' => $poolJoinId,
-        //         'user_id' => (int) $user['id']
-        //     ],
-        //     'theme' => [
-        //         'color' => '#3399cc'
-        //     ]
-        // ];
+        // Log payment as PENDING — becomes SUCCESS only on callback
+        $this->savePoolPaymentLog(
+            $poolJoinId,
+            $pool,
+            $user,
+            $amount,
+            'pending',   // ← stays pending until Razorpay callback confirms
+            $txnid,
+            'razorpay',
+            $razorpayOrder['id'],
+            null         // payment ID not yet known
+        );
 
-        // $this->load->view('header');
-        // $this->load->view('razorpay_redirect_pool', $data);
-        // $this->load->view('footer');
+        // Redirect user to Razorpay checkout
+        $data = [
+            'key'         => $this->RAZORPAY_KEY_ID,
+            'amount'      => $amountPaise,
+            'name'        => 'Pool Join Payment',
+            'description' => $pool['pool_name'],
+            'image'       => base_url('assets/logo.png'),
+            'order_id'    => $razorpayOrder['id'],
+            'txnid'       => $txnid,
+            'prefill'     => [
+                'name'    => $user['name']   ?? 'User',
+                'email'   => $user['email']  ?? '',
+                'contact' => $user['mobile'] ?? '',
+            ],
+            'notes' => [
+                'pool_id'      => (int) $pool['id'],
+                'pool_join_id' => $poolJoinId,
+                'user_id'      => (int) $user['id'],
+            ],
+            'theme' => ['color' => '#3399cc'],
+        ];
+
+        $this->load->view('header');
+        $this->load->view('razorpay_redirect_pool', $data);
+        $this->load->view('footer');
     }
 
 
@@ -1262,7 +1251,37 @@ class Cricket extends User_Controller
 
     public function pool_payment_cancel($txnid = '')
     {
-        $this->deletePendingPoolJoinByTxnid($txnid);
+        if (empty($txnid)) {
+            redirect('pool');
+            return;
+        }
+
+        // Find the pending payment log by txnid
+        $payment = $this->db
+            ->where('txnid', $txnid)
+            ->get('pool_join_payments')
+            ->row_array();
+
+        if ($payment) {
+            // Only cancel if it's still pending — never touch a success record
+            if ($payment['status'] === 'pending') {
+                // Mark payment log as failed
+                $this->db->where('id', $payment['id'])
+                    ->update('pool_join_payments', ['status' => 'failed']);
+
+                // Delete the pending pool join record
+                if (!empty($payment['pool_join_id'])) {
+                    $this->db->where('id', (int) $payment['pool_join_id'])
+                        ->where('status', 'pending')   // safety: never delete a success join
+                        ->delete('pool_joins');
+                }
+
+                // NOTE: We do NOT insert any refund transaction here.
+                // No money was ever charged — Razorpay was cancelled before payment.
+                // Refunds only happen in declare_winner() after match results.
+            }
+        }
+
         $this->session->set_flashdata('error', 'Pool payment was cancelled.');
         redirect('pool');
     }

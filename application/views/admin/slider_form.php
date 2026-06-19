@@ -54,7 +54,7 @@
 
                         <div class="col">
 
-                            <form id="SliderForm" method="post" enctype="multipart/form-data" novalidate data-mode="create" data-action="<?= site_url('admin/category/create'); ?>">
+                           <form id="SliderForm" method="post" enctype="multipart/form-data" novalidate data-mode="create" data-action="<?= site_url('admin/category/create'); ?>">
 
                                 
 
@@ -161,7 +161,6 @@
                                     <button type="submit" class="btn btn-primary w-100" id="sliderSubmitBtn">Submit</button>
 
                                 </div>
-
 
 
                             </form>

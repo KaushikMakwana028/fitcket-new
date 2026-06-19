@@ -267,12 +267,12 @@
 							</a>
 						</li>
 
-						
 						<li>
 							<a href="<?= base_url('admin/add_fittv_video') ?>">
 								<i class='bx bx-radio-circle'></i>Add Video
 							</a>
 						</li>
+
 						<li>
 							<a href="<?= base_url('admin/fittv_course_settings') ?>">
 								<i class='bx bx-radio-circle'></i>Course Price
@@ -282,6 +282,7 @@
 					</ul>
 
 				</li>
+
 
 				<li>
 					<a href="javascript:;" class="has-arrow">
@@ -299,261 +300,236 @@
 								<i class='bx bx-radio-circle'></i>Leaderboard
 							</a>
 						</li>
-					</ul>
 				</li>
+			</ul>
+			</li>
 
-				<li>
-					<a href="javascript:;" class="has-arrow">
-						<div class="parent-icon"><i class="bx bx-cricket-ball"></i></div>
-						<div class="menu-title">Cricket</div>
-					</a>
-					<ul>
-						<li>
-							<a href="<?= base_url('admin/cricket_matches') ?>">
-								<i class='bx bx-radio-circle'></i>All Matches
-							</a>
-						</li>
-						<li>
-							<a href="<?= base_url('admin/cricket_matches/create') ?>">
-								<i class='bx bx-radio-circle'></i>Add Match
-							</a>
-						</li>
-						<li>
-							<a href="<?= base_url('admin/cricket_questions') ?>">
-								<i class='bx bx-radio-circle'></i>Add Questions
-							</a>
-						</li>
-					</ul>
-				</li>
+			<li>
+				<a href="javascript:;" class="has-arrow">
+					<div class="parent-icon"><i class="bx bx-cricket-ball"></i></div>
+					<div class="menu-title">Cricket</div>
+				</a>
+				<ul>
+					<li>
+						<a href="<?= base_url('admin/cricket_matches') ?>">
+							<i class='bx bx-radio-circle'></i>All Matches
+						</a>
+					</li>
+					<li>
+						<a href="<?= base_url('admin/cricket_matches/create') ?>">
+							<i class='bx bx-radio-circle'></i>Add Match
+						</a>
+					</li>
+					<li>
+						<a href="<?= base_url('admin/cricket_questions') ?>">
+							<i class='bx bx-radio-circle'></i>Add Questions
+						</a>
+					</li>
+				</ul>
+			</li>
 
-				<li>
+			<li>
 
-					<a href="<?= base_url('partner'); ?>" class="">
+				<a href="<?= base_url('partner'); ?>" class="">
 
-						<div class="parent-icon"><i class="bx bx-user-circle"></i>
+					<div class="parent-icon"><i class="bx bx-user-circle"></i>
 
-						</div>
+					</div>
 
-						<div class="menu-title">Partner</div>
+					<div class="menu-title">Partner</div>
 
-					</a>
+				</a>
 
 
 
-				</li>
+			</li>
 
 
-				<li>
+			<li>
 
-					<a href="javascript:;" class="has-arrow">
+				<a href="javascript:;" class="has-arrow">
 
-						<div class="parent-icon"><i class="bx bx-map"></i>
+					<div class="parent-icon"><i class="bx bx-map"></i>
 
-						</div>
+					</div>
 
-						<div class="menu-title">City</div>
+					<div class="menu-title">City</div>
 
-					</a>
+				</a>
 
-					<ul>
+				<ul>
 
-						<li> <a href="<?= base_url('city'); ?>"><i class='bx bx-radio-circle'></i>All City</a>
+					<li> <a href="<?= base_url('city'); ?>"><i class='bx bx-radio-circle'></i>All City</a>
 
-						</li>
+					</li>
 
-						<li> <a href="<?= base_url('add_city'); ?>"><i class='bx bx-radio-circle'></i>Add City</a>
+					<li> <a href="<?= base_url('add_city'); ?>"><i class='bx bx-radio-circle'></i>Add City</a>
 
-						</li>
+					</li>
 
 
 
-					</ul>
+				</ul>
 
-				</li>
-				<li>
-					<a href="javascript:;" class="has-arrow">
-						<div class="parent-icon"><i class="bx bx-transfer"></i></div>
-						<div class="menu-title">Settlement(Pay Any Gym)</div>
-					</a>
-					<ul>
-						<li>
-							<a href="<?= base_url('settlement'); ?>">
-								<i class='bx bx-money'></i> Transactions
-							</a>
-						</li>
-						<li>
-							<a href="<?= base_url('settlement_history'); ?>">
-								<i class='bx bx-history'></i> History
-							</a>
-						</li>
-					</ul>
-				</li>
+			</li>
+			<li>
+				<a href="javascript:;" class="has-arrow">
+					<div class="parent-icon"><i class="bx bx-transfer"></i></div>
+					<div class="menu-title">Settlement(Pay Any Gym)</div>
+				</a>
+				<ul>
+					<li>
+						<a href="<?= base_url('settlement'); ?>">
+							<i class='bx bx-money'></i> Transactions
+						</a>
+					</li>
+					<li>
+						<a href="<?= base_url('settlement_history'); ?>">
+							<i class='bx bx-history'></i> History
+						</a>
+					</li>
+				</ul>
+			</li>
 
-				<li class="">
-					<a href="javascript:;" class="has-arrow">
-						<div class="parent-icon"><i class="bx bx-video"></i></div>
-						<div class="menu-title">Session</div>
-					</a>
-					<ul>
-						<li>
-							<a href="<?= base_url('admin/session_list') ?>">
-								<i class="bx bx-list-ul"></i> Session List
-							</a>
-						</li>
 
-						<li>
-							<a href="<?= base_url('admin/live_sessions') ?>">
-								<i class="bx bx-broadcast"></i> Live Sessions
-							</a>
-						</li>
-					</ul>
-				</li>
+			<li class="">
 
+				<a href="<?= base_url('customers'); ?>" aria-expanded="false">
 
-				<li class="">
+					<div class="parent-icon"><i class="bx bx-group"></i>
 
-					<a href="<?= base_url('customers'); ?>" aria-expanded="false">
+					</div>
 
-						<div class="parent-icon"><i class="bx bx-group"></i>
+					<div class="menu-title">Customers</div>
 
-						</div>
+				</a>
 
-						<div class="menu-title">Customers</div>
+			</li>
 
-					</a>
+			<li class="">
 
-				</li>
+				<a href="<?= base_url('bookings'); ?>" aria-expanded="false">
 
-				<li class="">
+					<div class="parent-icon"><i class="bx bx-book-bookmark"></i>
 
-					<a href="<?= base_url('bookings'); ?>" aria-expanded="false">
+					</div>
 
-						<div class="parent-icon"><i class="bx bx-book-bookmark"></i>
+					<div class="menu-title">Booking</div>
 
-						</div>
+				</a>
 
-						<div class="menu-title">Booking</div>
+			</li>
 
-					</a>
+			<li class="">
 
-				</li>
+				<a href="<?= base_url('admin/payment'); ?>" aria-expanded="false">
 
-				<li class="">
+					<div class="parent-icon"><i class="bx bx-rupee"></i>
 
-					<a href="<?= base_url('admin/payment'); ?>" aria-expanded="false">
+					</div>
 
-						<div class="parent-icon"><i class="bx bx-rupee"></i>
+					<div class="menu-title">Payment</div>
 
-						</div>
+				</a>
 
-						<div class="menu-title">Payment</div>
+			</li>
 
-					</a>
+			<li class="">
 
-				</li>
-				<li class="">
+				<a href="<?= base_url('admin/user_wallet'); ?>" aria-expanded="false">
 
-					<a href="<?= base_url('admin/user_wallet'); ?>" aria-expanded="false">
+					<div class="parent-icon"><i class="bx bx-wallet"></i>
 
-						<div class="parent-icon"><i class="bx bx-wallet"></i>
+					</div>
 
-						</div>
+					<div class="menu-title">User Wallet</div>
 
-						<div class="menu-title">User Wallet</div>
+				</a>
 
-					</a>
+			</li>
+			
+			<li class="">
 
-				</li>
-				<li class="">
+				<a href="<?= base_url('payment_setting'); ?>" aria-expanded="false">
 
-					<a href="<?= base_url('payment_setting'); ?>" aria-expanded="false">
+					<div class="parent-icon"><i class="bx bx-cog"></i>
 
-						<div class="parent-icon"><i class="bx bx-cog"></i>
+					</div>
 
-						</div>
+					<div class="menu-title">Payment Setting</div>
 
-						<div class="menu-title">Payment Setting</div>
+				</a>
 
-					</a>
+			</li>
+			<li>
+				<a class="dropdown-item d-flex align-items-center" href="<?= base_url('offer'); ?>">
+					<i class="bx bxs-discount fs-5"></i>
+					<div class="menu-title">Offer</div>
+				</a>
+			</li>
+			<li class="">
 
-				</li>
-				<li>
-					<a class="dropdown-item d-flex align-items-center" href="<?= base_url('offer'); ?>">
-						<i class="bx bxs-discount fs-5"></i>
-						<div class="menu-title">Offer</div>
-					</a>
-				</li>
-				<li class="">
+				<a href="<?= base_url('inquries'); ?>" aria-expanded="false">
 
-					<a href="<?= base_url('inquries'); ?>" aria-expanded="false">
+					<div class="parent-icon"><i class="bx bx-message-dots"></i>
 
-						<div class="parent-icon"><i class="bx bx-message-dots"></i>
+					</div>
 
-						</div>
+					<div class="menu-title">Referred Gym</div>
 
-						<div class="menu-title">Referred Gym</div>
+				</a>
 
-					</a>
+			</li>
+			<li>
+				<a href="<?= base_url('admin/host_requests'); ?>">
+					<div class="parent-icon">
+						<i class="bx bx-user-check"></i>
+					</div>
+					<div class="menu-title">Host Requests</div>
+				</a>
+			</li>
 
-				</li>
+			<li>
 
-				<li>
-					<a href="<?= base_url('admin/reviews'); ?>">
-						<div class="parent-icon">
-							<i class="bx bx-star"></i>
-						</div>
-						<div class="menu-title">Review</div>
-					</a>
-				</li>
+				<a href="javascript:;" class="has-arrow">
 
-				<li>
-					<a href="<?= base_url('admin/host_requests'); ?>">
-						<div class="parent-icon">
-							<i class="bx bx-user-check"></i>
-						</div>
-						<div class="menu-title">Host Requests</div>
-					</a>
-				</li>
+					<div class="parent-icon"><i class="bx bx-file"></i></div>
 
-				<li>
+					<div class="menu-title">Pages</div>
 
-					<a href="javascript:;" class="has-arrow">
+				</a>
 
-						<div class="parent-icon"><i class="bx bx-file"></i></div>
+				<ul>
 
-						<div class="menu-title">Pages</div>
 
-					</a>
 
-					<ul>
+					<li> <a href="<?= base_url('privacy_policy'); ?>"><i class='bx bx-radio-circle'></i>Privacy &
 
+							Policy</a>
 
+					</li>
 
-						<li> <a href="<?= base_url('privacy_policy'); ?>"><i class='bx bx-radio-circle'></i>Privacy &
+					<li> <a href="<?= base_url('refund_policy'); ?>"><i class='bx bx-radio-circle'></i>Refund
 
-								Policy</a>
+							Policy</a>
 
-						</li>
+					</li>
 
-						<li> <a href="<?= base_url('refund_policy'); ?>"><i class='bx bx-radio-circle'></i>Refund
+					<li> <a href="<?= base_url('terms_condition'); ?>"><i class='bx bx-radio-circle'></i>Terms &
 
-								Policy</a>
+							Conditions</a>
 
-						</li>
+					</li>
 
-						<li> <a href="<?= base_url('terms_condition'); ?>"><i class='bx bx-radio-circle'></i>Terms &
 
-								Conditions</a>
 
-						</li>
+				</ul>
 
+			</li>
 
 
-					</ul>
 
-				</li>
-
-				<!-- <li class="">
+			<!-- <li class="">
 
 							<a href="widgets.html" aria-expanded="false">
 

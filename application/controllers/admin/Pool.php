@@ -1286,101 +1286,6 @@ class Pool extends Admin_Controller
         $this->load->view('admin/footer');
     }
 
-    public function delete($poolId = 0)
-    {
-        $poolId = (int) $poolId;
-
-        if ($poolId <= 0) {
-            $this->session->set_flashdata('error', 'Pool not found.');
-            redirect('admin/pools');
-            return;
-        }
-
-        $pool = $this->db
-            ->from('pools')
-            ->where('id', $poolId)
-            ->get()
-            ->row_array();
-
-        if (!$pool) {
-            $this->session->set_flashdata('error', 'Pool not found.');
-            redirect('admin/pools');
-            return;
-        }
-
-        if ($this->isQuestionAnchorPool($pool)) {
-            $this->session->set_flashdata('error', 'Question anchor pool cannot be deleted from the pool list.');
-            redirect('admin/pools');
-            return;
-        }
-
-        $this->db->trans_start();
-
-        if ($this->db->table_exists('pool_prize_logs') && $this->db->table_exists('pool_prizes')) {
-            $prizeIds = $this->db
-                ->select('id')
-                ->from('pool_prizes')
-                ->where('pool_id', $poolId)
-                ->get()
-                ->result_array();
-
-            foreach ($prizeIds as $prizeRow) {
-                $prizeId = (int) ($prizeRow['id'] ?? 0);
-                if ($prizeId > 0) {
-                    $this->db->where('prize_id', $prizeId)->delete('pool_prize_logs');
-                }
-            }
-        }
-
-        if ($this->db->table_exists('pool_prize_items') && $this->db->table_exists('pool_prizes')) {
-            $prizeIds = isset($prizeIds) ? $prizeIds : $this->db
-                ->select('id')
-                ->from('pool_prizes')
-                ->where('pool_id', $poolId)
-                ->get()
-                ->result_array();
-
-            foreach ($prizeIds as $prizeRow) {
-                $prizeId = (int) ($prizeRow['id'] ?? 0);
-                if ($prizeId > 0) {
-                    $this->db->where('prize_id', $prizeId)->delete('pool_prize_items');
-                }
-            }
-        }
-
-        if ($this->db->table_exists('pool_prizes')) {
-            $this->db->where('pool_id', $poolId)->delete('pool_prizes');
-        }
-
-        if ($this->db->table_exists('pool_question_answers')) {
-            $this->db->where('pool_id', $poolId)->delete('pool_question_answers');
-        }
-
-        if ($this->db->table_exists('pool_joins')) {
-            $this->db->where('pool_id', $poolId)->delete('pool_joins');
-        }
-
-        if ($this->db->table_exists('pool_questions')) {
-            $this->db->where('pool_id', $poolId)->delete('pool_questions');
-        }
-
-        if ($this->db->table_exists('transactions') && $this->db->field_exists('pool_id', 'transactions')) {
-            $this->db->where('pool_id', $poolId)->delete('transactions');
-        }
-
-        $this->db->where('id', $poolId)->delete('pools');
-        $this->db->trans_complete();
-
-        if ($this->db->trans_status() === false) {
-            $this->session->set_flashdata('error', 'Unable to delete pool right now. Please try again.');
-            redirect('admin/pools');
-            return;
-        }
-
-        $this->session->set_flashdata('success', 'Pool deleted successfully.');
-        redirect('admin/pools');
-    }
-
     public function question_matches()
     {
         $perPage = 12;                    // cards per page
@@ -1420,8 +1325,6 @@ class Pool extends Admin_Controller
         // ── Attach question counts ─────────────────────────────────
         foreach ($allMatches as &$m) {
             $m['question_count'] = $this->getQuestionCountForMatch((int) $m['id']);
-            $m['linked_pools'] = $this->getLinkedPoolsForMatch((int) $m['id']);
-            $m['linked_pool_count'] = count($m['linked_pools']);
         }
         unset($m);
 
@@ -1849,6 +1752,39 @@ class Pool extends Admin_Controller
         $this->session->set_flashdata('success', 'Match questions saved successfully.');
         redirect('admin/cricket_questions/' . (int) $matchId);
     }
+    public function delete()
+    {
+        $id = (int) $this->input->post('id');
+
+        if (!$id) {
+            echo json_encode([
+                'status' => false,
+                'message' => 'Invalid ID'
+            ]);
+            return;
+        }
+
+        // Optional: delete related data first
+        $this->db->where('pool_id', $id)->delete('pool_questions');
+        $this->db->where('pool_id', $id)->delete('pool_question_answers');
+        $this->db->where('pool_id', $id)->delete('pool_prizes');
+
+        // Delete main pool
+        $this->db->where('id', $id);
+        $deleted = $this->db->delete('pools');
+
+        if ($deleted) {
+            echo json_encode([
+                'status' => true,
+                'message' => 'Deleted successfully'
+            ]);
+        } else {
+            echo json_encode([
+                'status' => false,
+                'message' => 'Delete failed'
+            ]);
+        }
+    }
 
     public function save_match_answer_key($matchId = 0)
     {
@@ -1893,6 +1829,7 @@ class Pool extends Admin_Controller
             redirect('admin/cricket_questions/' . (int) $matchId);
             return;
         }
+
 
         $poolIds = $this->db
             ->select('id')

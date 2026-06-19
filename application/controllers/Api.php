@@ -17,8 +17,10 @@ class Api extends CI_Controller
     private $razorpay_key_id;
     private $razorpay_key_secret;
     private $api;
-    private $poolAnswerOptions = ['yes', 'no'];
     private $cricketMatchDurationHours = 10;
+    private $poolAnswerOptions = ['yes', 'no'];
+
+
 
     public function __construct()
     {
@@ -42,362 +44,6 @@ class Api extends CI_Controller
         $this->load->library('email');
         $this->load->library(['form_validation']);
         $this->load->library('Firebase_messaging');
-    }
-
-    private function hasCricketMatchesTable()
-    {
-        return $this->db->table_exists('cricket_matches');
-    }
-
-    private function getCricketLogoUrl($path)
-    {
-        $path = trim((string) $path);
-
-        if ($path === '') {
-            return '';
-        }
-
-        $path = str_replace('\\', '/', $path);
-
-        if (preg_match('#^https?://#i', $path)) {
-            return $path;
-        }
-
-        if (strpos($path, base_url()) === 0) {
-            return $path;
-        }
-
-        return base_url(ltrim($path, '/'));
-    }
-
-    private function getCricketMatchEndAt($startAt, $nextStartAt = false)
-    {
-        if ($startAt === false) {
-            return false;
-        }
-
-        $defaultEndAt = strtotime('+' . (int) $this->cricketMatchDurationHours . ' hours', $startAt);
-
-        if ($nextStartAt !== false && $nextStartAt > $startAt && $nextStartAt < $defaultEndAt) {
-            return $nextStartAt;
-        }
-
-        return $defaultEndAt;
-    }
-
-    private function getCricketMatchBucket(array $match, $nextStartAt = false)
-    {
-        $status = strtolower((string) ($match['admin_status'] ?? 'scheduled'));
-        $startAt = strtotime((string) ($match['start_at'] ?? ''));
-        $now = time();
-        $today = date('Y-m-d');
-
-        if ($startAt === false || $status === 'cancelled') {
-            return 'hidden';
-        }
-
-        $endAt = $this->getCricketMatchEndAt($startAt, $nextStartAt);
-
-        if ($status === 'completed' || $endAt < $now) {
-            return 'completed';
-        }
-
-        if ($status === 'live' || ($startAt <= $now && $endAt >= $now)) {
-            return 'live';
-        }
-
-        if (date('Y-m-d', $startAt) === $today) {
-            return 'today';
-        }
-
-        if ($startAt > $now) {
-            return 'upcoming';
-        }
-
-        return 'completed';
-    }
-
-    private function mapCricketMatchCard(array $match, $bucket)
-    {
-        $startAt = strtotime((string) ($match['start_at'] ?? ''));
-        $scoreLine = $bucket === 'live'
-            ? 'Match in progress'
-            : ($startAt ? 'Starts at ' . date('g:i A', $startAt) : 'Schedule not set');
-
-        return [
-            'id' => (int) ($match['id'] ?? 0),
-            'competition_name' => trim((string) ($match['competition_name'] ?? '')),
-            'team1' => trim((string) ($match['team_home'] ?? 'Team A')),
-            'team2' => trim((string) ($match['team_away'] ?? 'Team B')),
-            'team1_logo' => $this->getCricketLogoUrl($match['home_logo'] ?? ''),
-            'team2_logo' => $this->getCricketLogoUrl($match['away_logo'] ?? ''),
-            'score' => $scoreLine,
-            'venue' => trim((string) ($match['venue'] ?? '')),
-            'bucket' => $bucket,
-            'status' => strtolower((string) ($match['admin_status'] ?? 'scheduled')),
-            'start_label' => $startAt ? date('d M Y, h:i A', $startAt) : 'Not scheduled',
-            'date_label' => $startAt ? date('d M Y', $startAt) : 'Not scheduled',
-            'time_label' => $startAt ? date('h:i A', $startAt) : '',
-            'teams' => trim((string) ($match['team_home'] ?? '')) . ' vs ' . trim((string) ($match['team_away'] ?? '')),
-            'match_result' => trim((string) ($match['match_result'] ?? '')),
-        ];
-    }
-
-    private function getCricketPageMatches()
-    {
-        $result = [
-            'live_match' => null,
-            'primary_match' => null,
-            'completed_matches' => [],
-            'upcoming_matches' => [],
-            'featured_match' => null,
-        ];
-
-        if (!$this->hasCricketMatchesTable()) {
-            return $result;
-        }
-
-        $rows = $this->db
-            ->from('cricket_matches')
-            ->where('admin_status !=', 'cancelled')
-            ->order_by('start_at', 'ASC')
-            ->order_by('id', 'DESC')
-            ->get()
-            ->result_array();
-
-        $liveMatches = [];
-        $completedMatches = [];
-        $upcomingMatches = [];
-        $visibleMatches = [];
-        $totalRows = count($rows);
-
-        foreach ($rows as $index => $row) {
-            $nextStartAt = false;
-
-            for ($nextIndex = $index + 1; $nextIndex < $totalRows; $nextIndex++) {
-                $candidateStartAt = strtotime((string) ($rows[$nextIndex]['start_at'] ?? ''));
-                if ($candidateStartAt !== false) {
-                    $nextStartAt = $candidateStartAt;
-                    break;
-                }
-            }
-
-            $bucket = $this->getCricketMatchBucket($row, $nextStartAt);
-
-            if ($bucket === 'hidden') {
-                continue;
-            }
-
-            $card = $this->mapCricketMatchCard($row, $bucket);
-
-            if ($bucket !== 'completed') {
-                $visibleMatches[] = $card;
-            }
-
-            if ($bucket === 'live') {
-                $liveMatches[] = $card;
-            } elseif ($bucket === 'completed') {
-                $completedMatches[] = $card;
-            } elseif ($bucket === 'today' || $bucket === 'upcoming') {
-                $upcomingMatches[] = $card;
-            }
-        }
-
-        $result['live_match'] = !empty($liveMatches) ? $liveMatches[0] : null;
-        $result['completed_matches'] = array_slice(array_reverse($completedMatches), 0, 4);
-        $result['upcoming_matches'] = array_slice($upcomingMatches, 0, 4);
-        $result['primary_match'] = $result['live_match']
-            ?: (!empty($upcomingMatches) ? $upcomingMatches[0] : null);
-
-        if (!empty($result['primary_match'])) {
-            $primaryId = (int) ($result['primary_match']['id'] ?? 0);
-
-            foreach ($visibleMatches as $index => $matchCard) {
-                if ((int) ($matchCard['id'] ?? 0) === $primaryId) {
-                    $result['featured_match'] = $visibleMatches[$index + 1] ?? null;
-                    break;
-                }
-            }
-        }
-
-        if (empty($result['featured_match'])) {
-            $result['featured_match'] = $result['primary_match'];
-        }
-
-        return $result;
-    }
-
-    private function getAuthorizedApiUser()
-    {
-        $authHeader = $this->input->get_request_header('Authorization', true);
-        $token = null;
-
-        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            $token = $matches[1];
-        }
-
-        $decoded = $this->verify_jwt($token);
-        if (!$decoded || empty($decoded->data->id)) {
-            return [null, $decoded];
-        }
-
-        $user = $this->db->get_where('users', ['id' => (int) $decoded->data->id])->row_array();
-
-        return [$user, $decoded];
-    }
-
-    private function getUserWalletRow($userId)
-    {
-        return $this->db
-            ->where('user_id', (int) $userId)
-            ->get('wallets')
-            ->row_array();
-    }
-
-    private function getOrCreateUserWalletRow($userId)
-    {
-        $wallet = $this->getUserWalletRow($userId);
-
-        if ($wallet) {
-            return $wallet;
-        }
-
-        $this->db->insert('wallets', [
-            'user_id' => (int) $userId,
-            'balance' => 0,
-        ]);
-
-        return $this->getUserWalletRow($userId);
-    }
-
-    private function getWalletTransactionsByWalletId($walletId)
-    {
-        return $this->db
-            ->where('wallet_id', (int) $walletId)
-            ->where_in('type', ['winning', 'withdraw'])
-            ->order_by('id', 'DESC')
-            ->get('transactions')
-            ->result_array();
-    }
-
-    private function buildWalletSummary($walletId)
-    {
-        $transactions = $this->getWalletTransactionsByWalletId($walletId);
-        $totalWinning = 0;
-        $totalWithdraw = 0;
-
-        foreach ($transactions as $transaction) {
-            $type = strtolower((string) ($transaction['type'] ?? ''));
-            $status = strtolower((string) ($transaction['status'] ?? ''));
-            $amount = (float) ($transaction['amount'] ?? 0);
-
-            if ($type === 'winning' && $status === 'success') {
-                $totalWinning += $amount;
-            }
-
-            if ($type === 'withdraw' && $status !== 'failed') {
-                $totalWithdraw += $amount;
-            }
-        }
-
-        return [
-            'transactions' => $transactions,
-            'total_winning' => $totalWinning,
-            'total_withdraw' => $totalWithdraw,
-            'available_withdraw' => max(0, $totalWinning - $totalWithdraw),
-        ];
-    }
-
-    private function walletTransactionColumnExists($column)
-    {
-        return $this->db->field_exists($column, 'transactions');
-    }
-
-    private function getUserBankAccountById($userId, $bankId)
-    {
-        if ((int) $bankId <= 0 || !$this->db->table_exists('provider_bank_details')) {
-            return null;
-        }
-
-        return $this->db
-            ->where('id', (int) $bankId)
-            ->where('provider_id', (int) $userId)
-            ->get('provider_bank_details')
-            ->row_array();
-    }
-
-    private function getUserBankAccountsList($userId)
-    {
-        if (!$this->db->table_exists('provider_bank_details')) {
-            return [];
-        }
-
-        return $this->db
-            ->where('provider_id', (int) $userId)
-            ->order_by('id', 'DESC')
-            ->get('provider_bank_details')
-            ->result_array();
-    }
-
-    private function normalizeBankAccountData(array $inputData, $userId)
-    {
-        return [
-            'provider_id' => (int) $userId,
-            'account_holder_name' => trim((string) ($inputData['account_holder_name'] ?? '')),
-            'bank_name' => trim((string) ($inputData['bank_name'] ?? '')),
-            'account_number' => preg_replace('/\s+/', '', (string) ($inputData['account_number'] ?? '')),
-            'ifsc_code' => strtoupper(trim((string) ($inputData['ifsc_code'] ?? ''))),
-            'account_type' => strtolower(trim((string) ($inputData['account_type'] ?? ''))),
-            'branch_name' => trim((string) ($inputData['branch_name'] ?? '')),
-        ];
-    }
-
-    private function validateBankAccountData(array $data)
-    {
-        $errors = [];
-
-        if ($data['account_holder_name'] === '' || strlen($data['account_holder_name']) < 3) {
-            $errors[] = 'Account holder name is required.';
-        }
-
-        if ($data['bank_name'] === '' || strlen($data['bank_name']) < 3) {
-            $errors[] = 'Bank name is required.';
-        }
-
-        if ($data['account_number'] === '' || !preg_match('/^[0-9]{8,20}$/', $data['account_number'])) {
-            $errors[] = 'Account number must be 8 to 20 digits.';
-        }
-
-        if ($data['ifsc_code'] === '' || !preg_match('/^[A-Z]{4}0[A-Z0-9]{6}$/', $data['ifsc_code'])) {
-            $errors[] = 'Please enter a valid IFSC code.';
-        }
-
-        if (!in_array($data['account_type'], ['savings', 'current', 'salary'], true)) {
-            $errors[] = 'Account type must be savings, current or salary.';
-        }
-
-        return [
-            'valid' => empty($errors),
-            'errors' => $errors,
-        ];
-    }
-
-    private function formatWalletTransaction(array $transaction)
-    {
-        return [
-            'id' => (int) ($transaction['id'] ?? 0),
-            'type' => (string) ($transaction['type'] ?? ''),
-            'amount' => (float) ($transaction['amount'] ?? 0),
-            'status' => (string) ($transaction['status'] ?? ''),
-            'payment_id' => (string) ($transaction['payment_id'] ?? ''),
-            'match_id' => isset($transaction['match_id']) ? (int) $transaction['match_id'] : 0,
-            'remark' => (string) ($transaction['remark'] ?? ($transaction['description'] ?? '')),
-            'withdraw_method' => (string) ($transaction['withdraw_method'] ?? ''),
-            'bank_name' => (string) ($transaction['bank_name'] ?? ''),
-            'account_number' => (string) ($transaction['account_number'] ?? ''),
-            'account_holder_name' => (string) ($transaction['account_holder_name'] ?? ''),
-            'created_at' => (string) ($transaction['created_at'] ?? ''),
-        ];
     }
 
     public function register_user()
@@ -895,8 +541,15 @@ class Api extends CI_Controller
         header('Content-Type: application/json');
 
         // 1️⃣ Verify JWT Token
-        list($user) = $this->getAuthorizedApiUser();
-        if (!$user) {
+        $authHeader = $this->input->get_request_header('Authorization', TRUE);
+        $token = null;
+
+        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        $decoded = $this->verify_jwt($token);
+        if (!$decoded || empty($decoded->data->id)) {
             return $this->output
                 ->set_status_header(400)
                 ->set_output(json_encode([
@@ -1097,6 +750,7 @@ class Api extends CI_Controller
                 'data' => null
             ]));
     }
+
 
     public function home()
     {
@@ -2209,8 +1863,15 @@ class Api extends CI_Controller
         header('Content-Type: application/json');
 
         // ✅ 1. Verify JWT Token
-        list($user) = $this->getAuthorizedApiUser();
-        if (!$user) {
+        $authHeader = $this->input->get_request_header('Authorization', TRUE);
+        $token = null;
+
+        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        $decoded = $this->verify_jwt($token);
+        if (!$decoded || empty($decoded->data->id)) {
             return $this->output
                 ->set_status_header(400)
                 ->set_output(json_encode([
@@ -2299,8 +1960,15 @@ class Api extends CI_Controller
         header('Content-Type: application/json');
 
         // ✅ 1. Verify JWT Token
-        list($user) = $this->getAuthorizedApiUser();
-        if (!$user) {
+        $authHeader = $this->input->get_request_header('Authorization', TRUE);
+        $token = null;
+
+        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        $decoded = $this->verify_jwt($token);
+        if (!$decoded || empty($decoded->data->id)) {
             return $this->output
                 ->set_status_header(400)
                 ->set_output(json_encode([
@@ -4015,14 +3683,13 @@ class Api extends CI_Controller
                 ]));
         }
 
-        $accounts = $this->getUserBankAccountsList($user['id']);
+        $user_id = $decoded->data->id;
 
-        foreach ($accounts as &$account) {
-            $validation = $this->validateBankAccountData($account);
-            $account['is_valid_for_withdraw'] = $validation['valid'];
-            $account['validation_errors'] = $validation['errors'];
-        }
-        unset($account);
+        $accounts = $this->db
+            ->where('provider_id', $user_id)
+            ->order_by('id', 'DESC')
+            ->get('provider_bank_details')
+            ->result();
 
         if (empty($accounts)) {
             return $this->output
@@ -4068,6 +3735,9 @@ class Api extends CI_Controller
                 ]));
         }
 
+        $user_id = $decoded->data->id;
+
+
         $input_data = json_decode($this->input->raw_input_stream, true);
         if (empty($input_data)) {
             return $this->output
@@ -4082,23 +3752,31 @@ class Api extends CI_Controller
 
         $id = $input_data['id'] ?? null;
 
-        $data = $this->normalizeBankAccountData($input_data, $user['id']);
-        $validation = $this->validateBankAccountData($data);
+        $data = [
+            'provider_id' => $user_id,
+            'account_holder_name' => $input_data['account_holder_name'] ?? '',
+            'bank_name' => $input_data['bank_name'] ?? '',
+            'account_number' => $input_data['account_number'] ?? '',
+            'ifsc_code' => strtoupper($input_data['ifsc_code'] ?? ''),
+            'account_type' => $input_data['account_type'] ?? '',
+            'branch_name' => $input_data['branch_name'] ?? ''
+        ];
 
-        if (!$validation['valid']) {
-            return $this->output
-                ->set_status_header(400)
-                ->set_output(json_encode([
-                    'status' => false,
-                    'code' => 400,
-                    'message' => $validation['errors'][0],
-                    'errors' => $validation['errors'],
-                    'data' => null
-                ]));
+        foreach ($data as $key => $val) {
+            if ($key != 'branch_name' && empty($val)) {
+                return $this->output
+                    ->set_status_header(400)
+                    ->set_output(json_encode([
+                        'status' => false,
+                        'code' => 400,
+                        'message' => ucfirst(str_replace('_', ' ', $key)) . ' is required',
+                        'data' => null
+                    ]));
+            }
         }
 
         if ($id) {
-            $exists = $this->db->where('id', $id)->where('provider_id', (int) $user['id'])->get('provider_bank_details')->row();
+            $exists = $this->db->where('id', $id)->where('provider_id', $user_id)->get('provider_bank_details')->row();
             if (!$exists) {
                 return $this->output
                     ->set_status_header(404)
@@ -4123,10 +3801,7 @@ class Api extends CI_Controller
                 'status' => true,
                 'code' => 200,
                 'message' => $message,
-                'data' => array_merge($data, [
-                    'is_valid_for_withdraw' => true,
-                    'validation_errors' => []
-                ])
+                'data' => $data
             ]));
     }
 
@@ -4155,8 +3830,10 @@ class Api extends CI_Controller
                 ]));
         }
 
+        $user_id = $decoded->data->id;
+
         $deleted = $this->db->where('id', $id)
-            ->where('provider_id', (int) $user['id'])
+            ->where('provider_id', $user_id)
             ->delete('provider_bank_details');
 
         if ($deleted) {
@@ -4176,266 +3853,6 @@ class Api extends CI_Controller
                 ]));
         }
     }
-
-    public function wallet()
-    {
-        header('Content-Type: application/json');
-
-        list($user) = $this->getAuthorizedApiUser();
-        if (!$user) {
-            return $this->output->set_status_header(401)->set_output(json_encode([
-                'status' => false,
-                'code' => 401,
-                'message' => 'Invalid token or user ID missing',
-                'data' => null
-            ]));
-        }
-
-        $wallet = $this->getOrCreateUserWalletRow($user['id']);
-        $summary = $this->buildWalletSummary($wallet['id']);
-        $bankAccounts = $this->getUserBankAccountsList($user['id']);
-
-        foreach ($bankAccounts as &$account) {
-            $validation = $this->validateBankAccountData($account);
-            $account['is_valid_for_withdraw'] = $validation['valid'];
-            $account['validation_errors'] = $validation['errors'];
-        }
-        unset($account);
-
-        $pendingWithdraws = 0;
-        foreach ($summary['transactions'] as $transaction) {
-            if (
-                strtolower((string) ($transaction['type'] ?? '')) === 'withdraw'
-                && strtolower((string) ($transaction['status'] ?? '')) === 'pending'
-            ) {
-                $pendingWithdraws++;
-            }
-        }
-
-        return $this->output->set_status_header(200)->set_output(json_encode([
-            'status' => true,
-            'code' => 200,
-            'message' => 'Wallet fetched successfully.',
-            'data' => [
-                'wallet' => [
-                    'id' => (int) ($wallet['id'] ?? 0),
-                    'balance' => (float) ($wallet['balance'] ?? 0),
-                    'total_winning' => (float) $summary['total_winning'],
-                    'total_withdraw' => (float) $summary['total_withdraw'],
-                    'available_withdraw' => (float) $summary['available_withdraw'],
-                    'pending_withdraw_count' => $pendingWithdraws,
-                ],
-                'withdraw_options' => [
-                    [
-                        'code' => 'bank_transfer',
-                        'label' => 'Bank Transfer',
-                        'description' => 'Withdraw to your verified bank account. Admin can pay by RazorpayX or manual real bank transfer.'
-                    ],
-                    [
-                        'code' => 'manual_review',
-                        'label' => 'Manual Review',
-                        'description' => 'Admin reviews and settles manually if RazorpayX is unavailable.'
-                    ],
-                ],
-                'bank_accounts' => $bankAccounts,
-                'transactions' => array_map([$this, 'formatWalletTransaction'], array_slice($summary['transactions'], 0, 20))
-            ]
-        ]));
-    }
-
-    public function wallet_withdraw()
-    {
-        header('Content-Type: application/json');
-
-        list($user) = $this->getAuthorizedApiUser();
-        if (!$user) {
-            return $this->output->set_status_header(401)->set_output(json_encode([
-                'status' => false,
-                'code' => 401,
-                'message' => 'Invalid token or user ID missing',
-                'data' => null
-            ]));
-        }
-
-        $inputData = json_decode($this->input->raw_input_stream, true);
-        if (!is_array($inputData)) {
-            $inputData = $this->input->post() ?: [];
-        }
-
-        $amount = (float) ($inputData['amount'] ?? 0);
-        $bankId = (int) ($inputData['bank_account_id'] ?? 0);
-        $withdrawMethod = strtolower(trim((string) ($inputData['withdraw_method'] ?? 'bank_transfer')));
-        $allowedMethods = ['bank_transfer', 'manual_review'];
-
-        if ($amount <= 0) {
-            return $this->output->set_status_header(400)->set_output(json_encode([
-                'status' => false,
-                'code' => 400,
-                'message' => 'Please enter a valid withdraw amount.',
-                'data' => null
-            ]));
-        }
-
-        if (!in_array($withdrawMethod, $allowedMethods, true)) {
-            return $this->output->set_status_header(400)->set_output(json_encode([
-                'status' => false,
-                'code' => 400,
-                'message' => 'Invalid withdraw method selected.',
-                'data' => null
-            ]));
-        }
-
-        $bankAccount = $this->getUserBankAccountById($user['id'], $bankId);
-        if (!$bankAccount) {
-            return $this->output->set_status_header(400)->set_output(json_encode([
-                'status' => false,
-                'code' => 400,
-                'message' => 'Please select your bank account before withdraw.',
-                'data' => null
-            ]));
-        }
-
-        $bankValidation = $this->validateBankAccountData($bankAccount);
-        if (!$bankValidation['valid']) {
-            return $this->output->set_status_header(400)->set_output(json_encode([
-                'status' => false,
-                'code' => 400,
-                'message' => 'Bank details are incomplete or invalid. Please update them first.',
-                'errors' => $bankValidation['errors'],
-                'data' => null
-            ]));
-        }
-
-        $wallet = $this->getOrCreateUserWalletRow($user['id']);
-        $summary = $this->buildWalletSummary($wallet['id']);
-
-        if ((float) $summary['available_withdraw'] < $amount) {
-            return $this->output->set_status_header(400)->set_output(json_encode([
-                'status' => false,
-                'code' => 400,
-                'message' => 'You can withdraw only real winning amount.',
-                'data' => null
-            ]));
-        }
-
-        if ((float) ($wallet['balance'] ?? 0) < $amount) {
-            return $this->output->set_status_header(400)->set_output(json_encode([
-                'status' => false,
-                'code' => 400,
-                'message' => 'Insufficient wallet balance.',
-                'data' => null
-            ]));
-        }
-
-        $this->db->trans_start();
-
-        $transactionData = [
-            'wallet_id' => (int) $wallet['id'],
-            'type' => 'withdraw',
-            'amount' => $amount,
-            'status' => 'pending',
-            'created_at' => date('Y-m-d H:i:s')
-        ];
-
-        if ($this->walletTransactionColumnExists('bank_detail_id')) {
-            $transactionData['bank_detail_id'] = (int) $bankAccount['id'];
-        }
-
-        if ($this->walletTransactionColumnExists('account_holder_name')) {
-            $transactionData['account_holder_name'] = (string) ($bankAccount['account_holder_name'] ?? '');
-        }
-
-        if ($this->walletTransactionColumnExists('bank_name')) {
-            $transactionData['bank_name'] = (string) ($bankAccount['bank_name'] ?? '');
-        }
-
-        if ($this->walletTransactionColumnExists('account_number')) {
-            $transactionData['account_number'] = (string) ($bankAccount['account_number'] ?? '');
-        }
-
-        if ($this->walletTransactionColumnExists('ifsc_code')) {
-            $transactionData['ifsc_code'] = (string) ($bankAccount['ifsc_code'] ?? '');
-        }
-
-        if ($this->walletTransactionColumnExists('account_type')) {
-            $transactionData['account_type'] = (string) ($bankAccount['account_type'] ?? '');
-        }
-
-        if ($this->walletTransactionColumnExists('branch_name')) {
-            $transactionData['branch_name'] = (string) ($bankAccount['branch_name'] ?? '');
-        }
-
-        if ($this->walletTransactionColumnExists('withdraw_method')) {
-            $transactionData['withdraw_method'] = $withdrawMethod;
-        }
-
-        if ($this->walletTransactionColumnExists('remark')) {
-            $transactionData['remark'] = $withdrawMethod === 'manual_review'
-                ? 'Manual withdraw review requested'
-                : 'Bank transfer withdraw requested';
-        }
-
-        if ($this->walletTransactionColumnExists('description')) {
-            $transactionData['description'] = $withdrawMethod === 'manual_review'
-                ? 'Manual withdraw review requested'
-                : 'Bank transfer withdraw requested';
-        }
-
-        $this->db->insert('transactions', $transactionData);
-        $transactionId = (int) $this->db->insert_id();
-
-        $this->db->set('balance', 'balance - ' . $amount, false)
-            ->where('id', (int) $wallet['id'])
-            ->update('wallets');
-
-        $this->db->trans_complete();
-
-        if ($this->db->trans_status() === false) {
-            return $this->output->set_status_header(500)->set_output(json_encode([
-                'status' => false,
-                'code' => 500,
-                'message' => 'Unable to submit withdraw request right now.',
-                'data' => null
-            ]));
-        }
-
-        return $this->output->set_status_header(200)->set_output(json_encode([
-            'status' => true,
-            'code' => 200,
-            'message' => 'Withdraw request submitted successfully.',
-            'data' => [
-                'transaction_id' => $transactionId,
-                'amount' => $amount,
-                'withdraw_method' => $withdrawMethod
-            ]
-        ]));
-    }
-
-    public function wallet_transactions()
-    {
-        header('Content-Type: application/json');
-
-        list($user) = $this->getAuthorizedApiUser();
-        if (!$user) {
-            return $this->output->set_status_header(401)->set_output(json_encode([
-                'status' => false,
-                'code' => 401,
-                'message' => 'Invalid token or user ID missing',
-                'data' => null
-            ]));
-        }
-
-        $wallet = $this->getOrCreateUserWalletRow($user['id']);
-        $transactions = $this->getWalletTransactionsByWalletId($wallet['id']);
-
-        return $this->output->set_status_header(200)->set_output(json_encode([
-            'status' => true,
-            'code' => 200,
-            'message' => 'Wallet transactions fetched successfully.',
-            'data' => array_map([$this, 'formatWalletTransaction'], $transactions)
-        ]));
-    }
-
     private function generate_jwt($user)
     {
         $payload = [
@@ -6138,6 +5555,1091 @@ class Api extends CI_Controller
             'data' => $videos
         ]));
     }
+    public function pay_fttv()
+    {
+        header('Content-Type: application/json');
+
+        // ===============================
+        // ✅ TOKEN VERIFY
+        // ===============================
+        $authHeader = $this->input->get_request_header('Authorization', TRUE);
+        $token = null;
+
+        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        $decoded = $this->verify_jwt($token);
+
+        if (!$decoded || empty($decoded->data->id)) {
+            return $this->output
+                ->set_status_header(401)
+                ->set_output(json_encode([
+                    'status' => false,
+                    'code' => 401,
+                    'message' => 'Invalid token',
+                    'data' => null
+                ]));
+        }
+
+        $user_id = (int) $decoded->data->id;
+
+        // ===============================
+        // ✅ GET SETTINGS
+        // ===============================
+        $settings = $this->db
+            ->get_where('fittv_course_settings', ['id' => 1])
+            ->row_array();
+
+        if (!$settings || !$settings['is_active']) {
+            return $this->output->set_output(json_encode([
+                'status' => false,
+                'code' => 200,
+                'message' => 'FITTV course not available',
+                'data' => null
+            ]));
+        }
+
+        $amount = (float) $settings['price'];
+
+        // ===============================
+        // ✅ FREE ACCESS
+        // ===============================
+        if ($amount <= 0) {
+            return $this->output->set_output(json_encode([
+                'status' => true,
+                'code' => 200,
+                'message' => 'Free access',
+                'data' => null
+            ]));
+        }
+
+        $amount_paise = (int) round($amount * 100);
+        $txnid = 'FTTV' . uniqid();
+
+        // ===============================
+        // ✅ UPSERT (same as your web logic)
+        // ===============================
+        $existing = $this->db->get_where('fittv_payments', [
+            'user_id' => $user_id,
+            'status' => 'pending'
+        ])->row_array();
+
+        if ($existing) {
+            $this->db->where('id', $existing['id'])->update('fittv_payments', [
+                'txnid' => $txnid,
+                'amount' => $amount,
+                'payment_method' => 'razorpay',
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+            $payment_id = $existing['id'];
+        } else {
+            $this->db->insert('fittv_payments', [
+                'user_id' => $user_id,
+                'txnid' => $txnid,
+                'amount' => $amount,
+                'payment_method' => 'razorpay',
+                'status' => 'pending',
+                'created_at' => date('Y-m-d H:i:s')
+            ]);
+            $payment_id = $this->db->insert_id();
+        }
+
+        // ===============================
+        // ✅ CREATE RAZORPAY ORDER
+        // ===============================
+        try {
+            $razorpayOrder = $this->api->order->create([
+                'receipt' => $txnid,
+                'amount' => $amount_paise,
+                'currency' => 'INR',
+                'payment_capture' => 1
+            ]);
+        } catch (Exception $e) {
+            log_message('error', 'FITTV Razorpay error: ' . $e->getMessage());
+
+            return $this->output->set_output(json_encode([
+                'status' => false,
+                'code' => 200,
+                'message' => 'Payment initiation failed',
+                'data' => null
+            ]));
+        }
+
+        // ===============================
+        // ✅ UPDATE ORDER ID
+        // ===============================
+        $this->db->where('txnid', $txnid)->update('fittv_payments', [
+            'razorpay_order_id' => $razorpayOrder['id'],
+            'updated_at' => date('Y-m-d H:i:s')
+        ]);
+
+        // ===============================
+        // ✅ FINAL RESPONSE (same as booking API)
+        // ===============================
+        return $this->output
+            ->set_status_header(200)
+            ->set_output(json_encode([
+                'status' => true,
+                'code' => 200,
+                'message' => 'FITTV payment created',
+                'data' => [
+                    'razorpay_key' => $this->razorpay_key_id,
+                    'order_id' => $razorpayOrder['id'],
+                    'txnid' => $txnid,
+                    'payment_id' => $payment_id,
+                    'amount' => $amount,
+                    'amount_paise' => $amount_paise,
+                    'currency' => 'INR',
+                    'description' => 'FITTV Access',
+                    'settings' => $settings
+                ]
+            ]));
+    }
+    public function fttv_callback()
+    {
+        header('Content-Type: application/json');
+
+        // ===============================
+        // ✅ TOKEN VERIFY
+        // ===============================
+        $authHeader = $this->input->get_request_header('Authorization', TRUE);
+        $token = null;
+
+        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        $decoded = $this->verify_jwt($token);
+
+        if (!$decoded || empty($decoded->data->id)) {
+            return $this->output->set_status_header(401)->set_output(json_encode([
+                'status' => false,
+                'code' => 401,
+                'message' => 'Invalid token',
+                'data' => null
+            ]));
+        }
+
+        $user_id = (int) $decoded->data->id;
+
+        // ===============================
+        // ✅ GET POST DATA
+        // ===============================
+        $input = json_decode(file_get_contents("php://input"), true);
+
+        $razorpay_payment_id = $input['razorpay_payment_id'] ?? '';
+        $razorpay_order_id   = $input['razorpay_order_id'] ?? '';
+        $razorpay_signature  = $input['razorpay_signature'] ?? '';
+        $txnid               = $input['txnid'] ?? '';
+
+        if (!$razorpay_payment_id || !$razorpay_order_id || !$razorpay_signature) {
+            return $this->output->set_output(json_encode([
+                'status' => false,
+                'code' => 200,
+                'message' => 'Missing payment data',
+                'data' => null
+            ]));
+        }
+
+        // ===============================
+        // ✅ VERIFY SIGNATURE
+        // ===============================
+        try {
+            $attributes = [
+                'razorpay_order_id' => $razorpay_order_id,
+                'razorpay_payment_id' => $razorpay_payment_id,
+                'razorpay_signature' => $razorpay_signature
+            ];
+
+            $this->api->utility->verifyPaymentSignature($attributes);
+        } catch (Exception $e) {
+
+            // ❌ FAILED
+            $this->db->where('razorpay_order_id', $razorpay_order_id)
+                ->update('fittv_payments', [
+                    'status' => 'failed',
+                    'updated_at' => date('Y-m-d H:i:s')
+                ]);
+
+            return $this->output->set_output(json_encode([
+                'status' => false,
+                'code' => 200,
+                'message' => 'Payment verification failed',
+                'data' => null
+            ]));
+        }
+
+        // ===============================
+        // ✅ SUCCESS UPDATE
+        // ===============================
+        $this->db->where('razorpay_order_id', $razorpay_order_id)
+            ->update('fittv_payments', [
+                'status' => 'success',
+                'razorpay_payment_id' => $razorpay_payment_id,
+                'razorpay_signature' => $razorpay_signature,
+                'updated_at' => date('Y-m-d H:i:s')
+            ]);
+
+        // ===============================
+        // ✅ UNLOCK ACCESS (IMPORTANT)
+        // ===============================
+        $this->db->where('user_id', $user_id)
+            ->update('users', [
+                'fittv_access' => 1
+            ]);
+
+        // ===============================
+        // ✅ FINAL RESPONSE
+        // ===============================
+        return $this->output->set_output(json_encode([
+            'status' => true,
+            'code' => 200,
+            'message' => 'Payment successful, access granted',
+            'data' => null
+        ]));
+    }
+    private function hasCricketMatchesTable()
+    {
+        return $this->db->table_exists('cricket_matches');
+    }
+    private function mapCricketMatchCard(array $match, $bucket)
+    {
+        $startAt = strtotime((string) ($match['start_at'] ?? ''));
+        $scoreLine = $bucket === 'live'
+            ? 'Match in progress'
+            : ($startAt ? 'Starts at ' . date('g:i A', $startAt) : 'Schedule not set');
+
+        return [
+            'id' => (int) ($match['id'] ?? 0),
+            'competition_name' => trim((string) ($match['competition_name'] ?? '')),
+            'team1' => trim((string) ($match['team_home'] ?? 'Team A')),
+            'team2' => trim((string) ($match['team_away'] ?? 'Team B')),
+            'team1_logo' => $this->getCricketLogoUrl($match['home_logo'] ?? ''),
+            'team2_logo' => $this->getCricketLogoUrl($match['away_logo'] ?? ''),
+            'score' => $scoreLine,
+            'venue' => trim((string) ($match['venue'] ?? '')),
+            'bucket' => $bucket,
+            'status' => strtolower((string) ($match['admin_status'] ?? 'scheduled')),
+            'start_label' => $startAt ? date('d M Y, h:i A', $startAt) : 'Not scheduled',
+            'date_label' => $startAt ? date('d M Y', $startAt) : 'Not scheduled',
+            'time_label' => $startAt ? date('h:i A', $startAt) : '',
+            'teams' => trim((string) ($match['team_home'] ?? '')) . ' vs ' . trim((string) ($match['team_away'] ?? '')),
+            'match_result' => trim((string) ($match['match_result'] ?? '')),
+        ];
+    }
+    private function getCricketLogoUrl($path)
+    {
+        $path = trim((string) $path);
+
+        if ($path === '') {
+            return '';
+        }
+
+        $path = str_replace('\\', '/', $path);
+
+        if (preg_match('#^https?://#i', $path)) {
+            return $path;
+        }
+
+        if (strpos($path, base_url()) === 0) {
+            return $path;
+        }
+
+        return base_url(ltrim($path, '/'));
+    }
+    private function getCricketPageMatches()
+    {
+        $result = [
+            'live_match' => null,
+            'primary_match' => null,
+            'completed_matches' => [],
+            'upcoming_matches' => [],
+            'featured_match' => null,
+        ];
+
+        if (!$this->hasCricketMatchesTable()) {
+            return $result;
+        }
+
+        $rows = $this->db
+            ->from('cricket_matches')
+            ->where('admin_status !=', 'cancelled')
+            ->order_by('start_at', 'ASC')
+            ->order_by('id', 'DESC')
+            ->get()
+            ->result_array();
+
+        $liveMatches = [];
+        $completedMatches = [];
+        $upcomingMatches = [];
+        $visibleMatches = [];
+        $todayMatch = null;
+
+        $totalRows = count($rows);
+
+        foreach ($rows as $index => $row) {
+            $nextStartAt = false;
+
+            for ($nextIndex = $index + 1; $nextIndex < $totalRows; $nextIndex++) {
+                $candidateStartAt = strtotime((string) ($rows[$nextIndex]['start_at'] ?? ''));
+                if ($candidateStartAt !== false) {
+                    $nextStartAt = $candidateStartAt;
+                    break;
+                }
+            }
+
+            $bucket = $this->getCricketMatchBucket($row, $nextStartAt);
+
+            if ($bucket === 'hidden') {
+                continue;
+            }
+
+            $card = $this->mapCricketMatchCard($row, $bucket);
+
+            if ($bucket !== 'completed') {
+                $visibleMatches[] = $card;
+            }
+
+            // ===============================
+            // ✅ CATEGORY LOGIC (FIXED)
+            // ===============================
+            if ($bucket === 'live') {
+                $liveMatches[] = $card;
+            } elseif ($bucket === 'completed') {
+                $completedMatches[] = $card;
+            } elseif ($bucket === 'today') {
+                // ✅ ONLY store today separately
+                if ($todayMatch === null) {
+                    $todayMatch = $card; // take first today match
+                }
+            } elseif ($bucket === 'upcoming') {
+                // ✅ ONLY future matches
+                $upcomingMatches[] = $card;
+            }
+        }
+
+        // ===============================
+        // ✅ FINAL ASSIGNMENTS
+        // ===============================
+        $result['live_match'] = !empty($liveMatches) ? $liveMatches[0] : null;
+
+        $result['completed_matches'] = array_slice(array_reverse($completedMatches), 0, 4);
+
+        $result['upcoming_matches'] = array_slice($upcomingMatches, 0, 4);
+
+        // ===============================
+        // ✅ PRIMARY MATCH (PRIORITY FIXED)
+        // ===============================
+        $result['primary_match'] =
+            $result['live_match']
+            ?: $todayMatch
+            ?: (!empty($upcomingMatches) ? $upcomingMatches[0] : null);
+
+        // ===============================
+        // ✅ FEATURED MATCH (NEXT AFTER PRIMARY)
+        // ===============================
+        $result['featured_match'] = null;
+
+        if (!empty($result['primary_match'])) {
+            $primaryId = (int) ($result['primary_match']['id'] ?? 0);
+
+            foreach ($visibleMatches as $index => $matchCard) {
+                if ((int) ($matchCard['id'] ?? 0) === $primaryId) {
+                    $result['featured_match'] = $visibleMatches[$index + 1] ?? null;
+                    break;
+                }
+            }
+        }
+
+        if (empty($result['featured_match'])) {
+            $result['featured_match'] = $result['primary_match'];
+        }
+
+        return $result;
+    }
+
+    private function getCricketMatchBucket(array $match, $nextStartAt = false)
+    {
+        $status = strtolower((string) ($match['admin_status'] ?? 'scheduled'));
+        $startAt = strtotime((string) ($match['start_at'] ?? ''));
+        $now = time();
+        $today = date('Y-m-d');
+
+        if ($startAt === false || $status === 'cancelled') {
+            return 'hidden';
+        }
+
+        $endAt = $this->getCricketMatchEndAt($startAt, $nextStartAt);
+
+        if ($status === 'completed' || $endAt < $now) {
+            return 'completed';
+        }
+
+        if ($status === 'live' || ($startAt <= $now && $endAt >= $now)) {
+            return 'live';
+        }
+
+        if (date('Y-m-d', $startAt) === $today) {
+            return 'today';
+        }
+
+        if ($startAt > $now) {
+            return 'upcoming';
+        }
+
+        return 'completed';
+    }
+    private function getCricketMatchEndAt($startAt, $nextStartAt = false)
+    {
+        if ($startAt === false) {
+            return false;
+        }
+
+        $defaultEndAt = strtotime('+' . (int) $this->cricketMatchDurationHours . ' hours', $startAt);
+
+        if ($nextStartAt !== false && $nextStartAt > $startAt && $nextStartAt < $defaultEndAt) {
+            return $nextStartAt;
+        }
+
+        return $defaultEndAt;
+    }
+
+    public function get_matches()
+    {
+        header('Content-Type: application/json');
+
+        // ===============================
+        // ✅ TOKEN VERIFY
+        // ===============================
+        $authHeader = $this->input->get_request_header('Authorization', TRUE);
+        $token = null;
+
+        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        $decoded = $this->verify_jwt($token);
+
+        $response = [
+            'status'  => true,
+            'code'    => 200,
+            'message' => 'Success',
+            'data'    => null
+        ];
+
+        if (!$decoded || empty($decoded->data->id)) {
+            $response['status']  = false;
+            $response['message'] = 'Invalid token or user ID missing';
+
+            return $this->output
+                ->set_status_header(200)
+                ->set_output(json_encode($response));
+        }
+
+        $user_id = (int) $decoded->data->id;
+
+        // ===============================
+        // ✅ GET USER
+        // ===============================
+        $user = $this->db->get_where('users', ['id' => $user_id])->row_array();
+
+        $request = $this->db
+            ->get_where('host_requests', ['user_id' => $user_id])
+            ->row_array();
+
+        $matches = $this->getCricketPageMatches();
+
+        $primaryLiveCard = $matches['primary_match'] ?? $matches['featured_match'];
+
+        $live = [
+            'team1' => $primaryLiveCard['team1'] ?? 'No Matches',
+            'team2' => $primaryLiveCard['team2'] ?? 'Scheduled',
+            'score' => $primaryLiveCard['score'] ?? 'Check back soon',
+            'status' => !empty($matches['live_match'])
+                ? 'LIVE'
+                : strtoupper((string) ($primaryLiveCard['bucket'] ?? 'today')),
+            'team1_logo' => $primaryLiveCard['team1_logo'] ?? '',
+            'team2_logo' => $primaryLiveCard['team2_logo'] ?? '',
+            'competition_name' => $primaryLiveCard['competition_name'] ?? '',
+            'venue' => $primaryLiveCard['venue'] ?? '',
+            'start_label' => $primaryLiveCard['start_label'] ?? '',
+        ];
+
+        // ===============================
+        // ✅ FEATURED CARD
+        // ===============================
+        $featuredCard = $matches['featured_match'] ?? $matches['primary_match'];
+
+        $featured = [
+            'team1' => $featuredCard['team1'] ?? 'No Matches',
+            'team2' => $featuredCard['team2'] ?? 'Scheduled',
+            'score' => $featuredCard['score'] ?? '',
+            'status' => !empty($featuredCard['bucket']) && $featuredCard['bucket'] === 'live'
+                ? 'LIVE NOW'
+                : (!empty($featuredCard['bucket']) && $featuredCard['bucket'] === 'today'
+                    ? 'TODAY MATCH'
+                    : 'UPCOMING MATCH'),
+            'team1_logo' => $featuredCard['team1_logo'] ?? '',
+            'team2_logo' => $featuredCard['team2_logo'] ?? '',
+            'competition_name' => $featuredCard['competition_name'] ?? '',
+            'venue' => $featuredCard['venue'] ?? '',
+            'start_label' => $featuredCard['start_label'] ?? '',
+        ];
+
+        // ===============================
+        // ✅ UPCOMING FORMAT
+        // ===============================
+        $upcoming = array_map(function ($match) {
+            $match['date'] = trim(
+                ($match['date_label'] ?? '') .
+                    (!empty($match['time_label']) ? ', ' . $match['time_label'] : '')
+            );
+            return $match;
+        }, $matches['upcoming_matches']);
+
+        // ===============================
+        // ✅ STATIC DATA
+        // ===============================
+        $tournaments = [
+            ['name' => 'IPL 2026', 'date' => 'Starts 25 Mar'],
+            ['name' => 'Asia Cup', 'date' => 'June 2026'],
+            ['name' => 'World Cup', 'date' => 'Oct 2026']
+        ];
+
+        $players = [
+            ['name' => 'Virat Kohli', 'image' => base_url('assets/images/cricket/VK.jpg')],
+            ['name' => 'AB de Villiers', 'image' => base_url('assets/images/cricket/ABD.png')],
+            ['name' => 'Joe Root', 'image' => base_url('assets/images/cricket/JR.jpg')],
+            ['name' => 'Steve Smith', 'image' => base_url('assets/images/cricket/SS.jpeg')]
+        ];
+
+        // ===============================
+        // ✅ SAFE REQUEST STATUS (FIXED)
+        // ===============================
+        $request_status = null;
+        if (!empty($request) && isset($request['status'])) {
+            $request_status = $request['status'];
+        }
+
+        // ===============================
+        // ✅ FINAL RESPONSE DATA
+        // ===============================
+        $response['data'] = [
+            'user' => [
+                'id' => $user['id'],
+                'name' => $user['name'],
+                'is_host' => $user['is_host']
+            ],
+            'request_status' => $request_status,
+
+            'has_live' => !empty($matches['live_match']),
+            'today' => $live,
+
+            // 'has_featured' => !empty($featuredCard),
+            // 'featured' => $featured,
+
+            'completed_matches' => $matches['completed_matches'],
+            'upcoming_matches' => $upcoming
+
+            // 'tournaments' => $tournaments,
+            // 'players' => $players
+        ];
+
+        return $this->output
+            ->set_status_header(200)
+            ->set_output(json_encode($response));
+    }
+    public function getfttvprice()
+    {
+        header('Content-Type: application/json');
+
+        $authHeader = $this->input->get_request_header('Authorization', TRUE);
+        $token = null;
+
+        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        $decoded = $this->verify_jwt($token);
+
+        // ✅ DEFAULT RESPONSE
+        $response = [
+            'status'  => true,
+            'code'    => 200,
+            'message' => 'Success',
+            'data'    => null,
+            'access'  => false
+        ];
+
+        // ❌ If token invalid → still return 200
+        if (!$decoded || empty($decoded->data->id)) {
+            $response['status']  = false;
+            $response['message'] = 'Invalid token or user ID missing';
+
+            return $this->output
+                ->set_status_header(200)
+                ->set_output(json_encode($response));
+        }
+
+        $user_id = (int) $decoded->data->id;
+
+        // ✅ Check access
+        $access = $this->db
+            ->where('user_id', $user_id)
+            ->where('status', 'success')
+            ->count_all_results('fittv_payments') > 0;
+
+        // ✅ Get settings
+        $settings = $this->db
+            ->get_where('fittv_course_settings', ['id' => 1])
+            ->row_array();
+
+        // ✅ Default settings if not found
+        if (!$settings) {
+            $settings = [
+                'id' => 1,
+                'title' => 'FITTV Premium Access',
+                'description' => 'Unlock full FITTV access to explore all workout categories and videos.',
+                'price' => 0,
+                'is_active' => 1
+            ];
+        }
+
+        // ✅ Final response
+        $response['data']   = $settings;
+        $response['access'] = $access;
+
+        return $this->output
+            ->set_status_header(200)
+            ->set_output(json_encode($response));
+    }
+    private function isPoolJoinClosed(array $pool)
+    {
+        $joinCloseAt = trim((string) ($pool['join_close_at'] ?? ''));
+        $matchStartAt = trim((string) ($pool['match_start_at'] ?? ''));
+
+        if ($joinCloseAt !== '') {
+            return strtotime($joinCloseAt) <= time();
+        }
+
+        if ($matchStartAt !== '') {
+            return strtotime($matchStartAt . ' -30 minutes') <= time();
+        }
+
+        return false;
+    }
+    private function upsertPoolJoin($pool, $user, $data)
+    {
+        $existing = $this->db->get_where('pool_joins', [
+            'pool_id' => (int) $pool['id'],
+            'user_id' => (int) $user['id']
+        ])->row_array();
+
+        $timestamp = date('Y-m-d H:i:s');
+        $payload = array_merge([
+            'pool_id' => (int) $pool['id'],
+            'user_id' => (int) $user['id'],
+            'host_user_id' => (int) $pool['user_id'],
+            'amount' => (float) $pool['price'],
+            'updated_at' => $timestamp
+        ], $data);
+
+        if ($existing) {
+            if (empty($existing['created_at'])) {
+                $payload['created_at'] = $timestamp;
+            }
+
+            $this->db->where('id', (int) $existing['id'])->update('pool_joins', $payload);
+            return (int) $existing['id'];
+        }
+
+        $payload['created_at'] = $timestamp;
+        $this->db->insert('pool_joins', $payload);
+
+        return (int) $this->db->insert_id();
+    }
+    private function savePoolPaymentLog($poolJoinId, $pool, $user, $amount, $status, $txnid, $paymentMethod = 'razorpay', $razorpayOrderId = null, $razorpayPaymentId = null)
+    {
+        $existing = $this->db->get_where('pool_join_payments', [
+            'pool_join_id' => (int) $poolJoinId,
+            'status' => 'success'
+        ])->row_array();
+
+        if ($existing) {
+            return;
+        }
+
+        $this->db->insert('pool_join_payments', [
+            'pool_join_id' => (int) $poolJoinId,
+            'pool_id' => (int) $pool['id'],
+            'user_id' => (int) $user['id'],
+            'amount' => (float) $amount,
+            'payment_method' => $paymentMethod,
+            'txnid' => $txnid,
+            'razorpay_order_id' => $razorpayOrderId,
+            'razorpay_payment_id' => $razorpayPaymentId,
+            'status' => $status,
+            'created_at' => date('Y-m-d H:i:s')
+        ]);
+    }
+    private function syncPoolJoinedCount($poolId)
+    {
+        if (!$this->db->field_exists('total_joined', 'pools')) {
+            return;
+        }
+
+        $joinedCount = (int) $this->db
+            ->where('pool_id', (int) $poolId)
+            ->where('status', 'success')
+            ->count_all_results('pool_joins');
+
+        $this->db->where('id', (int) $poolId)->update('pools', [
+            'total_joined' => $joinedCount
+        ]);
+    }
+    public function pay_pool()
+    {
+        header('Content-Type: application/json');
+
+        // ===============================
+        // ✅ TOKEN VERIFY
+        // ===============================
+        $authHeader = $this->input->get_request_header('Authorization', TRUE);
+        $token = null;
+
+        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        $decoded = $this->verify_jwt($token);
+
+        if (!$decoded || empty($decoded->data->id)) {
+            return $this->output->set_status_header(401)->set_output(json_encode([
+                'status' => false,
+                'code' => 401,
+                'message' => 'Invalid token',
+                'data' => null
+            ]));
+        }
+
+        $user_id = (int) $decoded->data->id;
+
+        // ===============================
+        // ✅ INPUT
+        // ===============================
+        $poolId = (int) $this->input->get('pool_id');
+
+        if (!$poolId) {
+            return $this->output->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Pool ID required',
+                'data' => null
+            ]));
+        }
+
+        // ===============================
+        // ✅ GET USER
+        // ===============================
+        $user = $this->db->get_where('users', ['id' => $user_id])->row_array();
+
+        // ===============================
+        // ✅ GET POOL
+        // ===============================
+        $pool = $this->db
+            ->select("
+            pools.*,
+            COALESCE(users.name, 'Host') as host_name,
+            (
+                SELECT COUNT(*)
+                FROM pool_joins
+                WHERE pool_joins.pool_id = pools.id
+                AND pool_joins.status = 'success'
+            ) as total_joined
+        ", false)
+            ->from('pools')
+            ->join('users', 'users.id = pools.user_id', 'left')
+            ->where('pools.id', $poolId)
+            ->get()
+            ->row_array();
+
+        if (!$pool) {
+            return $this->output->set_output(json_encode([
+                'status' => false,
+                'code' => 404,
+                'message' => 'Pool not found',
+                'data' => null
+            ]));
+        }
+
+        // ===============================
+        // ❌ VALIDATIONS
+        // ===============================
+        if ((int) $pool['user_id'] === $user_id) {
+            return $this->output->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'You cannot join your own pool',
+                'data' => null
+            ]));
+        }
+
+        $existingJoin = $this->db->get_where('pool_joins', [
+            'pool_id' => $poolId,
+            'user_id' => $user_id,
+            'status' => 'success'
+        ])->row_array();
+
+        if ($existingJoin) {
+            return $this->output->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Already joined this pool',
+                'data' => null
+            ]));
+        }
+
+        if ((int)$pool['user_limit'] > 0 && (int)$pool['total_joined'] >= (int)$pool['user_limit']) {
+            return $this->output->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Pool is full',
+                'data' => null
+            ]));
+        }
+
+        if ($this->isPoolJoinClosed($pool)) {
+            return $this->output->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Pool join closed',
+                'data' => null
+            ]));
+        }
+
+        $amount = (float) $pool['price'];
+
+        // ===============================
+        // ✅ FREE JOIN
+        // ===============================
+        if ($amount <= 0) {
+
+            $txnid = 'POOLFREE' . uniqid();
+
+            $this->db->trans_start();
+
+            $poolJoinId = $this->upsertPoolJoin($pool, $user, [
+                'txnid' => $txnid,
+                'status' => 'success'
+            ]);
+
+            $this->savePoolPaymentLog($poolJoinId, $pool, $user, 0, 'success', $txnid, 'free');
+
+            $this->syncPoolJoinedCount($poolId);
+
+            $this->db->trans_complete();
+
+            return $this->output->set_output(json_encode([
+                'status' => true,
+                'code' => 200,
+                'message' => 'Joined successfully',
+                'data' => null
+            ]));
+        }
+
+        // ===============================
+        // ✅ PAID FLOW
+        // ===============================
+        $txnid = 'POOL' . uniqid();
+        $amount_paise = (int) round($amount * 100);
+
+        // UPSERT JOIN (PENDING)
+        $poolJoinId = $this->upsertPoolJoin($pool, $user, [
+            'txnid' => $txnid,
+            'status' => 'pending'
+        ]);
+
+        // CREATE ORDER
+        try {
+            $razorpayOrder = $this->api->order->create([
+                'receipt' => $txnid,
+                'amount' => $amount_paise,
+                'currency' => 'INR',
+                'payment_capture' => 1
+            ]);
+        } catch (Exception $e) {
+            log_message('error', 'Pool Razorpay error: ' . $e->getMessage());
+
+            return $this->output->set_output(json_encode([
+                'status' => false,
+                'code' => 500,
+                'message' => 'Payment initiation failed',
+                'data' => null
+            ]));
+        }
+
+        // UPDATE ORDER ID
+        $this->db->where('id', $poolJoinId)->update('pool_joins', [
+            'razorpay_order_id' => $razorpayOrder['id'],
+            'updated_at' => date('Y-m-d H:i:s')
+        ]);
+
+        // ===============================
+        // ✅ FINAL RESPONSE (IMPORTANT)
+        // ===============================
+        return $this->output->set_output(json_encode([
+            'status' => true,
+            'code' => 200,
+            'message' => 'Payment order created',
+            'data' => [
+                'razorpay_key' => $this->razorpay_key_id,
+                'order_id' => $razorpayOrder['id'],
+                'txnid' => $txnid,
+                'pool_join_id' => $poolJoinId,
+                'amount' => $amount,
+                'amount_paise' => $amount_paise,
+                'currency' => 'INR',
+                'description' => $pool['pool_name']
+            ]
+        ]));
+    }
+    public function pool_callback()
+    {
+        header('Content-Type: application/json');
+
+        // ===============================
+        // ✅ TOKEN VERIFY
+        // ===============================
+        $authHeader = $this->input->get_request_header('Authorization', TRUE);
+        $token = null;
+
+        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            $token = $matches[1];
+        }
+
+        $decoded = $this->verify_jwt($token);
+
+        if (!$decoded || empty($decoded->data->id)) {
+            return $this->output->set_status_header(401)->set_output(json_encode([
+                'status' => false,
+                'code' => 401,
+                'message' => 'Invalid token',
+                'data' => null
+            ]));
+        }
+
+        $user_id = (int) $decoded->data->id;
+
+        // ===============================
+        // ✅ INPUT JSON
+        // ===============================
+        $input = json_decode(file_get_contents("php://input"), true);
+
+        $razorpay_payment_id = $input['razorpay_payment_id'] ?? '';
+        $razorpay_order_id   = $input['razorpay_order_id'] ?? '';
+        $razorpay_signature  = $input['razorpay_signature'] ?? '';
+        $txnid               = $input['txnid'] ?? '';
+
+        if (!$razorpay_payment_id || !$razorpay_order_id || !$razorpay_signature) {
+            return $this->output->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Missing payment data',
+                'data' => null
+            ]));
+        }
+
+        // ===============================
+        // ✅ VERIFY SIGNATURE
+        // ===============================
+        try {
+            $attributes = [
+                'razorpay_order_id' => $razorpay_order_id,
+                'razorpay_payment_id' => $razorpay_payment_id,
+                'razorpay_signature' => $razorpay_signature
+            ];
+
+            $this->api->utility->verifyPaymentSignature($attributes);
+        } catch (Exception $e) {
+
+            // ❌ FAIL
+            $this->db->where('razorpay_order_id', $razorpay_order_id)
+                ->update('pool_joins', [
+                    'status' => 'failed',
+                    'updated_at' => date('Y-m-d H:i:s')
+                ]);
+
+            return $this->output->set_output(json_encode([
+                'status' => false,
+                'code' => 400,
+                'message' => 'Payment verification failed',
+                'data' => null
+            ]));
+        }
+
+        // ===============================
+        // ✅ GET JOIN DATA
+        // ===============================
+        $join = $this->db->get_where('pool_joins', [
+            'razorpay_order_id' => $razorpay_order_id
+        ])->row_array();
+
+        if (!$join) {
+            return $this->output->set_output(json_encode([
+                'status' => false,
+                'code' => 404,
+                'message' => 'Join not found',
+                'data' => null
+            ]));
+        }
+
+        // ===============================
+        // ✅ UPDATE SUCCESS
+        // ===============================
+        $this->db->where('id', $join['id'])->update('pool_joins', [
+            'status' => 'success',
+            'razorpay_payment_id' => $razorpay_payment_id,
+            'razorpay_signature' => $razorpay_signature,
+            'updated_at' => date('Y-m-d H:i:s')
+        ]);
+
+        // ===============================
+        // ✅ GET EXTRA DATA
+        // ===============================
+        $pool = $this->db->get_where('pools', ['id' => $join['pool_id']])->row_array();
+        $user = $this->db->get_where('users', ['id' => $user_id])->row_array();
+
+        // ===============================
+        // ✅ SAVE PAYMENT LOG
+        // ===============================
+        $this->savePoolPaymentLog(
+            $join['id'],
+            $pool,
+            $user,
+            $join['amount'],
+            'success',
+            $txnid,
+            'razorpay',
+            $razorpay_order_id,
+            $razorpay_payment_id
+        );
+
+        // ===============================
+        // ✅ UPDATE COUNT
+        // ===============================
+        $this->syncPoolJoinedCount($join['pool_id']);
+
+        // ===============================
+        // ✅ FINAL RESPONSE
+        // ===============================
+        return $this->output->set_output(json_encode([
+            'status' => true,
+            'code' => 200,
+            'message' => 'Payment successful, joined pool',
+            'data' => null
+        ]));
+    }
     public function get_pools()
     {
         header('Content-Type: application/json');
@@ -6926,146 +7428,5 @@ class Api extends CI_Controller
             'status' => true,
             'data' => $final
         ]));
-    }
-
-    public function get_matches()
-    {
-        header('Content-Type: application/json');
-
-        // ===============================
-        // ✅ TOKEN VERIFY
-        // ===============================
-        $authHeader = $this->input->get_request_header('Authorization', TRUE);
-        $token = null;
-
-        if ($authHeader && preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-            $token = $matches[1];
-        }
-
-        $decoded = $this->verify_jwt($token);
-
-        $response = [
-            'status'  => true,
-            'code'    => 200,
-            'message' => 'Success',
-            'data'    => null,
-            'access'  => false
-        ];
-
-        if (!$decoded || empty($decoded->data->id)) {
-            $response['status']  = false;
-            $response['message'] = 'Invalid token or user ID missing';
-
-            return $this->output
-                ->set_status_header(200)
-                ->set_output(json_encode($response));
-        }
-
-        $user_id = (int) $decoded->data->id;
-
-        // ===============================
-        // ✅ GET USER
-        // ===============================
-        $user = $this->db->get_where('users', ['id' => $user_id])->row_array();
-
-
-        $request = $this->db
-            ->get_where('host_requests', ['user_id' => $user_id])
-            ->row_array();
-
-        $matches = $this->getCricketPageMatches();
-
-        $primaryLiveCard = $matches['primary_match'] ?? $matches['featured_match'];
-
-
-        $live = [
-            'team1' => $primaryLiveCard['team1'] ?? 'No Matches',
-            'team2' => $primaryLiveCard['team2'] ?? 'Scheduled',
-            'score' => $primaryLiveCard['score'] ?? 'Check back soon',
-            'status' => !empty($matches['live_match'])
-                ? 'LIVE'
-                : strtoupper((string) ($primaryLiveCard['bucket'] ?? 'today')),
-            'team1_logo' => $primaryLiveCard['team1_logo'] ?? '',
-            'team2_logo' => $primaryLiveCard['team2_logo'] ?? '',
-            'competition_name' => $primaryLiveCard['competition_name'] ?? '',
-            'venue' => $primaryLiveCard['venue'] ?? '',
-            'start_label' => $primaryLiveCard['start_label'] ?? '',
-        ];
-
-        // ===============================
-        // ✅ FEATURED CARD
-        // ===============================
-        $featuredCard = $matches['featured_match'] ?? $matches['primary_match'];
-
-        $featured = [
-            'team1' => $featuredCard['team1'] ?? 'No Matches',
-            'team2' => $featuredCard['team2'] ?? 'Scheduled',
-            'score' => $featuredCard['score'] ?? '',
-            'status' => !empty($featuredCard['bucket']) && $featuredCard['bucket'] === 'live'
-                ? 'LIVE NOW'
-                : (!empty($featuredCard['bucket']) && $featuredCard['bucket'] === 'today'
-                    ? 'TODAY MATCH'
-                    : 'UPCOMING MATCH'),
-            'team1_logo' => $featuredCard['team1_logo'] ?? '',
-            'team2_logo' => $featuredCard['team2_logo'] ?? '',
-            'competition_name' => $featuredCard['competition_name'] ?? '',
-            'venue' => $featuredCard['venue'] ?? '',
-            'start_label' => $featuredCard['start_label'] ?? '',
-        ];
-
-        // ===============================
-        // ✅ UPCOMING FORMAT
-        // ===============================
-        $upcoming = array_map(function ($match) {
-            $match['date'] = trim(
-                ($match['date_label'] ?? '') .
-                    (!empty($match['time_label']) ? ', ' . $match['time_label'] : '')
-            );
-            return $match;
-        }, $matches['upcoming_matches']);
-
-        // ===============================
-        // ✅ STATIC DATA (same as web)
-        // ===============================
-        $tournaments = [
-            ['name' => 'IPL 2026', 'date' => 'Starts 25 Mar'],
-            ['name' => 'Asia Cup', 'date' => 'June 2026'],
-            ['name' => 'World Cup', 'date' => 'Oct 2026']
-        ];
-
-        $players = [
-            ['name' => 'Virat Kohli', 'image' => base_url('assets/images/cricket/VK.jpg')],
-            ['name' => 'AB de Villiers', 'image' => base_url('assets/images/cricket/ABD.png')],
-            ['name' => 'Joe Root', 'image' => base_url('assets/images/cricket/JR.jpg')],
-            ['name' => 'Steve Smith', 'image' => base_url('assets/images/cricket/SS.jpeg')]
-        ];
-
-        // ===============================
-        // ✅ FINAL RESPONSE DATA
-        // ===============================
-        $response['data'] = [
-            'user' => [
-                'id' => $user['id'],
-                'name' => $user['name'],
-                'is_host' => $user['is_host']
-            ],
-            'request_status' => $request['status'] ?? null,
-
-            'has_live' => !empty($matches['live_match']),
-            'today' => $live,
-
-            // 'has_featured' => !empty($featuredCard),
-            // 'featured' => $featured,
-
-            'completed_matches' => $matches['completed_matches'],
-            'upcoming_matches' => $upcoming
-
-            // 'tournaments' => $tournaments,
-            // 'players' => $players
-        ];
-
-        return $this->output
-            ->set_status_header(200)
-            ->set_output(json_encode($response));
     }
 }

@@ -1,4 +1,4 @@
-<div class="page-wrapper">
+c<div class="page-wrapper">
     <div class="page-content">
         <!--breadcrumb-->
         <div class="page-breadcrumb d-none d-sm-flex align-items-center mb-3">
@@ -21,14 +21,9 @@
             <div class="card-body">
                 <div class="d-lg-flex align-items-center mb-4 gap-3">
                     <div class="position-relative">
-                        <input type="text"
-                            id="sliderSearch"
-                            class="form-control ps-5 radius-30"
-                            placeholder="Search Slider">
-
-                        <span class="position-absolute top-50 product-show translate-middle-y">
-                            <i class="bx bx-search"></i>
-                        </span>
+                        <input type="text" class="form-control ps-5 radius-30" placeholder="Search Order"> <span
+                            class="position-absolute top-50 product-show translate-middle-y"><i
+                                class="bx bx-search"></i></span>
                     </div>
                 </div>
                 <div class="table-responsive">
@@ -52,7 +47,17 @@
             </div>
         </div>
         <nav aria-label="Page navigation example">
-            <ul class="pagination round-pagination justify-content-center" id="sliderPagination">
+            <ul class="pagination round-pagination justify-content-center">
+                <li class="page-item"><a class="page-link" href="javascript:;">Previous</a>
+                </li>
+                <li class="page-item"><a class="page-link" href="javascript:;javascript:;">1</a>
+                </li>
+                <li class="page-item active"><a class="page-link" href="javascript:;">2</a>
+                </li>
+                <li class="page-item"><a class="page-link" href="javascript:;">3</a>
+                </li>
+                <li class="page-item"><a class="page-link" href="javascript:;">Next</a>
+                </li>
             </ul>
         </nav>
 

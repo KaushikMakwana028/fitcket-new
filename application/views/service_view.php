@@ -617,12 +617,89 @@
     </div>
 </div>
 
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
 <script>
-    document.getElementById('search-input').addEventListener('input', function() {
-        var term = this.value.toLowerCase();
-        document.querySelectorAll('.provider-card').forEach(function(card) {
-            var text = card.textContent.toLowerCase();
-            card.style.display = text.includes(term) ? '' : 'none';
+    $(document).ready(function() {
+
+        function loadServices(page = 1, search = '') {
+            $.ajax({
+                url: "<?= base_url('services/fetch_services') ?>",
+                type: "GET",
+                data: {
+                    page: page,
+                    search: search
+                },
+                dataType: "json",
+                success: function(res) {
+                    let html = '';
+
+                    if (res.services.length === 0) {
+                        html = `
+                            <div style="text-align:center; padding:20px;">
+                                <h4>No Services Found 😢</h4>
+                                <p>Try different search</p>
+                            </div>
+                        `;
+                    } else {
+                        res.services.forEach(service => {
+                            html += `
+                            <div class="provider-card">
+                                
+                                <!-- IMAGE -->
+                                <div class="card-header">
+                                    <img src="${service.image ? '<?= base_url() ?>' + service.image : '<?= base_url("assets/images/default.jpg") ?>'}" alt="">
+                                    
+                                    <!-- RATING -->
+                                    <div class="card-rating">
+                                        ⭐ ${service.rating ? service.rating : '4.5'}
+                                    </div>
+                                </div>
+
+                                <!-- BODY -->
+                                <div class="card-body">
+                                    <h5 class="card-title">${service.name || ''}</h5>
+                                    <p class="card-subtitle">${service.gym_name || ''}</p>
+
+                                    <!-- CITY -->
+                                    <div class="city-section">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                        <span class="label">Available in:</span>
+                                        <span class="city-tag">${service.city || 'N/A'}</span>
+                                    </div>
+
+                                    <!-- DISTANCE -->
+                                    <div class="distance-section">
+                                        <i class="fas fa-route"></i>
+                                        <span class="label">Distance:</span>
+                                        <span class="distance">${service.distance || 'N/A'}</span>
+                                    </div>
+                                </div>
+
+                                <!-- FOOTER -->
+                                <div class="card-footer">
+                                    <div class="price">₹${service.month_price || '0'}</div>
+                                    <button class="btn-book">View</button>
+                                </div>
+
+                            </div>
+                            `;
+                        });
+                    }
+
+                    $('#providers-container').html(html);
+                }
+            });
+        }
+
+        // Initial load
+        loadServices();
+
+        // Search input
+        $('#search-input').on('input', function() {
+            let search = $(this).val();
+            loadServices(1, search);
         });
+
     });
 </script>

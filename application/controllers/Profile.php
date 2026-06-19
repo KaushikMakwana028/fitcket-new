@@ -1,67 +1,17 @@
 <?php
 
-
-
-
-
-
-
 defined('BASEPATH') or exit('No direct script access allowed');
 
-
-
 require_once(APPPATH . 'core/User_Controller.php');
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 class Profile extends User_Controller
 
 {
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     public function __construct()
 
     {
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         parent::__construct();
     }
 
@@ -213,7 +163,7 @@ class Profile extends User_Controller
         } elseif ($rating === 'top_rated') {
             $this->db->order_by('avg_rating', 'DESC');
         } else {
-            $this->db->order_by('distance', 'ASC');
+            $this->db->order_by('provider.created_on', 'DESC');
         }
 
         $this->db->limit($limit, $offset);

@@ -13,7 +13,6 @@ class Profile extends Provider_Controller
     {
 
         parent::__construct();
-
     }
 
 
@@ -27,9 +26,9 @@ class Profile extends Provider_Controller
             'categories',
             ['isActive' => 1, 'parent_id' => null]
         );
-    // echo "<pre>";
-    // print_r( $data['categories']);
-    // die;
+        // echo "<pre>";
+        // print_r( $data['categories']);
+        // die;
 
 
         $data['city'] = $this->general_model->getAll('cities', ['isActive' => 1]);
@@ -44,17 +43,14 @@ class Profile extends Provider_Controller
 
 
 
-// echo "H";
-// die;
+        // echo "H";
+        // die;
 
         $this->load->view('provider/header');
 
         $this->load->view('provider/profile_form', $data);
 
         $this->load->view('provider/footer');
-
-
-
     }
 
     public function get_subcategories()
@@ -107,13 +103,10 @@ class Profile extends Provider_Controller
                 $uploadData = $this->upload->data();
 
                 $profile_image = 'uploads/profile/' . $uploadData['file_name'];
-
             } else {
 
                 log_message('error', 'Profile image upload failed: ' . $this->upload->display_errors('', ''));
-
             }
-
         }
 
 
@@ -155,9 +148,7 @@ class Profile extends Provider_Controller
                 $latitude = $data[0]['lat'];
 
                 $longitude = $data[0]['lon'];
-
             }
-
         }
 
 
@@ -169,12 +160,12 @@ class Profile extends Provider_Controller
             'description' => $input['description'],
 
             'category'   => $input['category'],              // updated
-            'sub_category' => $input['subcategory'] ?? null,
+            // 'sub_category' => $input['subcategory'] ?? null,
 
             'city' => isset($input['availability']) ? implode(',', $input['availability']) : '',
             'language' => isset($input['language']) ? implode(',', $input['language']) : '',
-            'service_type' => $input['service_type'] ,
-            'exp' => $input['exp'] ,
+            'service_type' => $input['service_type'],
+            'exp' => $input['exp'],
 
 
 
@@ -204,7 +195,6 @@ class Profile extends Provider_Controller
         if ($profile_image) {
 
             $providerData['profile_image'] = $profile_image;
-
         }
 
 
@@ -219,11 +209,9 @@ class Profile extends Provider_Controller
 
                 $providerData
             );
-
         } else {
 
             $this->general_model->insert('provider', $providerData);
-
         }
 
 
@@ -243,19 +231,14 @@ class Profile extends Provider_Controller
                 $tags = array_map(function ($tag) {
 
                     return ['value' => trim($tag['value'])];
-
                 }, $decoded);
-
             } else {
 
                 $tags = array_map(function ($tag) {
 
                     return ['value' => trim($tag)];
-
                 }, explode(',', $input['expertise_tags']));
-
             }
-
         }
 
 
@@ -281,9 +264,7 @@ class Profile extends Provider_Controller
                     'created_on' => date('Y-m-d')
 
                 ]);
-
             }
-
         }
 
 
@@ -291,7 +272,6 @@ class Profile extends Provider_Controller
         // Return response
 
         echo json_encode(['status' => 'success', 'message' => 'Profile saved successfully!']);
-
     }
 
 
@@ -316,7 +296,6 @@ class Profile extends Provider_Controller
         $this->load->view('provider/bank_form', $data);
 
         $this->load->view('provider/footer');
-
     }
 
     public function saveBankDetails()
@@ -347,7 +326,6 @@ class Profile extends Provider_Controller
             echo json_encode(['status' => 'error', 'message' => 'All required fields must be filled.']);
 
             return;
-
         }
 
 
@@ -387,7 +365,6 @@ class Profile extends Provider_Controller
             $this->db->update('provider_bank_details', $data);
 
             echo json_encode(['status' => 'success', 'message' => 'Bank details updated successfully!']);
-
         } else {
 
             // Insert
@@ -395,240 +372,235 @@ class Profile extends Provider_Controller
             $this->db->insert('provider_bank_details', $data);
 
             echo json_encode(['status' => 'success', 'message' => 'Bank details saved successfully!']);
-
-        }
-
-    }
-
-
-public function image(){
-    $this->load->view('provider/header');
-    $this->load->view('provider/gallery_view');
-    $this->load->view('provider/footer');
-
-}
-public function add_image(){
-    $this->load->view('provider/header');
-    $this->load->view('provider/gallery_form');
-    $this->load->view('provider/footer');
-
-}
-public function fetch_gallery()
-{
-    $page = $this->input->post('page') ?? 1;
-    $search = $this->input->post('search') ?? '';
-
-    $limit = 5;
-    $offset = ($page - 1) * $limit;
-
-    // $this->db->like('title', $search);
-    $this->db->limit($limit, $offset);
-    $query = $this->db->get('gym_gallery');
-    $data = $query->result();
-
-    // $this->db->like('title', $search);
-    $total = $this->db->count_all_results('gym_gallery', FALSE);
-
-    echo json_encode([
-        'data' => $data,
-        'total' => $total,
-        'limit' => $limit,
-        'page' => $page
-    ]);
-}
-
-public function delete_image()
-{
-    $id = $this->input->post('id');
-    $image = $this->db->get_where('gym_gallery', ['id' => $id])->row();
-
-    if ($image) {
-        @unlink('./uploads/gallery/' . $image->image);
-        $this->db->delete('gym_gallery', ['id' => $id]);
-        echo json_encode(['status' => true]);
-    } else {
-        echo json_encode(['status' => false]);
-    }
-}
-
-public function upload_gallery_images()
-{
-    $provider_id = $this->provider['id'];
-
-    if (empty($_FILES['gallery_images']['name'][0])) {
-        echo json_encode(['status' => 'error', 'message' => 'No images selected.']);
-        return;
-    }
-
-    $upload_path = './uploads/gym_gallery/';
-    if (!is_dir($upload_path)) {
-        mkdir($upload_path, 0777, true);
-    }
-
-    $uploaded_files = [];
-    $this->load->library('upload');
-
-    foreach ($_FILES['gallery_images']['name'] as $key => $filename) {
-        $_FILES['file']['name'] = $_FILES['gallery_images']['name'][$key];
-        $_FILES['file']['type'] = $_FILES['gallery_images']['type'][$key];
-        $_FILES['file']['tmp_name'] = $_FILES['gallery_images']['tmp_name'][$key];
-        $_FILES['file']['error'] = $_FILES['gallery_images']['error'][$key];
-        $_FILES['file']['size'] = $_FILES['gallery_images']['size'][$key];
-
-        $config['upload_path'] = $upload_path;
-        $config['allowed_types'] = 'jpg|jpeg|png';
-        $config['file_name'] = 'gallery_' . time() . '_' . rand(1000, 9999);
-
-        $this->upload->initialize($config);
-
-        if ($this->upload->do_upload('file')) {
-            $upload_data = $this->upload->data();
-            $image_path = 'uploads/gym_gallery/' . $upload_data['file_name'];
-
-            $insert_data = [
-                'provider_id' => $provider_id,
-                'image'       => $image_path,
-                'status'      => 1,
-                'created_on'  => date('Y-m-d H:i:s')
-            ];
-            $this->db->insert('gym_gallery', $insert_data);
-            $uploaded_files[] = $image_path;
         }
     }
 
-    if (count($uploaded_files) > 0) {
+
+    public function image()
+    {
+        $this->load->view('provider/header');
+        $this->load->view('provider/gallery_view');
+        $this->load->view('provider/footer');
+    }
+    public function add_image()
+    {
+        $this->load->view('provider/header');
+        $this->load->view('provider/gallery_form');
+        $this->load->view('provider/footer');
+    }
+    public function fetch_gallery()
+    {
+        $page = $this->input->post('page') ?? 1;
+        $search = $this->input->post('search') ?? '';
+
+        $limit = 5;
+        $offset = ($page - 1) * $limit;
+
+        // $this->db->like('title', $search);
+        $this->db->limit($limit, $offset);
+        $query = $this->db->get('gym_gallery');
+        $data = $query->result();
+
+        // $this->db->like('title', $search);
+        $total = $this->db->count_all_results('gym_gallery', FALSE);
+
         echo json_encode([
-            'status' => 'success',
-            'message' => 'Images uploaded successfully!',
-            'files' => $uploaded_files
+            'data' => $data,
+            'total' => $total,
+            'limit' => $limit,
+            'page' => $page
         ]);
-    } else {
-        echo json_encode(['status' => 'error', 'message' => 'No valid images uploaded.']);
     }
-}
 
-public function certification()
-{
-    $provider_id = $this->provider['id'];
+    public function delete_image()
+    {
+        $id = $this->input->post('id');
+        $image = $this->db->get_where('gym_gallery', ['id' => $id])->row();
 
-    // Fetch certifications
-    $certifications = $this->db
-        ->where('provider_id', $provider_id)
-        ->where('is_active', 1)
-        ->order_by('id', 'DESC')
-        ->get('certifications')
-        ->result();
+        if ($image) {
+            @unlink('./uploads/gallery/' . $image->image);
+            $this->db->delete('gym_gallery', ['id' => $id]);
+            echo json_encode(['status' => true]);
+        } else {
+            echo json_encode(['status' => false]);
+        }
+    }
 
-    $data['certifications'] = $certifications;
+    public function upload_gallery_images()
+    {
+        $provider_id = $this->provider['id'];
 
-    $this->load->view('provider/header');
-    $this->load->view('provider/certificate_view', $data);
-    $this->load->view('provider/footer');
-}
+        if (empty($_FILES['gallery_images']['name'][0])) {
+            echo json_encode(['status' => 'error', 'message' => 'No images selected.']);
+            return;
+        }
 
-public function save_certificate()
-{
-    header('Content-Type: application/json');
+        $upload_path = './uploads/gym_gallery/';
+        if (!is_dir($upload_path)) {
+            mkdir($upload_path, 0777, true);
+        }
 
-    $provider_id = $this->provider['id'];;
-    $title       = trim($this->input->post('title'));
+        $uploaded_files = [];
+        $this->load->library('upload');
 
-    // 🔒 Backend Validation
-    if (!$provider_id || !$title) {
+        foreach ($_FILES['gallery_images']['name'] as $key => $filename) {
+            $_FILES['file']['name'] = $_FILES['gallery_images']['name'][$key];
+            $_FILES['file']['type'] = $_FILES['gallery_images']['type'][$key];
+            $_FILES['file']['tmp_name'] = $_FILES['gallery_images']['tmp_name'][$key];
+            $_FILES['file']['error'] = $_FILES['gallery_images']['error'][$key];
+            $_FILES['file']['size'] = $_FILES['gallery_images']['size'][$key];
+
+            $config['upload_path'] = $upload_path;
+            $config['allowed_types'] = 'jpg|jpeg|png';
+            $config['file_name'] = 'gallery_' . time() . '_' . rand(1000, 9999);
+
+            $this->upload->initialize($config);
+
+            if ($this->upload->do_upload('file')) {
+                $upload_data = $this->upload->data();
+                $image_path = 'uploads/gym_gallery/' . $upload_data['file_name'];
+
+                $insert_data = [
+                    'provider_id' => $provider_id,
+                    'image'       => $image_path,
+                    'status'      => 1,
+                    'created_on'  => date('Y-m-d H:i:s')
+                ];
+                $this->db->insert('gym_gallery', $insert_data);
+                $uploaded_files[] = $image_path;
+            }
+        }
+
+        if (count($uploaded_files) > 0) {
+            echo json_encode([
+                'status' => 'success',
+                'message' => 'Images uploaded successfully!',
+                'files' => $uploaded_files
+            ]);
+        } else {
+            echo json_encode(['status' => 'error', 'message' => 'No valid images uploaded.']);
+        }
+    }
+
+    public function certification()
+    {
+        $provider_id = $this->provider['id'];
+
+        // Fetch certifications
+        $certifications = $this->db
+            ->where('provider_id', $provider_id)
+            ->where('is_active', 1)
+            ->order_by('id', 'DESC')
+            ->get('certifications')
+            ->result();
+
+        $data['certifications'] = $certifications;
+
+        $this->load->view('provider/header');
+        $this->load->view('provider/certificate_view', $data);
+        $this->load->view('provider/footer');
+    }
+
+    public function save_certificate()
+    {
+        header('Content-Type: application/json');
+
+        $provider_id = $this->provider['id'];;
+        $title       = trim($this->input->post('title'));
+
+        // 🔒 Backend Validation
+        if (!$provider_id || !$title) {
+            echo json_encode([
+                'status' => false,
+                'message' => 'All fields are required'
+            ]);
+            return;
+        }
+
+        if (empty($_FILES['certificate']['name'])) {
+            echo json_encode([
+                'status' => false,
+                'message' => 'Certificate file is required'
+            ]);
+            return;
+        }
+
+        // Upload Config
+        $config['upload_path']   = './uploads/certificates/';
+        $config['allowed_types'] = 'jpg|jpeg|png|pdf';
+        $config['max_size']      = 2048;
+        $config['encrypt_name']  = true;
+
+        $this->load->library('upload', $config);
+
+        if (!$this->upload->do_upload('certificate')) {
+            echo json_encode([
+                'status' => false,
+                'message' => $this->upload->display_errors('', '')
+            ]);
+            return;
+        }
+
+        $fileData = $this->upload->data();
+        $imagePath = 'uploads/certificates/' . $fileData['file_name'];
+
+        // Insert Data
+        $insert = [
+            'provider_id' => $provider_id,
+            'title'       => $title,
+            'image_path'  => $imagePath,
+            'is_active'   => 1,
+            'created_on'  => date('Y-m-d H:i:s')
+        ];
+
+        $this->db->insert('certifications', $insert);
+
         echo json_encode([
-            'status' => false,
-            'message' => 'All fields are required'
+            'status' => true,
+            'message' => 'Certification added successfully'
         ]);
-        return;
     }
+    public function delete_certificate()
+    {
+        header('Content-Type: application/json');
 
-    if (empty($_FILES['certificate']['name'])) {
+        $id = $this->input->post('id');
+        $provider_id = $this->provider['id'];
+
+        if (!$id) {
+            echo json_encode([
+                'status' => false,
+                'message' => 'Invalid request'
+            ]);
+            return;
+        }
+
+        // Verify ownership
+        $cert = $this->db
+            ->where('id', $id)
+            ->where('provider_id', $provider_id)
+            ->get('certifications')
+            ->row();
+
+        if (!$cert) {
+            echo json_encode([
+                'status' => false,
+                'message' => 'Certification not found'
+            ]);
+            return;
+        }
+
+        // Delete file
+        if (file_exists(FCPATH . $cert->image_path)) {
+            unlink(FCPATH . $cert->image_path);
+        }
+
+        // Delete DB record
+        $this->db->where('id', $id)->delete('certifications');
+
         echo json_encode([
-            'status' => false,
-            'message' => 'Certificate file is required'
+            'status' => true,
+            'message' => 'Certification deleted successfully'
         ]);
-        return;
     }
-
-    // Upload Config
-    $config['upload_path']   = './uploads/certificates/';
-    $config['allowed_types'] = 'jpg|jpeg|png|pdf';
-    $config['max_size']      = 5120;
-    $config['encrypt_name']  = true;
-
-    $this->load->library('upload', $config);
-
-    if (!$this->upload->do_upload('certificate')) {
-        echo json_encode([
-            'status' => false,
-            'message' => $this->upload->display_errors('', '')
-        ]);
-        return;
-    }
-
-    $fileData = $this->upload->data();
-    $imagePath = 'uploads/certificates/' . $fileData['file_name'];
-
-    // Insert Data
-    $insert = [
-        'provider_id' => $provider_id,
-        'title'       => $title,
-        'image_path'  => $imagePath,
-        'is_active'   => 1,
-        'created_on'  => date('Y-m-d H:i:s')
-    ];
-
-    $this->db->insert('certifications', $insert);
-
-    echo json_encode([
-        'status' => true,
-        'message' => 'Certification added successfully'
-    ]);
-}
-public function delete_certificate()
-{
-    header('Content-Type: application/json');
-
-    $id = $this->input->post('id');
-    $provider_id = $this->provider['id'];
-
-    if (!$id) {
-        echo json_encode([
-            'status' => false,
-            'message' => 'Invalid request'
-        ]);
-        return;
-    }
-
-    // Verify ownership
-    $cert = $this->db
-        ->where('id', $id)
-        ->where('provider_id', $provider_id)
-        ->get('certifications')
-        ->row();
-
-    if (!$cert) {
-        echo json_encode([
-            'status' => false,
-            'message' => 'Certification not found'
-        ]);
-        return;
-    }
-
-    // Delete file
-    if (file_exists(FCPATH . $cert->image_path)) {
-        unlink(FCPATH . $cert->image_path);
-    }
-
-    // Delete DB record
-    $this->db->where('id', $id)->delete('certifications');
-
-    echo json_encode([
-        'status' => true,
-        'message' => 'Certification deleted successfully'
-    ]);
-}
-
-
-
 }

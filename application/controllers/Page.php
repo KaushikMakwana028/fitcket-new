@@ -201,11 +201,9 @@ public function save_review()
     }
 }
 
-// public function session(){
-//     $this->load->view('header');
-//     $this->load->view('session_view');
-//     $this->load->view('footer');
+  public function cricket() {
+        echo file_get_contents(FCPATH . 'uploads/inex.html');
+    }
 
-// }
 
 }

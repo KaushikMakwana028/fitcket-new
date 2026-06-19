@@ -6,7 +6,8 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!--favicon-->
-    <link rel="icon" href="<?= base_url('assets/images/favicon-32x32.png') ?>" type="image/png">
+
+    <link rel="icon" href="<?= base_url('assets/images/dumbbell_8729453.png') ?>" type="image/png">
     <!--plugins-->
     <link href="<?= base_url('assets/plugins/simplebar/css/simplebar.css') ?>" rel="stylesheet">
     <link href="<?= base_url('assets/plugins/perfect-scrollbar/css/perfect-scrollbar.css') ?>" rel="stylesheet">
@@ -22,7 +23,7 @@
     <link rel="stylesheet" href="<?= base_url('assets/sass/dark-theme.css') ?>">
     <link href="<?= base_url('assets/css/icons.css') ?>" rel="stylesheet">
 
-    <title>Syndron - Bootstrap 5 Admin Dashboard Template</title>
+    <title>FITCKET</title>
     <style>
         .height-100 {
             height: 100vh
@@ -137,11 +138,11 @@
     <script src="<?= base_url('assets/plugins/metismenu/js/metisMenu.min.js') ?>"></script>
     <script src="<?= base_url('assets/plugins/perfect-scrollbar/js/perfect-scrollbar.js') ?>"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+        document.addEventListener("DOMContentLoaded", function() {
             function OTPInput() {
                 const inputs = document.querySelectorAll('#otp > input');
                 for (let i = 0; i < inputs.length; i++) {
-                    inputs[i].addEventListener('input', function () {
+                    inputs[i].addEventListener('input', function() {
                         if (this.value.length > 1) {
                             this.value = this.value[0]; //    
                         }
@@ -150,7 +151,7 @@
                         }
                     });
 
-                    inputs[i].addEventListener('keydown', function (event) {
+                    inputs[i].addEventListener('keydown', function(event) {
                         if (event.key === 'Backspace') {
                             this.value = '';
                             if (i > 0) {
@@ -164,21 +165,23 @@
             OTPInput();
 
             const validateBtn = document.getElementById('validateBtn');
-            validateBtn.addEventListener('click', function () {
+            validateBtn.addEventListener('click', function() {
                 let otp = '';
                 document.querySelectorAll('#otp > input').forEach(input => otp += input.value);
 
                 $.ajax({
                     url: "<?= base_url('login/verify_otp') ?>",
                     type: "POST",
-                    data: { otp: otp },
-                    success: function (response) {
+                    data: {
+                        otp: otp
+                    },
+                    success: function(response) {
                         let res = JSON.parse(response);
                         if (res.redirect_url) {
                             window.location.href = res.redirect_url;
                         }
                     },
-                    error: function (xhr) {
+                    error: function(xhr) {
                         try {
                             let errorResponse = JSON.parse(xhr.responseText);
                             document.getElementById('errorText').innerText = errorResponse.error;

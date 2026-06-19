@@ -7,7 +7,9 @@ require_once(APPPATH . 'core/Admin_Controller.php');
 class Pay_out extends Admin_Controller
 
 {
-
+private $cf_client_id = "YOUR_CLIENT_ID";
+private $cf_client_secret = "YOUR_CLIENT_SECRET";
+private $cf_base_url = "https://payout-gamma.cashfree.com"; // sandbox
 
 
     public function __construct()
@@ -43,193 +45,220 @@ class Pay_out extends Admin_Controller
 
 
     }
-
-
-
-   public function pay_out_process() {
-
-    
-
-    $provider_id = $this->input->post('provider_id');
-
-    $amount = $this->input->post('payout_amount');
-
-    $note = $this->input->post('transaction_note');
-
-
-
-    $provider = $this->general_model->getOne('users', ['id' => $provider_id]);
-
-    $bank = $this->general_model->getOne('provider_bank_details', ['provider_id' => $provider_id]);
-
-    $wallet = $this->general_model->getOne('provider_wallet', ['provider_id' => $provider_id]);
-
-
-
-    if (empty($provider) || empty($bank) || empty($wallet)) {
-
-        echo json_encode(['status' => 'error', 'message' => 'Provider or bank details not found']);
-
-        return;
-
-    }
-
-
-
-    if ($amount > $wallet->balance) {
-
-        echo json_encode(['status' => 'error', 'message' => 'Insufficient wallet balance']);
-
-        return;
-
-    }
-
-
-
-    // Step 1: Generate OAuth token
-
-    $token_url = "https://accounts.payu.in/oauth/token";
-
-    $client_id = "c04e87601e13ad6b947cd23494547b1a9bce1dec99419ae37c8b2864a4947560";
-
-    $client_secret = "5179edf1963a57e5219836d8cf7f54b85a02cd762c84777b30fb067495e49a63";
-
-
-
-    $token_payload = [
-
-        "client_id" => $client_id,
-
-        "client_secret" => $client_secret,
-
-        "grant_type" => "client_credentials"
-
-    ];
-
-
-
-    $ch = curl_init($token_url);
-
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-    curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
-
-    curl_setopt($ch, CURLOPT_POST, true);
-
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($token_payload));
-
-    $token_result = curl_exec($ch);
-
-    curl_close($ch);
-
-
-
-    $token_response = json_decode($token_result, true);
-
-    if (empty($token_response['access_token'])) {
-
-        echo json_encode(['status' => 'error', 'message' => 'Failed to get PayU token']);
-
-        return;
-
-    }
-
-    $auth_token = $token_response['access_token'];
-
-
-
-    // Step 2: Make payout request
-
-    $api_url = "https://payout.payu.in/api/payout";
+private function getToken()
+{
+    $url = $this->cf_base_url . "/payout/v1/authorize";
 
     $payload = [
-
-        "account_number"   => $bank->account_number,
-
-        "ifsc"             => $bank->ifsc_code,
-
-        "amount"           => $amount,
-
-        "purpose"          => "payout",
-
-        "remarks"          => $note,
-
-        "transfer_mode"    => "IMPS", // or NEFT/RTGS
-
-        "beneficiary_name" => $bank->account_holder_name
-
+        "clientId" => $this->cf_client_id,
+        "clientSecret" => $this->cf_client_secret
     ];
 
-
-
-    $ch = curl_init($api_url);
-
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
-    curl_setopt($ch, CURLOPT_HTTPHEADER, [
-
-        "Authorization: Bearer ".$auth_token,
-
-        "Content-Type: application/json"
-
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => json_encode($payload),
+        CURLOPT_HTTPHEADER => ["Content-Type: application/json"]
     ]);
 
-    curl_setopt($ch, CURLOPT_POST, true);
-
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-
-    $result = curl_exec($ch);
-
+    $res = curl_exec($ch);
     curl_close($ch);
 
-// echo $result; exit;
+    $data = json_decode($res, true);
+
+    return $data['data']['token'] ?? null;
+}
+private function addBeneficiary($token, $bank, $provider_id)
+{
+    $url = $this->cf_base_url . "/payout/v1/addBeneficiary";
+
+    $beneId = "prov_" . $provider_id;
+
+    $payload = [
+        "beneId" => $beneId,
+        "name" => $bank->account_holder_name,
+        "email" => "test@test.com",
+        "phone" => "9999999999",
+        "bankAccount" => $bank->account_number,
+        "ifsc" => $bank->ifsc_code,
+        "address1" => "India"
+    ];
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => json_encode($payload),
+        CURLOPT_HTTPHEADER => [
+            "Authorization: Bearer $token",
+            "Content-Type: application/json"
+        ]
+    ]);
+
+    $res = curl_exec($ch);
+    curl_close($ch);
+
+    return json_decode($res, true);
+}
+private function sendPayout($token, $beneId, $amount)
+{
+    $url = $this->cf_base_url . "/payout/v1/requestTransfer";
+
+    $transferId = uniqid("txn_");
+
+    $payload = [
+        "beneId" => $beneId,
+        "amount" => $amount,
+        "transferId" => $transferId,
+        "transferMode" => "imps",
+        "remarks" => "Payout"
+    ];
+
+    $ch = curl_init($url);
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => json_encode($payload),
+        CURLOPT_HTTPHEADER => [
+            "Authorization: Bearer $token",
+            "Content-Type: application/json"
+        ]
+    ]);
+
+    $res = curl_exec($ch);
+    curl_close($ch);
+
+    return [
+        'response' => json_decode($res, true),
+        'transferId' => $transferId
+    ];
+}
 
 
+   public function pay_out_process()
+{
+    $provider_id = $this->input->post('provider_id');
+    $amount      = $this->input->post('payout_amount');
+    $note        = $this->input->post('transaction_note');
 
-    $response = json_decode($result, true);
+   
+    $provider = $this->general_model->getOne('users', ['id' => $provider_id]);
+    $bank     = $this->general_model->getOne('provider_bank_details', ['provider_id' => $provider_id]);
+    $wallet   = $this->general_model->getOne('provider_wallet', ['provider_id' => $provider_id]);
 
+   
+    if (empty($provider) || empty($bank) || empty($wallet)) {
+        echo json_encode(['status' => 'error', 'message' => 'Provider or bank details not found']);
+        return;
+    }
 
+    if ($amount <= 0) {
+        echo json_encode(['status' => 'error', 'message' => 'Invalid amount']);
+        return;
+    }
 
-    // Step 3: Handle response
+    if ($amount > $wallet->balance) {
+        echo json_encode(['status' => 'error', 'message' => 'Insufficient wallet balance']);
+        return;
+    }
 
-    if (!empty($response['status']) && $response['status'] == 'success') {
+    // =====================================================
+    // ✅ STEP 1: Insert PENDING payout
+    // =====================================================
+    $payout_id = $this->general_model->insert('provider_payouts', [
+        'provider_id' => $provider_id,
+        'amount'      => $amount,
+        'note'        => $note,
+        'status'      => 'pending',
+        'created_at'  => date('Y-m-d H:i:s')
+    ]);
 
-        // Update wallet balance
+    // =====================================================
+    // ✅ STEP 2: Get Cashfree Token
+    // =====================================================
+    $token = $this->getToken();
 
+    if (!$token) {
+        $this->general_model->update('provider_payouts', [
+            'status' => 'failed'
+        ], ['id' => $payout_id]);
+
+        echo json_encode(['status' => 'error', 'message' => 'Token generation failed']);
+        return;
+    }
+
+    // =====================================================
+    // ✅ STEP 3: Check / Create Beneficiary
+    // =====================================================
+    if (empty($bank->beneficiary_id)) {
+
+        $bene = $this->addBeneficiary($token, $bank, $provider_id);
+
+        if (empty($bene) || $bene['status'] != "SUCCESS") {
+
+            $this->general_model->update('provider_payouts', [
+                'status' => 'failed'
+            ], ['id' => $payout_id]);
+
+            echo json_encode(['status' => 'error', 'message' => 'Beneficiary creation failed']);
+            return;
+        }
+
+        $beneId = "prov_" . $provider_id;
+
+        // save beneficiary
+        $this->general_model->update('provider_bank_details', [
+            'beneficiary_id' => $beneId
+        ], ['provider_id' => $provider_id]);
+
+    } else {
+        $beneId = $bank->beneficiary_id;
+    }
+
+    // =====================================================
+    // ✅ STEP 4: Send Payout
+    // =====================================================
+    $result = $this->sendPayout($token, $beneId, $amount);
+
+    $res = $result['response'];
+
+    // =====================================================
+    // ✅ STEP 5: Handle Response
+    // =====================================================
+    if (!empty($res) && $res['status'] == "SUCCESS") {
+
+        // 💰 Deduct wallet
         $new_balance = $wallet->balance - $amount;
 
-        $this->general_model->update('provider_wallet', ['balance' => $new_balance], ['provider_id' => $provider_id]);
+        $this->general_model->update('provider_wallet', [
+            'balance' => $new_balance
+        ], ['provider_id' => $provider_id]);
 
+        // ✅ Update payout success
+        $this->general_model->update('provider_payouts', [
+            'status' => 'success',
+            'txn_id' => $result['transferId']
+        ], ['id' => $payout_id]);
 
-
-        // Log payout
-
-        $this->general_model->insert('provider_payouts', [
-
-            'provider_id' => $provider_id,
-
-            'amount'      => $amount,
-
-            'txn_id'      => $response['transaction_id'],
-
-            'note'        => $note,
-
-            'created_at'  => date('Y-m-d H:i:s')
-
+        echo json_encode([
+            'status' => 'success',
+            'message' => 'Payout successful'
         ]);
-
-
-
-        echo json_encode(['status' => 'success', 'txn_id' => $response['transaction_id']]);
 
     } else {
 
-        echo json_encode(['status' => 'error', 'message' => $response['message'] ?? 'PayU API failed']);
+        // ❌ Mark failed
+        $this->general_model->update('provider_payouts', [
+            'status' => 'failed'
+        ], ['id' => $payout_id]);
 
+        echo json_encode([
+            'status' => 'error',
+            'message' => $res['message'] ?? 'Payout failed'
+        ]);
     }
-
 }
-
 
 
 

@@ -14,201 +14,317 @@
         </div>
         <!--end breadcrumb-->
 
-        <div class="card">
-            <div class="card-body p-3 p-md-4">
-                <div class="row">
-                    <div class="col-12">
-                        <h4 class="card-title mb-4 text-center text-md-start">My Wallet</h4>
-                    </div>
-                </div>
-
-                <!-- Wallet Balance Section -->
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <div class="bg-success bg-gradient rounded-3 p-3 text-white text-center">
-                            <h5 class="mb-2 fw-normal">Wallet Balance</h5>
-                            <h2 class="mb-0 fw-bold">₹<?= number_format($wallet_balance, 2) ?></h2>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Alert Message -->
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <div class="alert alert-warning d-flex align-items-center" role="alert">
-                            <i class="bx bx-info-circle me-2 fs-5"></i>
-                            <small>
-                                You should have minimum ₹<?= number_format($wallet_min, 2) ?> in your wallet to keep
-                                your wallet active.
-                            </small>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Withdraw Section -->
-                <div class="row mb-4">
-                    <div class="col-12">
-                        <div class="card border-0 bg-light">
-                            <div class="card-body p-3">
-                                <h6 class="card-title mb-3">Withdraw Funds</h6>
-                                <div class="mb-3">
-                                    <label for="withdrawAmount" class="form-label fw-semibold">
-                                        Eligible Withdraw Amount *
-                                    </label>
-                                    <div class="input-group">
-                                        <span class="input-group-text">₹</span>
-                                        <input type="number" class="form-control" id="withdrawAmount" min="1">
-                                    </div>
-                                    <!-- Error message should be outside input-group -->
-                                    <small id="amountError" class="text-danger d-none"></small>
-                                </div>
-
-                                <button class="btn btn-primary w-100 py-2" id="withdrawBtn"
-                                    data-id="<?= $this->provider['id'] ?>">
-                                    <i class="bx bx-wallet me-2"></i>Withdraw Now
-                                </button>
+        <div class="row">
+            <div class="col-12 col-xl-12">
+                <div class="card radius-10">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center mb-4">
+                            <div>
+                                <h5 class="mb-1 font-weight-bold">My Wallet</h5>
+                                <p class="mb-0 text-secondary">Manage your earnings and withdraw funds</p>
                             </div>
                         </div>
-                    </div>
-                </div>
 
-                <!-- Transaction History -->
-                <div class="row">
-                    <div class="col-12">
-                        <div class="d-flex align-items-center justify-content-between mb-3">
-                            <h5 class="mb-0">Transaction History</h5>
-                        </div>
-
-                        <!-- Toggle Buttons -->
-                        <div class="row mb-3">
-                            <div class="col-12">
-                                <div class="btn-group w-100" role="group" aria-label="History Toggle">
-                                    <button type="button" class="btn btn-outline-primary active" id="bookingHistoryBtn"
-                                        onclick="toggleHistory('booking')">
-                                        <i class="bx bx-calendar me-1"></i>Booking History
-                                        <span
-                                            class="badge bg-secondary ms-2"><?= !empty($transactions) ? count($transactions) : 0 ?></span>
-                                    </button>
-                                    <button type="button" class="btn btn-outline-primary" id="withdrawHistoryBtn"
-                                        onclick="toggleHistory('withdraw')">
-                                        <i class="bx bx-money me-1"></i>Withdraw History
-                                        <span
-                                            class="badge bg-secondary ms-2"><?= !empty($withdraw) ? count($withdraw) : 0 ?></span>
-                                    </button>
+                        <!-- Balance Overview -->
+                        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3 mb-4">
+                            <div class="col">
+                                <div class="card radius-10 border-start border-0 border-4 border-primary">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div>
+                                                <p class="mb-0 text-secondary">Available Balance</p>
+                                                <h4 class="my-1 text-primary">₹<?= number_format($wallet_balance, 2) ?></h4>
+                                            </div>
+                                            <div class="widgets-icons-2 rounded-circle bg-gradient-cosmic text-white ms-auto">
+                                                <i class='bx bx-wallet'></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="card radius-10 border-start border-0 border-4 border-warning">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div>
+                                                <p class="mb-0 text-secondary">Minimum Required</p>
+                                                <h4 class="my-1 text-warning">₹<?= number_format($wallet_min, 2) ?></h4>
+                                            </div>
+                                            <div class="widgets-icons-2 rounded-circle bg-gradient-burning text-white ms-auto">
+                                                <i class='bx bx-info-circle'></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="card radius-10 border-start border-0 border-4 border-success">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div>
+                                                <p class="mb-0 text-secondary">Total Bookings</p>
+                                                <h4 class="my-1 text-success"><?= !empty($transactions) ? count($transactions) : 0 ?></h4>
+                                            </div>
+                                            <div class="widgets-icons-2 rounded-circle bg-gradient-ohhappiness text-white ms-auto">
+                                                <i class='bx bx-calendar-check'></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col">
+                                <div class="card radius-10 border-start border-0 border-4 border-danger">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center">
+                                            <div>
+                                                <p class="mb-0 text-secondary">Total Withdrawals</p>
+                                                <h4 class="my-1 text-danger"><?= !empty($withdraw) ? count($withdraw) : 0 ?></h4>
+                                            </div>
+                                            <div class="widgets-icons-2 rounded-circle bg-gradient-bloody text-white ms-auto">
+                                                <i class='bx bx-money'></i>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Booking History Section -->
-                        <div id="bookingHistory" class="history-section">
-                            <?php if (!empty($transactions)): ?>
-                                <div class="row g-3">
-                                    <?php foreach ($transactions as $txn): ?>
-                                        <div class="col-12 col-sm-6 col-lg-4">
-                                            <div class="card h-100 border shadow-sm hover-shadow">
-                                                <div class="card-body p-3">
-                                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                                        <span
-                                                            class="badge bg-success rounded-pill">₹<?= number_format($txn['amount'], 2) ?></span>
-                                                        <small
-                                                            class="text-muted"><?= date("M d, Y", strtotime($txn['date'])) ?></small>
-                                                    </div>
-
-                                                    <div class="mb-2">
-                                                        <span class="badge bg-info text-dark rounded-pill px-2 py-1">
-                                                            Booking
-                                                        </span>
-                                                    </div>
-
-                                                    <p class="card-text small text-muted mb-2 lh-sm">
-                                                        <?= $txn['reference'] ?>
-                                                    </p>
-
-                                                    <div class="text-end">
-                                                        <small class="text-muted">
-                                                            <?= date("h:i A", strtotime($txn['date'])) ?>
-                                                        </small>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    <?php endforeach; ?>
+                        <!-- Alert Notice -->
+                        <div class="alert border-0 border-start border-5 border-warning alert-dismissible fade show py-2 mb-4">
+                            <div class="d-flex align-items-center">
+                                <div class="font-35 text-warning"><i class='bx bx-info-circle'></i></div>
+                                <div class="ms-3">
+                                    <h6 class="mb-0 text-warning">Important Notice</h6>
+                                    <div class="text-secondary">You must maintain a minimum balance of ₹<?= number_format($wallet_min, 2) ?> to keep your wallet active and continue receiving bookings.</div>
                                 </div>
-                            <?php else: ?>
-                                <div class="text-center py-5">
-                                    <div class="mb-3">
-                                        <i class="bx bx-calendar fs-1 text-muted"></i>
-                                    </div>
-                                    <h6 class="text-muted">No booking transactions found</h6>
-                                    <p class="text-muted small">Your booking transaction history will appear here.</p>
-                                </div>
-                            <?php endif; ?>
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                         </div>
 
-                        <!-- Withdraw History Section -->
-                        <div id="withdrawHistory" class="history-section <?= !empty($withdraw) ? '' : 'd-none' ?>">
-                            <?php if (!empty($withdraw)): ?>
-                                <div class="row g-3">
-                                    <?php foreach ($withdraw as $txn): ?>
-                                        <div class="col-12 col-sm-6 col-lg-4">
-                                            <div class="card h-100 border shadow-sm hover-shadow">
-                                                <div class="card-body p-3">
-                                                    <!-- Amount and Date -->
-                                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                                        <span class="badge bg-warning rounded-pill">
-                                                            ₹<?= number_format($txn->amount, 2) ?>
-                                                        </span>
-                                                        <small class="text-muted">
-                                                            <?= date("M d, Y", strtotime($txn->created_at)) ?>
-                                                        </small>
-                                                    </div>
-
-                                                    <!-- Status -->
-                                                    <div class="mb-2">
-                                                        <?php if ($txn->status === "pending"): ?>
-                                                            <span
-                                                                class="badge bg-warning text-dark rounded-pill px-2 py-1">Pending</span>
-                                                        <?php elseif ($txn->status === "success"): ?>
-                                                            <span
-                                                                class="badge bg-success text-white rounded-pill px-2 py-1">Success</span>
-                                                        <?php else: ?>
-                                                            <span
-                                                                class="badge bg-danger text-white rounded-pill px-2 py-1">Failed</span>
-                                                        <?php endif; ?>
-                                                    </div>
-
-                                                    <!-- Transaction ID -->
-                                                    <p class="card-text small text-muted mb-2 lh-sm">
-                                                        Transaction ID: <?= $txn->txn_id ?>
-                                                    </p>
-
-                                                    <!-- Note (if available) -->
-                                                    <?php if (!empty($txn->note)): ?>
-                                                        <p class="card-text small text-muted mb-2 lh-sm">
-                                                            <?= htmlspecialchars($txn->note) ?>
-                                                        </p>
-                                                    <?php endif; ?>
-
-                                                    <!-- Time -->
-                                                    <div class="text-end">
-                                                        <small class="text-muted">
-                                                            <?= date("h:i A", strtotime($txn->created_at)) ?>
-                                                        </small>
-                                                    </div>
-                                                </div>
+                        <!-- Withdraw Section -->
+                        <div class="row">
+                            <div class="col-12 col-lg-5 col-xl-4">
+                                <div class="card radius-10 border shadow-none">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="font-30 text-primary"><i class='bx bx-wallet'></i></div>
+                                            <div class="ms-3">
+                                                <h6 class="mb-0">Withdraw Funds</h6>
+                                                <p class="mb-0 text-secondary small">Request a withdrawal</p>
                                             </div>
                                         </div>
-                                    <?php endforeach; ?>
-                                </div>
-                            <?php else: ?>
-                                <div class="text-center py-5">
-                                    <div class="mb-3">
-                                        <i class="bx bx-money fs-1 text-muted"></i>
+
+                                        <div class="mb-3">
+                                            <label for="withdrawAmount" class="form-label">Withdrawal Amount</label>
+                                            <div class="input-group">
+                                                <span class="input-group-text bg-transparent">
+                                                    <i class='bx bx-rupee'></i>
+                                                </span>
+                                                <input type="number"
+                                                    class="form-control border-start-0"
+                                                    id="withdrawAmount"
+                                                    placeholder="Enter amount"
+                                                    min="1"
+                                                    step="0.01">
+                                            </div>
+                                            <small id="amountError" class="text-danger d-none mt-1"></small>
+                                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                                <small class="text-muted">
+                                                    Max: ₹<?= number_format(max(0, $wallet_balance - $wallet_min), 2) ?>
+                                                </small>
+                                                <?php if (max(0, $wallet_balance - $wallet_min) > 0): ?>
+                                                    <button type="button" class="btn btn-link btn-sm p-0 text-decoration-none" onclick="setMaxAmount()">
+                                                        Use Max
+                                                    </button>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-grid">
+                                            <button class="btn btn-primary radius-10"
+                                                id="withdrawBtn"
+                                                data-id="<?= $this->provider['id'] ?>"
+                                                disabled>
+                                                <i class='bx bx-send me-1'></i>Request Withdrawal
+                                            </button>
+                                        </div>
                                     </div>
-                                    <h6 class="text-muted">No withdraw transactions found</h6>
-                                    <p class="text-muted small">Your withdraw transaction history will appear here.</p>
                                 </div>
-                            <?php endif; ?>
+
+                                <!-- Quick Stats -->
+                                <div class="card radius-10 border shadow-none mt-3">
+                                    <div class="card-body">
+                                        <h6 class="mb-3">Wallet Status</h6>
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <p class="mb-0 text-secondary">Current Balance</p>
+                                            <h6 class="mb-0 text-primary">₹<?= number_format($wallet_balance, 2) ?></h6>
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                            <p class="mb-0 text-secondary">Minimum Required</p>
+                                            <h6 class="mb-0 text-warning">₹<?= number_format($wallet_min, 2) ?></h6>
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-between">
+                                            <p class="mb-0 text-secondary">Available to Withdraw</p>
+                                            <h6 class="mb-0 text-success">₹<?= number_format(max(0, $wallet_balance - $wallet_min), 2) ?></h6>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Transaction History -->
+                            <div class="col-12 col-lg-7 col-xl-8">
+                                <div class="card radius-10 border shadow-none">
+                                    <div class="card-body">
+                                        <div class="d-flex align-items-center mb-3">
+                                            <div class="font-30 text-primary"><i class='bx bx-history'></i></div>
+                                            <div class="ms-3">
+                                                <h6 class="mb-0">Transaction History</h6>
+                                                <p class="mb-0 text-secondary small">View all transactions</p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Nav Tabs -->
+                                        <ul class="nav nav-tabs nav-primary mb-3" role="tablist">
+                                            <li class="nav-item" role="presentation">
+                                                <a class="nav-link active" data-bs-toggle="tab" href="#bookingTab" role="tab" aria-selected="true">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="tab-icon"><i class='bx bx-calendar-check font-18 me-1'></i></div>
+                                                        <div class="tab-title">Bookings
+                                                            <span class="badge bg-primary rounded-pill ms-1"><?= !empty($transactions) ? count($transactions) : 0 ?></span>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </li>
+                                            <li class="nav-item" role="presentation">
+                                                <a class="nav-link" data-bs-toggle="tab" href="#withdrawTab" role="tab" aria-selected="false">
+                                                    <div class="d-flex align-items-center">
+                                                        <div class="tab-icon"><i class='bx bx-money font-18 me-1'></i></div>
+                                                        <div class="tab-title">Withdrawals
+                                                            <span class="badge bg-danger rounded-pill ms-1"><?= !empty($withdraw) ? count($withdraw) : 0 ?></span>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            </li>
+                                        </ul>
+
+                                        <!-- Tab Content -->
+                                        <div class="tab-content py-3">
+                                            <!-- Booking History Tab -->
+                                            <div class="tab-pane fade show active" id="bookingTab" role="tabpanel">
+                                                <?php if (!empty($transactions)): ?>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-hover align-middle mb-0">
+                                                            <thead class="table-light">
+                                                                <tr>
+                                                                    <th>Date</th>
+                                                                    <th>Reference</th>
+                                                                    <th class="text-end">Amount</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <?php foreach ($transactions as $txn): ?>
+                                                                    <tr>
+                                                                        <td>
+                                                                            <div class="d-flex align-items-center">
+                                                                                <div class="recent-product-img">
+                                                                                    <div class="bg-light-success text-success rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                                                        <i class='bx bx-plus font-22'></i>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="ms-2">
+                                                                                    <h6 class="mb-0 font-14"><?= date("M d, Y", strtotime($txn['date'])) ?></h6>
+                                                                                    <p class="mb-0 text-secondary font-13"><?= date("h:i A", strtotime($txn['date'])) ?></p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </td>
+                                                                        <td>
+                                                                            <p class="mb-0 text-secondary"><?= htmlspecialchars($txn['reference']) ?></p>
+                                                                        </td>
+                                                                        <td class="text-end">
+                                                                            <h6 class="mb-0 text-success">+₹<?= number_format($txn['amount'], 2) ?></h6>
+                                                                        </td>
+                                                                    </tr>
+                                                                <?php endforeach; ?>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <div class="text-center py-5">
+                                                        <div class="mb-3">
+                                                            <i class='bx bx-receipt font-50 text-secondary'></i>
+                                                        </div>
+                                                        <h6 class="text-secondary">No Booking Transactions</h6>
+                                                        <p class="text-secondary small mb-0">Your booking transactions will appear here</p>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+
+                                            <!-- Withdraw History Tab -->
+                                            <div class="tab-pane fade" id="withdrawTab" role="tabpanel">
+                                                <?php if (!empty($withdraw)): ?>
+                                                    <div class="table-responsive">
+                                                        <table class="table table-hover align-middle mb-0">
+                                                            <thead class="table-light">
+                                                                <tr>
+                                                                    <th>Date</th>
+                                                                    <th>Transaction ID</th>
+                                                                    <th>Status</th>
+                                                                    <th class="text-end">Amount</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <?php foreach ($withdraw as $txn): ?>
+                                                                    <tr>
+                                                                        <td>
+                                                                            <div class="d-flex align-items-center">
+                                                                                <div class="recent-product-img">
+                                                                                    <div class="bg-light-danger text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                                                        <i class='bx bx-minus font-22'></i>
+                                                                                    </div>
+                                                                                </div>
+                                                                                <div class="ms-2">
+                                                                                    <h6 class="mb-0 font-14"><?= date("M d, Y", strtotime($txn->created_at)) ?></h6>
+                                                                                    <p class="mb-0 text-secondary font-13"><?= date("h:i A", strtotime($txn->created_at)) ?></p>
+                                                                                </div>
+                                                                            </div>
+                                                                        </td>
+                                                                        <td>
+                                                                            <p class="mb-0 text-secondary font-13"><?= htmlspecialchars($txn->txn_id) ?></p>
+                                                                            <?php if (!empty($txn->note)): ?>
+                                                                                <p class="mb-0 text-secondary font-12"><?= htmlspecialchars($txn->note) ?></p>
+                                                                            <?php endif; ?>
+                                                                        </td>
+                                                                        <td>
+                                                                            <?php if ($txn->status === "pending"): ?>
+                                                                                <span class="badge bg-warning text-dark">Pending</span>
+                                                                            <?php elseif ($txn->status === "success"): ?>
+                                                                                <span class="badge bg-success">Success</span>
+                                                                            <?php else: ?>
+                                                                                <span class="badge bg-danger">Failed</span>
+                                                                            <?php endif; ?>
+                                                                        </td>
+                                                                        <td class="text-end">
+                                                                            <h6 class="mb-0 text-danger">-₹<?= number_format($txn->amount, 2) ?></h6>
+                                                                        </td>
+                                                                    </tr>
+                                                                <?php endforeach; ?>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <div class="text-center py-5">
+                                                        <div class="mb-3">
+                                                            <i class='bx bx-money-withdraw font-50 text-secondary'></i>
+                                                        </div>
+                                                        <h6 class="text-secondary">No Withdrawal Transactions</h6>
+                                                        <p class="text-secondary small mb-0">Your withdrawal transactions will appear here</p>
+                                                    </div>
+                                                <?php endif; ?>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
                     </div>
@@ -219,228 +335,447 @@
 </div>
 
 <style>
-    .hover-shadow {
-        transition: box-shadow 0.3s ease;
+    /* ========== Custom Styles for Wallet Page ========== */
+
+    /* Widget Icons */
+    .widgets-icons-2 {
+        width: 56px;
+        height: 56px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 27px;
     }
 
-    .hover-shadow:hover {
-        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    /* Light backgrounds for icons */
+    .bg-light-success {
+        background-color: rgba(23, 160, 134, 0.18) !important;
     }
 
-    .bg-gradient {
-        background: linear-gradient(135deg, var(--bs-success) 0%, rgba(var(--bs-success-rgb), 0.8) 100%);
+    .bg-light-danger {
+        background-color: rgba(241, 85, 108, 0.18) !important;
     }
 
-    .card-body {
-        word-wrap: break-word;
+    .bg-light-warning {
+        background-color: rgba(255, 193, 7, 0.18) !important;
     }
 
-    /* Toggle Button Styles */
-    .btn-group .btn {
+    .bg-light-info {
+        background-color: rgba(23, 162, 184, 0.18) !important;
+    }
+
+    /* Card hover effect */
+    .card:hover {
+        transform: translateY(-2px);
         transition: all 0.3s ease;
     }
 
-    .btn-group .btn.active {
-        background-color: var(--bs-primary);
-        color: white;
-        border-color: var(--bs-primary);
+    /* Input group styling */
+    .input-group-text {
+        border-right: 0;
     }
 
-    .btn-group .btn:not(.active) {
-        background-color: transparent;
+    .border-start-0 {
+        border-left: 0 !important;
     }
 
-    .btn-group .btn:not(.active):hover {
-        background-color: var(--bs-primary);
-        color: white;
+    /* Table styling */
+    .table-responsive {
+        max-height: 450px;
+        overflow-y: auto;
     }
 
-    .history-section {
-        transition: opacity 0.3s ease;
+    .table-responsive::-webkit-scrollbar {
+        width: 5px;
     }
 
-    @media (max-width: 576px) {
+    .table-responsive::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+
+    /* Tab customization */
+    .nav-tabs .nav-link {
+        border: none;
+        color: #6c757d;
+        padding: 0.75rem 1.25rem;
+    }
+
+    .nav-tabs .nav-link.active {
+        border-bottom: 2px solid;
+    }
+
+    .nav-primary .nav-link.active {
+        border-bottom-color: var(--bs-primary);
+        color: var(--bs-primary);
+    }
+
+    /* Badge in tabs */
+    .nav-link .badge {
+        font-size: 0.7rem;
+        padding: 0.25em 0.5em;
+    }
+
+    /* Button styling */
+    .btn-primary {
+        padding: 0.625rem 1.25rem;
+    }
+
+    .btn-primary:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Alert styling */
+    .alert .font-35 {
+        font-size: 35px;
+    }
+
+    /* Responsive */
+    @media (max-width: 575.98px) {
+        .widgets-icons-2 {
+            width: 45px;
+            height: 45px;
+            font-size: 22px;
+        }
+
         .card-body {
             padding: 1rem !important;
         }
 
-        .btn {
-            font-size: 0.9rem;
+        .font-30 {
+            font-size: 24px !important;
         }
 
-        .badge {
-            font-size: 0.75rem;
+        .font-35 {
+            font-size: 28px !important;
         }
 
-        h4.card-title {
-            font-size: 1.25rem;
+        .nav-tabs .nav-link {
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .table-responsive {
+            max-height: 350px;
+        }
+
+        .font-14 {
+            font-size: 13px !important;
+        }
+
+        .font-13 {
+            font-size: 12px !important;
+        }
+
+        h4 {
+            font-size: 1.25rem !important;
         }
 
         h5 {
-            font-size: 1.1rem;
+            font-size: 1.1rem !important;
         }
 
-        .btn-group .btn {
-            padding: 0.5rem 0.75rem;
-            font-size: 0.85rem;
-        }
-
-        .btn-group .btn i {
-            font-size: 0.9rem;
+        h6 {
+            font-size: 0.95rem !important;
         }
     }
 
-    @media (max-width: 768px) {
-        .page-content {
-            padding: 0.5rem;
+    @media (max-width: 767.98px) {
+        .row-cols-md-2>* {
+            width: 100%;
         }
 
-        .alert {
-            font-size: 0.85rem;
-        }
-
-        .input-group-text {
-            font-size: 0.9rem;
-        }
-
-        .btn-group {
+        .alert .d-flex {
             flex-direction: column;
+            text-align: center;
         }
 
-        .btn-group .btn {
-            border-radius: 0.375rem !important;
-            margin-bottom: 0.25rem;
-        }
-
-        .btn-group .btn:last-child {
-            margin-bottom: 0;
+        .alert .ms-3 {
+            margin-left: 0 !important;
+            margin-top: 1rem;
         }
     }
 
-    @media (min-width: 992px) {
-        .col-lg-4 {
-            max-width: 33.333333%;
+    @media (max-width: 991.98px) {
+
+        .col-lg-5,
+        .col-lg-7 {
+            width: 100%;
         }
+
+        .card.mt-3 {
+            margin-top: 1rem !important;
+        }
+    }
+
+    /* Dark theme compatibility */
+    @media (prefers-color-scheme: dark) {
+        .table-light {
+            --bs-table-bg: rgba(255, 255, 255, 0.05);
+            --bs-table-color: inherit;
+        }
+
+        .bg-transparent {
+            background-color: transparent !important;
+        }
+    }
+
+    /* Print styles */
+    @media print {
+
+        .page-breadcrumb,
+        .btn,
+        .alert,
+        .nav-tabs {
+            display: none !important;
+        }
+
+        .card {
+            box-shadow: none !important;
+            border: 1px solid #dee2e6 !important;
+        }
+
+        .table-responsive {
+            max-height: none !important;
+            overflow: visible !important;
+        }
+    }
+
+    /* Animation */
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .tab-pane {
+        animation: fadeIn 0.3s ease;
+    }
+
+    /* Additional utility classes */
+    .font-12 {
+        font-size: 12px;
+    }
+
+    .font-13 {
+        font-size: 13px;
+    }
+
+    .font-14 {
+        font-size: 14px;
+    }
+
+    .font-18 {
+        font-size: 18px;
+    }
+
+    .font-22 {
+        font-size: 22px;
+    }
+
+    .font-50 {
+        font-size: 50px;
     }
 </style>
-<script>
-    function toggleHistory(type) {
-        // Get buttons and sections
-        const bookingBtn = document.getElementById('bookingHistoryBtn');
-        const withdrawBtn = document.getElementById('withdrawHistoryBtn');
-        const bookingSection = document.getElementById('bookingHistory');
-        const withdrawSection = document.getElementById('withdrawHistory');
 
-        if (type === 'booking') {
-            // Show booking history
-            bookingBtn.classList.add('active');
-            withdrawBtn.classList.remove('active');
-            bookingSection.classList.remove('d-none');
-            withdrawSection.classList.add('d-none');
-        } else {
-            // Show withdraw history
-            withdrawBtn.classList.add('active');
-            bookingBtn.classList.remove('active');
-            withdrawSection.classList.remove('d-none');
-            bookingSection.classList.add('d-none');
-        }
+<script>
+    /**
+     * Set maximum withdrawable amount
+     */
+    function setMaxAmount() {
+        const maxAmount = <?= max(0, $wallet_balance - $wallet_min) ?>;
+        const input = document.getElementById('withdrawAmount');
+        input.value = maxAmount.toFixed(2);
+        input.dispatchEvent(new Event('input'));
     }
-    document.addEventListener("DOMContentLoaded", function () {
+
+    /**
+     * Wallet functionality
+     */
+    document.addEventListener("DOMContentLoaded", function() {
         const withdrawBtn = document.getElementById("withdrawBtn");
         const withdrawInput = document.getElementById("withdrawAmount");
         const amountError = document.getElementById("amountError");
 
         const walletBalance = parseFloat("<?= $wallet_balance ?>") || 0;
-        const walletMin = parseFloat("<?= $wallet_min ?>") || 0; // Admin set min balance
+        const walletMin = parseFloat("<?= $wallet_min ?>") || 0;
+        const maxWithdraw = Math.max(0, walletBalance - walletMin);
 
-        withdrawBtn.disabled = true;
-
-        withdrawInput.addEventListener("input", function () {
+        /**
+         * Validate withdrawal amount
+         */
+        withdrawInput.addEventListener("input", function() {
             let amount = parseFloat(this.value);
 
+            // Reset
+            withdrawBtn.disabled = true;
+            amountError.classList.add("d-none");
+            this.classList.remove("is-invalid", "is-valid");
+
+            // Validations
             if (!amount || amount <= 0) {
-                withdrawBtn.disabled = true;
-                amountError.textContent = "Please enter a valid amount.";
-                amountError.classList.remove("d-none");
-            } else if (amount > walletBalance) {
-                withdrawBtn.disabled = true;
-                amountError.textContent = "Insufficient funds. Available balance: ₹" + walletBalance;
-                amountError.classList.remove("d-none");
-            } else if ((walletBalance - amount) < walletMin) {
-                withdrawBtn.disabled = true;
-                amountError.textContent = "You must maintain at least ₹" + walletMin + " in your wallet.";
-                amountError.classList.remove("d-none");
-            } else {
-                withdrawBtn.disabled = false;
-                amountError.textContent = "";
-                amountError.classList.add("d-none");
+                showError("Please enter a valid amount");
+                return;
             }
+
+            if (amount > walletBalance) {
+                showError(`Insufficient balance. Available: ₹${walletBalance.toFixed(2)}`);
+                return;
+            }
+
+            if ((walletBalance - amount) < walletMin) {
+                showError(`You must maintain minimum ₹${walletMin.toFixed(2)} balance`);
+                return;
+            }
+
+            if (amount > maxWithdraw) {
+                showError(`Maximum withdrawable: ₹${maxWithdraw.toFixed(2)}`);
+                return;
+            }
+
+            // Valid
+            withdrawBtn.disabled = false;
+            this.classList.add("is-valid");
         });
 
-        withdrawBtn.addEventListener("click", function () {
-            let providerId = this.getAttribute("data-id");
-            let amount = parseFloat(withdrawInput.value);
+        /**
+         * Show error
+         */
+        function showError(message) {
+            amountError.textContent = message;
+            amountError.classList.remove("d-none");
+            withdrawInput.classList.add("is-invalid");
+        }
+
+        /**
+         * Handle withdrawal
+         */
+        withdrawBtn.addEventListener("click", function() {
+            const providerId = this.getAttribute("data-id");
+            const amount = parseFloat(withdrawInput.value);
 
             if (!providerId || !amount || amount <= 0) {
                 Swal.fire({
                     icon: "error",
-                    title: "Missing",
-                    text: "Please enter a valid amount."
+                    title: "Invalid Amount",
+                    text: "Please enter a valid withdrawal amount",
+                    confirmButtonText: "OK"
                 });
                 return;
             }
 
             Swal.fire({
-                title: "Are you sure?",
-                text: "Do you want to withdraw now?",
-                icon: "warning",
+                title: "Confirm Withdrawal",
+                html: `
+                    <div class="text-start">
+                        <p class="mb-2">Withdrawal Amount:</p>
+                        <h3 class="text-primary mb-3">₹${amount.toFixed(2)}</h3>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Current Balance:</span>
+                            <strong>₹${walletBalance.toFixed(2)}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>After Withdrawal:</span>
+                            <strong>₹${(walletBalance - amount).toFixed(2)}</strong>
+                        </div>
+                    </div>
+                `,
+                icon: "question",
                 showCancelButton: true,
-                confirmButtonText: "Yes, Withdraw",
-                cancelButtonText: "Cancel",
+                confirmButtonText: '<i class="bx bx-check me-1"></i> Confirm',
+                cancelButtonText: '<i class="bx bx-x me-1"></i> Cancel',
                 reverseButtons: true
             }).then((result) => {
                 if (result.isConfirmed) {
-                    withdrawNow(providerId, amount);
+                    processWithdrawal(providerId, amount);
                 }
             });
         });
 
-        function withdrawNow(providerId, amount) {
+        /**
+         * Process withdrawal
+         */
+        function processWithdrawal(providerId, amount) {
+            Swal.fire({
+                title: 'Processing...',
+                text: 'Please wait while we process your request',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
             $.ajax({
                 url: "<?= base_url('provider/wallet/withdraw_request') ?>",
                 method: "POST",
-                data: { provider_id: providerId, amount: amount },
+                data: {
+                    provider_id: providerId,
+                    amount: amount
+                },
                 dataType: "json",
-                success: function (res) {
+                success: function(res) {
                     if (res.status === "success") {
                         Swal.fire({
                             icon: "success",
-                            title: "Success",
-                            text: res.message,
-                            timer: 1500,
+                            title: "Success!",
+                            text: res.message || "Withdrawal request submitted successfully",
+                            timer: 2000,
+                            timerProgressBar: true,
                             showConfirmButton: false
+                        }).then(() => {
+                            withdrawInput.value = "";
+                            withdrawInput.classList.remove("is-valid");
+                            withdrawBtn.disabled = true;
+                            location.reload();
                         });
-                        withdrawInput.value = "";
-                        withdrawBtn.disabled = true;
-                        location.reload();
                     } else {
                         Swal.fire({
                             icon: "error",
-                            title: "Failed",
-                            text: res.message
+                            title: "Request Failed",
+                            text: res.message || "Unable to process withdrawal",
+                            confirmButtonText: "OK"
                         });
                     }
                 },
-                error: function () {
+                error: function(xhr, status, error) {
+                    console.error("Error:", error);
                     Swal.fire({
                         icon: "error",
                         title: "Error",
-                        text: "Something went wrong. Please try again."
+                        text: "Something went wrong. Please try again",
+                        confirmButtonText: "OK"
                     });
                 }
             });
         }
+
+        /**
+         * Format on blur
+         */
+        withdrawInput.addEventListener("blur", function() {
+            if (this.value) {
+                let amount = parseFloat(this.value);
+                if (!isNaN(amount)) {
+                    this.value = amount.toFixed(2);
+                }
+            }
+        });
     });
-
-
 </script>

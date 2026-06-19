@@ -296,6 +296,8 @@ class Login extends CI_Controller
 
 
 
+
+
             $query = $this->db->get_where('users', ['id' => $user_id]);
             $user_data = $query->row_array(); // ✅ returns array
             $user_data['is_logged_in']  = true;

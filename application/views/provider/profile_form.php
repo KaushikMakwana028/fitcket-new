@@ -176,35 +176,35 @@
                                 placeholder="Enter Experience" required>
 
                         </div>
-                          <?php
-$selectedLanguages = [];
+                        <?php
+                        $selectedLanguages = [];
 
-if (isset($profile->language) && !empty($profile->language)) {
-    // Convert to lowercase + trim spaces
-    $selectedLanguages = array_map(
-        'strtolower',
-        array_map('trim', explode(',', $profile->language))
-    );
-}
-?>
+                        if (isset($profile->language) && !empty($profile->language)) {
+                            // Convert to lowercase + trim spaces
+                            $selectedLanguages = array_map(
+                                'strtolower',
+                                array_map('trim', explode(',', $profile->language))
+                            );
+                        }
+                        ?>
 
                         <div class="col-md-6">
-    <label class="form-label">Languages</label>
+                            <label class="form-label">Languages</label>
 
-    <select class="form-select"
-            id="js-example-basic-multiple"
-            name="language[]"
-            multiple="multiple">
+                            <select class="form-select"
+                                id="js-example-basic-multiple"
+                                name="language[]"
+                                multiple="multiple">
 
-        <option value="hindi"   <?= in_array('hindi', $selectedLanguages) ? 'selected' : '' ?>>Hindi</option>
-        <option value="marathi" <?= in_array('marathi', $selectedLanguages) ? 'selected' : '' ?>>Marathi</option>
-        <option value="gujarati" <?= in_array('gujarati', $selectedLanguages) ? 'selected' : '' ?>>Gujarati</option>
-        <option value="telugu"  <?= in_array('telugu', $selectedLanguages) ? 'selected' : '' ?>>Telugu</option>
-        <option value="kannada" <?= in_array('kannada', $selectedLanguages) ? 'selected' : '' ?>>Kannada</option>
-        <option value="english" <?= in_array('english', $selectedLanguages) ? 'selected' : '' ?>>English</option>
+                                <option value="hindi" <?= in_array('hindi', $selectedLanguages) ? 'selected' : '' ?>>Hindi</option>
+                                <option value="marathi" <?= in_array('marathi', $selectedLanguages) ? 'selected' : '' ?>>Marathi</option>
+                                <option value="gujarati" <?= in_array('gujarati', $selectedLanguages) ? 'selected' : '' ?>>Gujarati</option>
+                                <option value="telugu" <?= in_array('telugu', $selectedLanguages) ? 'selected' : '' ?>>Telugu</option>
+                                <option value="kannada" <?= in_array('kannada', $selectedLanguages) ? 'selected' : '' ?>>Kannada</option>
+                                <option value="english" <?= in_array('english', $selectedLanguages) ? 'selected' : '' ?>>English</option>
 
-    </select>
-</div>
+                            </select>
+                        </div>
 
 
 
@@ -256,17 +256,15 @@ if (isset($profile->language) && !empty($profile->language)) {
                         <script src="<?= base_url('assets/js/jquery.min.js') ?>"></script>
 
                         <script>
-
-
                             // After subcategories are loaded via AJAX based on category, set selected value if present in PHP
 
-                            $(function () {
+                            $(function() {
 
                                 <?php if (!empty($profile->sub_category)): ?>
 
                                     // Wait for AJAX to populate subcategory select, then set the value
 
-                                    setTimeout(function () {
+                                    setTimeout(function() {
 
                                         $('#subcategorySelect').val('<?= $profile->sub_category ?>');
 
@@ -275,7 +273,6 @@ if (isset($profile->language) && !empty($profile->language)) {
                                 <?php endif; ?>
 
                             });
-
                         </script>
 
 
@@ -306,8 +303,8 @@ if (isset($profile->language) && !empty($profile->language)) {
                             if (!empty($expertis)) {
 
                                 $tags = implode(',', array_map(function ($row) {
-                                    return $row->tag; }, $expertis));
-
+                                    return $row->tag;
+                                }, $expertis));
                             }
 
                             ?>
@@ -428,18 +425,20 @@ if (isset($profile->language) && !empty($profile->language)) {
 <script src="<?= base_url('assets/js/jquery.min.js') ?>"></script>
 
 <script>
-    $(document).ready(function () {
+    $(document).ready(function() {
         function loadSubcategories(categoryId, selectedSubcat = null) {
             if (categoryId) {
                 $.ajax({
                     url: site_url + "provider/profile/get_subcategories",
                     type: "POST",
-                    data: { category_id: categoryId },
+                    data: {
+                        category_id: categoryId
+                    },
                     dataType: "json",
-                    success: function (data) {
+                    success: function(data) {
                         if (data.length > 0) {
                             let options = '<option value="">-- Select Subcategory --</option>';
-                            $.each(data, function (i, subcat) {
+                            $.each(data, function(i, subcat) {
                                 options += `<option value="${subcat.id}">${subcat.name}</option>`;
                             });
                             $("#subcategorySelect").html(options);
@@ -461,7 +460,7 @@ if (isset($profile->language) && !empty($profile->language)) {
         }
 
         // On category change
-        $("#categorySelect").on("change", function () {
+        $("#categorySelect").on("change", function() {
             let categoryId = $(this).val();
             loadSubcategories(categoryId);
         });
@@ -471,5 +470,4 @@ if (isset($profile->language) && !empty($profile->language)) {
             loadSubcategories("<?= $profile->category ?>", "<?= $profile->sub_category ?>");
         <?php endif; ?>
     });
-
 </script>

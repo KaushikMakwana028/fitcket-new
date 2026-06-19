@@ -780,7 +780,91 @@ class User_wallet extends Admin_Controller
         $this->session->set_flashdata('success', 'Withdraw marked as manually paid. No demo credit was added; this is recorded as a real external payout.');
         redirect('admin/user_wallet');
     }
+private function cf_get_token()
+{
+    $this->config->load('cashfree');
 
+    $url = $this->config->item('cashfree_base_url') . "authorize";
+
+    $headers = [
+        "X-Client-Id: " . $this->config->item('cashfree_client_id'),
+        "X-Client-Secret: " . $this->config->item('cashfree_client_secret')
+    ];
+
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_HTTPHEADER => $headers
+    ]);
+
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    $res = json_decode($response, true);
+    return $res['data']['token'] ?? false;
+}
+private function cf_add_beneficiary($token, $user)
+{
+    $this->config->load('cashfree');
+
+    $url = $this->config->item('cashfree_base_url') . "addBeneficiary";
+
+    $data = [
+        "beneId" => "USER_" . $user['id'],
+        "name" => $user['name'],
+        "email" => $user['email'],
+        "phone" => $user['phone'],
+        "bankAccount" => $user['bank_account'],
+        "ifsc" => $user['ifsc'],
+        "address1" => "India"
+    ];
+
+    $headers = [
+        "Authorization: Bearer $token",
+        "Content-Type: application/json"
+    ];
+
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => json_encode($data),
+        CURLOPT_HTTPHEADER => $headers
+    ]);
+
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    return json_decode($response, true);
+}
+private function cf_transfer($token, $data)
+{
+    $this->config->load('cashfree');
+
+    $url = $this->config->item('cashfree_base_url') . "requestTransfer";
+
+    $headers = [
+        "Authorization: Bearer $token",
+        "Content-Type: application/json"
+    ];
+
+    $ch = curl_init();
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_POST => true,
+        CURLOPT_POSTFIELDS => json_encode($data),
+        CURLOPT_HTTPHEADER => $headers
+    ]);
+
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    return json_decode($response, true);
+}
     public function reject_withdraw($transactionId = 0)
     {
         $transaction = $this->db

@@ -17,7 +17,6 @@ class General_model extends CI_Model
         $this->load->database();
 
         $this->load->Model('general_model');
-
     }
 
 
@@ -29,7 +28,6 @@ class General_model extends CI_Model
         $query = $this->db->get_where($table, $where);
 
         return $query->row();
-
     }
 
 
@@ -43,13 +41,11 @@ class General_model extends CI_Model
         if (!empty($where)) {
 
             $this->db->where($where);
-
         }
 
         $query = $this->db->get($table);
 
         return $query->result();
-
     }
 
 
@@ -61,7 +57,6 @@ class General_model extends CI_Model
         $this->db->insert($table, $data);
 
         return $this->db->insert_id();
-
     }
 
     public function update($table, $where, $data)
@@ -69,13 +64,13 @@ class General_model extends CI_Model
     {
 
         return $this->db->update($table, $data, $where);
-
     }
 
     public function delete($table, $where)
     {
         return $this->db->delete($table, $where);
     }
+
 
     public function getCount($table, $where = [], $isActive = null)
 
@@ -84,10 +79,9 @@ class General_model extends CI_Model
         if (!is_null($isActive)) {
 
             $where['isActive'] = $isActive;
-
         }
 
-    
+
 
         if (!empty($where)) {
 
@@ -96,22 +90,20 @@ class General_model extends CI_Model
                 ->where($where)
 
                 ->get($table);
-
         } else {
 
             $query = $this->db->select()
 
                 ->get($table);
-
         }
 
-    
+
 
         return $query->num_rows();
-
     }
 
-    public function getData($table, $selectFields = '*', $where = []) {
+    public function getData($table, $selectFields = '*', $where = [])
+    {
 
         $this->db->select($selectFields);
 
@@ -120,74 +112,66 @@ class General_model extends CI_Model
         if (!empty($where)) {
 
             $this->db->where($where);
-
         }
 
         $query = $this->db->get();
 
-        return $query->result_array();  
-
+        return $query->result_array();
     }
 
 
 
-  // Count with optional search
+    // Count with optional search
 
-public function count_with_search($table, $params = [])
+    public function count_with_search($table, $params = [])
 
-{
+    {
 
-    if (isset($params['search'])) {
+        if (isset($params['search'])) {
 
-        $this->db->group_start();
+            $this->db->group_start();
 
-        foreach ($params['search'] as $field => $keyword) {
+            foreach ($params['search'] as $field => $keyword) {
 
-            $this->db->or_like($field, $keyword);
+                $this->db->or_like($field, $keyword);
+            }
 
+            $this->db->group_end();
         }
 
-        $this->db->group_end();
-
+        return $this->db->count_all_results($table);
     }
 
-    return $this->db->count_all_results($table);
-
-}
 
 
+    // Fetch with optional search, limit, and offset
 
-// Fetch with optional search, limit, and offset
+    public function get_with_search($table, $params = [], $limit = 10, $offset = 0)
 
-public function get_with_search($table, $params = [], $limit = 10, $offset = 0)
+    {
 
-{
+        if (isset($params['search'])) {
 
-    if (isset($params['search'])) {
+            $this->db->group_start();
 
-        $this->db->group_start();
+            foreach ($params['search'] as $field => $keyword) {
 
-        foreach ($params['search'] as $field => $keyword) {
+                $this->db->or_like($field, $keyword);
+            }
 
-            $this->db->or_like($field, $keyword);
-
+            $this->db->group_end();
         }
 
-        $this->db->group_end();
 
+
+        $this->db->limit($limit, $offset);
+
+        $query = $this->db->get($table);
+
+        return $query->result_array();
     }
 
-
-
-    $this->db->limit($limit, $offset);
-
-    $query = $this->db->get($table);
-
-    return $query->result_array();
-
-}
-
-public function get_customers_with_orders($limit, $offset)
+    public function get_customers_with_orders($limit, $offset)
 
     {
 
@@ -234,7 +218,6 @@ public function get_customers_with_orders($limit, $offset)
                 $items = $this->db->get('order_items')->result_array();
 
                 $order['provider_names'] = array_column($items, 'name');
-
             }
 
 
@@ -242,7 +225,6 @@ public function get_customers_with_orders($limit, $offset)
             $cust['orders'] = $orders;
 
             $cust['total_transactions'] = count($orders);
-
         }
 
 
@@ -254,10 +236,9 @@ public function get_customers_with_orders($limit, $offset)
             'total' => $total
 
         ];
-
     }
-// pay any gym function
- public function get_user_recipients($user_id)
+    // pay any gym function
+    public function get_user_recipients($user_id)
     {
         $this->db->where('user_id', $user_id);
         $this->db->order_by('is_default', 'DESC');
@@ -265,6 +246,4 @@ public function get_customers_with_orders($limit, $offset)
         $query = $this->db->get('rent_recipients');
         return $query->result_array();
     }
-
-
-    }
+}

@@ -436,7 +436,7 @@
         border-radius: 8px;
         margin: 0 0.25rem;
         border: none;
-        color: #ffffff;
+        color: var(--primary-color);
         background: white;
         box-shadow: var(--shadow-sm);
         transition: var(--transition);
@@ -726,119 +726,6 @@
     .reviews-scroll-container::-webkit-scrollbar-thumb:hover {
         background: #555;
     }
-
-    /* =============== Certificate Btn ==================== */
-
-    .certificate-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 18px;
-        font-size: 14px;
-        font-weight: 600;
-        border-radius: 50px;
-        text-decoration: none;
-        color: #fff;
-        background: var(--gradient-primary);
-        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .certificate-btn i {
-        font-size: 14px;
-        transition: transform 0.3s ease;
-    }
-
-    .certificate-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
-        color: #fff;
-    }
-
-    .certificate-btn:hover i {
-        transform: translateX(3px);
-    }
-
-    .certificate-btn:active {
-        transform: scale(0.96);
-    }
-
-
-    /*================= Services View ========================== */
-
-    .service-card {
-        display: flex;
-        gap: 20px;
-        padding: 20px;
-        border-radius: 16px;
-        background: #fff;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-        transition: all 0.3s ease;
-        margin-bottom: 20px;
-        align-items: center;
-    }
-
-    .service-card:hover {
-        transform: translateY(-6px);
-        box-shadow: 0 10px 30px rgba(108, 92, 231, 0.15);
-    }
-
-    .service-image {
-        flex: 0 0 160px;
-        height: 120px;
-        border-radius: 12px;
-        overflow: hidden;
-    }
-
-    .service-image img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-
-    .service-content {
-        flex: 1;
-    }
-
-    .service-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .service-header h5 {
-        font-weight: 700;
-        margin: 0;
-    }
-
-    .service-price {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: #fff;
-        padding: 6px 12px;
-        border-radius: 20px;
-        font-size: 13px;
-        font-weight: 600;
-    }
-
-    .service-description {
-        color: #666;
-        margin: 10px 0;
-        font-size: 14px;
-    }
-
-    .service-footer {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .service-city {
-        font-size: 13px;
-        color: #888;
-    }
-
 
     /* Responsive Design */
     @media (max-width: 768px) {
@@ -1245,6 +1132,7 @@
                     </button>
                 </li>
 
+
                 <!-- <li class="nav-item flex-fill text-center">
                     <button class="nav-link w-100" id="fittv-tab"
                         data-bs-toggle="pill" data-bs-target="#fittv"
@@ -1252,6 +1140,7 @@
                         <i class="fa-solid fa-play-circle me-2"></i>FITTV
                     </button>
                 </li> -->
+
                 <li class="nav-item flex-fill text-center">
                     <button class="nav-link w-100" id="about-tab" data-bs-toggle="pill" data-bs-target="#about"
                         type="button">
@@ -1426,7 +1315,7 @@
                 </div>
 
                 <div class="tab-pane fade" id="services" role="tabpanel" aria-labelledby="services-tab">
-                    <div id="service-list" data-provider="<?= $provider->provider_id ?>"></div>
+                    <div id="service-list"></div>
                     <nav class="mt-3 mb-5">
                         <ul class="pagination justify-content-center" id="service-pagination"></ul>
                     </nav>
@@ -1512,31 +1401,16 @@
                                             <i class="fa fa-server me-2 text-primary"></i>Service Types Available
                                         </h5>
                                         <div class="service-type-container">
-
-                                            <?php if (!empty($provider->service_type)) : ?>
-
-                                                <?php if ($provider->service_type == 'online' || $provider->service_type == 'both') : ?>
-                                                    <div class="service-type-badge online">
-                                                        <i class="fa fa-wifi"></i>
-                                                        <h5>Online</h5>
-                                                        <p>Live video classes & personalized training</p>
-                                                    </div>
-                                                <?php endif; ?>
-
-                                                <?php if ($provider->service_type == 'offline' || $provider->service_type == 'both') : ?>
-                                                    <div class="service-type-badge offline">
-                                                        <i class="fa fa-building"></i>
-                                                        <h5>Offline</h5>
-                                                        <p>Visit our facility for hands-on experience</p>
-                                                    </div>
-                                                <?php endif; ?>
-
-                                            <?php else : ?>
-
-                                                <p class="text-danger fw-bold text-align-center text-center w-100">
-                                                    Services Type not Specified.
-                                                </p>
-                                            <?php endif; ?>
+                                            <div class="service-type-badge online">
+                                                <i class="fa fa-wifi"></i>
+                                                <h5>Online</h5>
+                                                <p>Live video classes & personalized training</p>
+                                            </div>
+                                            <div class="service-type-badge offline">
+                                                <i class="fa fa-building"></i>
+                                                <h5>Offline</h5>
+                                                <p>Visit our facility for hands-on experience</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -1548,152 +1422,106 @@
                             <div class="col-12">
                                 <div class="card shadow-sm border-0 fade-in">
                                     <div class="card-body">
-
-                                        <!-- Languages -->
                                         <h5 class="fw-bold mb-3">
-                                            <i class="fa fa-language me-2 text-primary"></i>
-                                            Languages Spoken
+                                            <i class="fa fa-language me-2 text-primary"></i>Languages Spoken
                                         </h5>
-
                                         <div class="d-flex flex-wrap gap-3">
-
-                                            <?php if (!empty($provider->language)) : ?>
-
-                                                <?php
-                                                $languages = explode(',', $provider->language);
-                                                foreach ($languages as $lang) :
-                                                ?>
-
-                                                    <div class="language-chip">
-                                                        <i class="fa fa-globe"></i>
-                                                        <span><?= htmlspecialchars(trim($lang)) ?></span>
-                                                    </div>
-
-                                                <?php endforeach; ?>
-
-                                            <?php else : ?>
-
-                                                <span class="text-danger fw-bold w-100 text-center">
-                                                    Language Not Specified.
-                                                </span>
-
-                                            <?php endif; ?>
-
-                                        </div>
-
-                                        <!-- Experience -->
-                                        <h5 class="fw-bold mt-4 mb-3">
-                                            <i class="fa fa-briefcase me-2 text-primary"></i>
-                                            Hand On Experience
-                                        </h5>
-
-                                        <div class="d-flex flex-wrap gap-3">
-
                                             <div class="language-chip">
-                                                <i class="fa fa-clock"></i>
-                                                <span>
-                                                    <?= !empty($provider->exp) ? $provider->exp . '' : 'Experience not specified' ?>
-                                                </span>
+                                                <i class="fa fa-globe"></i>
+                                                <span>English</span>
+                                            </div>
+                                            <div class="language-chip">
+                                                <i class="fa fa-globe"></i>
+                                                <span>Hindi</span>
+                                            </div>
+                                            <div class="language-chip">
+                                                <i class="fa fa-globe"></i>
+                                                <span>Marathi</span>
+                                            </div>
+                                        </div>
+                                        <h5 class="fw-bold mb-3">
+                                            <i class="fa fa-language me-2 text-primary"></i>Hand On Experience
+                                        </h5>
+                                        <div class="d-flex flex-wrap gap-3">
+                                            <div class="language-chip">
+                                                <i class="fa fa-globe"></i>
+                                                <span>5+ Years</span>
                                             </div>
 
                                         </div>
-
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="row g-4 align-items-stretch">
-
-                            <!-- About Description -->
-                            <div class="col-lg-7 col-md-12">
-                                <div class="card shadow-sm border-0 h-100 about-card-enhanced">
-                                    <div class="card-body p-4">
+                        <div class="row">
+                            <!-- Profile Description -->
+                            <div class="col-lg-8 col-md-7 mb-4">
+                                <div class="card shadow-sm border-0 h-100 fade-in">
+                                    <div class="card-body">
                                         <h4 class="fw-bold mb-3">
-                                            <i class="fa fa-user-circle me-2 text-primary"></i>
-                                            About the Provider
+                                            <i class="fa fa-user-circle me-2 text-primary"></i>About the Provider
                                         </h4>
-
-                                        <p class="text-muted mb-0 about-description">
-                                            <?= !empty($provider->description)
-                                                ? nl2br(htmlspecialchars($provider->description))
-                                                : 'No description available.'; ?>
+                                        <p class="text-muted mb-0">
+                                            <?= !empty($provider->description) ? $provider->description : 'No description available.'; ?>
                                         </p>
                                     </div>
                                 </div>
                             </div>
-
-                            <!-- Contact Information -->
-                            <div class="col-lg-5 col-md-12">
-                                <div class="card shadow-sm border-0 h-100 contact-card-enhanced">
-
-                                    <div class="card-header text-white text-center fw-bold">
-                                        <i class="fa fa-address-card me-2"></i>
-                                        Contact Information
+                            <!-- Contact Info -->
+                            <div class="col-lg-4 col-md-5 mb-4">
+                                <div class="card shadow-sm border-0 h-100 fade-in">
+                                    <div class="card-header bg-primary text-white fw-bold">
+                                        <i class="fa fa-address-card me-2"></i> Contact Information
                                     </div>
-
-                                    <div class="card-body p-4">
-
-                                        <div class="contact-row">
-                                            <div class="contact-circle bg-purple">
-                                                <i class="fa fa-user"></i>
+                                    <div class="card-body">
+                                        <div class="mb-3 d-flex align-items-center">
+                                            <div class="contact-icon user">
+                                                <i class="fa fa-user text-white"></i>
                                             </div>
                                             <div>
-                                                <small>Owner : </small>
-                                                <strong><?= $provider->name; ?></strong>
+                                                <strong>Owner:</strong> <span><?= $provider->name; ?></span>
                                             </div>
                                         </div>
-
-                                        <div class="contact-row">
-                                            <div class="contact-circle bg-pink">
-                                                <i class="fa fa-envelope"></i>
+                                        <div class="mb-3 d-flex align-items-center">
+                                            <div class="contact-icon email">
+                                                <i class="fa fa-envelope text-white"></i>
                                             </div>
                                             <div>
-                                                <small>Email : </small>
-                                                <strong><?= $provider->email; ?></strong>
+                                                <strong>Email:</strong> <span><?= $provider->email; ?></span>
                                             </div>
                                         </div>
-
-                                        <div class="contact-row">
-                                            <div class="contact-circle bg-blue">
-                                                <i class="fa fa-phone"></i>
+                                        <div class="mb-3 d-flex align-items-center">
+                                            <div class="contact-icon phone">
+                                                <i class="fa fa-phone text-white"></i>
                                             </div>
                                             <div>
-                                                <small>Mobile : </small>
-                                                <strong><?= $provider->mobile; ?></strong>
+                                                <strong>Mobile:</strong> <span><?= $provider->mobile; ?></span>
                                             </div>
                                         </div>
-
-                                        <div class="contact-row">
-                                            <div class="contact-circle bg-green">
-                                                <i class="fa fa-map-marker-alt"></i>
+                                        <div class="mb-3 d-flex align-items-start">
+                                            <div class="contact-icon location">
+                                                <i class="fa fa-map-marker-alt text-white"></i>
                                             </div>
                                             <div>
-                                                <small>Address : </small>
-                                                <strong><?= $provider->address; ?></strong>
+                                                <strong>Address:</strong>
+                                                <div><?= $provider->address; ?></div>
                                             </div>
                                         </div>
-
                                     </div>
-
-                                    <!-- Map (Better & Safer Version) -->
-                                    <?php if (!empty($provider->address)): ?>
-                                        <div class="map-container">
-                                            <iframe
-                                                src="https://www.google.com/maps?q=<?= urlencode($provider->address) ?>&output=embed"
-                                                width="100%"
-                                                height="220"
-                                                style="border:0;"
-                                                loading="lazy">
-                                            </iframe>
-                                        </div>
-                                    <?php endif; ?>
-
+                                    <div class="card-footer p-0 map-container">
+                                        <!-- Clickable Static Map -->
+                                        <img
+                                            src="https://maps.googleapis.com/maps/api/staticmap?center=<?= urlencode($provider->address); ?>&zoom=15&size=400x200&markers=color:red%7C<?= $provider->latitude; ?>,<?= $provider->longitude; ?>&key=AIzaSyAR5-9XtV0r0VyR7uu0ppEKhNHanKlGwWk"
+                                            class="img-fluid w-100 rounded-bottom map-image"
+                                            alt="Map of <?= $provider->address; ?>"
+                                            data-gym-lat="<?= $provider->latitude; ?>"
+                                            data-gym-lng="<?= $provider->longitude; ?>"
+                                            style="cursor:pointer;">
+                                    </div>
                                 </div>
                             </div>
-
                         </div>
-
                     </div>
                 </div>
 
@@ -1830,25 +1658,25 @@
                                     <i class="fa fa-images me-2 text-primary"></i>Photo Gallery
                                 </h5>
                                 <div class="gallery-grid">
-
-                                    <?php if (!empty($gallery_images)) : ?>
-
-                                        <?php foreach ($gallery_images as $image) : ?>
-
-                                            <div class="gallery-item fade-in">
-                                                <img src="<?= base_url($image->image) ?>"
-                                                    alt="Gallery Image"
-                                                    class="img-fluid rounded">
-                                            </div>
-
-                                        <?php endforeach; ?>
-
-                                    <?php else : ?>
-                                        <p class="text-danger fw-bold text-align-center text-center w-100">
-                                            No Gallery Image Uploaded yet.
-                                        </p>
-                                    <?php endif; ?>
-
+                                    <!-- Sample Images - Replace with dynamic PHP -->
+                                    <div class="gallery-item fade-in">
+                                        <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=500" alt="Gym Image 1">
+                                    </div>
+                                    <div class="gallery-item fade-in">
+                                        <img src="https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=500" alt="Gym Image 2">
+                                    </div>
+                                    <div class="gallery-item fade-in">
+                                        <img src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=500" alt="Gym Image 3">
+                                    </div>
+                                    <div class="gallery-item fade-in">
+                                        <img src="https://images.unsplash.com/photo-1574680096145-d05b474e2155?w=500" alt="Gym Image 4">
+                                    </div>
+                                    <div class="gallery-item fade-in">
+                                        <img src="https://images.unsplash.com/photo-1593476087123-36d1de271f08?w=500" alt="Gym Image 5">
+                                    </div>
+                                    <div class="gallery-item fade-in">
+                                        <img src="https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=500" alt="Gym Image 6">
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1864,54 +1692,48 @@
                                     <i class="fa fa-certificate me-2 text-primary"></i>Certifications & Achievements
                                 </h5>
                                 <div class="row g-3">
-
-                                    <?php if (!empty($certifications)) : ?>
-                                        <?php foreach ($certifications as $cert) : ?>
-
-                                            <div class="col-md-6">
-                                                <div class="certification-card fade-in">
-                                                    <h6 class="certification-title">
-                                                        <?= htmlspecialchars($cert->title) ?>
-                                                    </h6>
-                                                    <p class="certification-issuer">
-                                                        <i class="fa fa-map-marker-alt me-2"></i>
-                                                        <?= htmlspecialchars($provider->address ?? 'Address Not Available') ?>
-                                                    </p>
-
-                                                    <?php if (!empty($cert->image_path)) : ?>
-
-                                                        <p class="certification-year">
-                                                            <a href="<?= base_url($cert->image_path) ?>" target="_blank" class="certificate-btn">
-                                                                <i class="fa fa-file me-2 text-light"></i>
-                                                                View Certificate
-                                                            </a>
-                                                        </p>
-
-                                                    <?php endif; ?>
-
-                                                    <span class="certification-year">
-                                                        <?= date('Y', strtotime($cert->created_on)) ?>
-                                                    </span>
-
-                                                </div>
-                                            </div>
-
-                                        <?php endforeach; ?>
-
-                                    <?php else : ?>
-
-                                        <div class="col-12 text-danger fw-bold text-align-center text-center">
-                                            No Certifications Uploaded yet.
+                                    <!-- Sample Certifications - Replace with dynamic PHP -->
+                                    <div class="col-md-6">
+                                        <div class="certification-card fade-in">
+                                            <h6 class="certification-title">Certified Personal Trainer</h6>
+                                            <p class="certification-issuer">
+                                                <i class="fa fa-building me-2"></i>American Council on Exercise (ACE)
+                                            </p>
+                                            <span class="certification-year">2019</span>
                                         </div>
-
-                                    <?php endif; ?>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="certification-card fade-in">
+                                            <h6 class="certification-title">Nutrition & Wellness Consultant</h6>
+                                            <p class="certification-issuer">
+                                                <i class="fa fa-building me-2"></i>International Sports Sciences Association
+                                            </p>
+                                            <span class="certification-year">2020</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="certification-card fade-in">
+                                            <h6 class="certification-title">Advanced Strength Training</h6>
+                                            <p class="certification-issuer">
+                                                <i class="fa fa-building me-2"></i>National Academy of Sports Medicine
+                                            </p>
+                                            <span class="certification-year">2021</span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="certification-card fade-in">
+                                            <h6 class="certification-title">Yoga Instructor Level 2</h6>
+                                            <p class="certification-issuer">
+                                                <i class="fa fa-building me-2"></i>Yoga Alliance International
+                                            </p>
+                                            <span class="certification-year">2022</span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-
             </div>
         </div>
     </div>
@@ -1963,92 +1785,3 @@
         </div>
     </div>
 </div>
-
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-
-<script>
-    var base_url = "<?= base_url(); ?>";
-</script>
-
-<script>
-    $(document).ready(function() {
-        if ($("#service-list").length > 0) {
-            const providerId = $("#service-list").data("provider");
-
-            function loadServices(page = 1) {
-
-                $.ajax({
-                    url: site_url + "profile/get_services_ajax/" + providerId,
-                    type: "GET",
-                    data: {
-                        page: page
-                    },
-                    dataType: "json",
-                    success: function(res) {
-                        let html = "";
-
-                        if (res.services.length > 0) {
-                            res.services.forEach(function(service) {
-
-                                html += `
-                                    <div class="service-card fade-in">
-                                        <div class="service-image">
-                                            <img src="${base_url + service.image}" alt="${service.name}">
-                                        </div>
-
-                                        <div class="service-content">
-                                            <div class="service-header">
-                                                <h5>${service.name}</h5>
-                                                ${service.month_price ? `<span class="service-price">₹${service.month_price}/mo</span>` : ''}
-                                            </div>
-
-                                            <p class="service-description">
-                                                ${service.description}
-                                            </p>
-
-                                            <div class="service-footer">
-                                                <span class="service-city">
-                                                    <i class="fa fa-location-dot"></i> ${service.city ?? 'Location Not Available'} 
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    `;
-
-                            });
-                        } else {
-                            html = `
-                                <div class="text-danger fw-bold text-align-center text-center">
-                                    No Services Available!
-                                </div>
-                            `;
-                        }
-
-                        $("#service-list").html(html);
-
-                        let totalPages = Math.ceil(res.total / res.limit);
-                        let currentPage = res.page;
-
-                        let pagination = "";
-                        for (let i = 1; i <= res.totalPages; i++) {
-                            pagination += `
-                            <li class="page-item ${i == res.currentPage ? 'active' : ''}">
-                                <a class="page-link" href="#" data-page="${i}">${i}</a>
-                            </li>
-                            `;
-                        }
-
-                        $("#service-pagination").html(pagination);
-                    }
-                });
-            }
-
-            loadServices();
-
-            $(document).on("click", "#service-pagination .page-link", function(e) {
-                e.preventDefault();
-                loadServices($(this).data("page"));
-            });
-        }
-    });
-</script>

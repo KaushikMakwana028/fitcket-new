@@ -37,12 +37,13 @@ class UserWallet extends User_Controller
 
     private function getWalletTransactions($walletId)
     {
-        return $this->db
+        $query = $this->db
             ->where('wallet_id', $walletId)
             ->where_in('type', ['winning', 'withdraw', 'refund'])
             ->order_by('id', 'DESC')
-            ->get('transactions')
-            ->result_array();
+            ->get('transactions');
+
+        return $query ? $query->result_array() : [];
     }
 
     private function getUserBankAccounts($userId)
@@ -79,10 +80,15 @@ class UserWallet extends User_Controller
     private function getWinningSummary($walletId)
     {
         $transactions = $this->getWalletTransactions($walletId);
+
+        if (!is_array($transactions)) {
+            $transactions = [];
+        }
         $totalWinning = 0;
         $totalWithdraw = 0;
 
         foreach ($transactions as $transaction) {
+
             $type = strtolower((string) ($transaction['type'] ?? ''));
             $status = strtolower((string) ($transaction['status'] ?? ''));
             $amount = (float) ($transaction['amount'] ?? 0);

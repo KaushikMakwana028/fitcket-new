@@ -2387,14 +2387,14 @@ $renderCricketTeamAvatar = function ($logoUrl, $teamName) {
                 <div class="players-scroll animate-in delay-5">
                     <?php if (!empty($players)): ?>
                         <?php foreach ($players as $p): ?>
-                            <?php 
-                                $pName = is_array($p) ? $p['name'] : $p;
-                                $pImageRaw = is_array($p) && !empty($p['image']) ? trim($p['image']) : '';
-                                
-                                $pImage = '';
-                                if ($pImageRaw !== '') {
-                                    $pImage = (strpos($pImageRaw, 'http') === 0) ? $pImageRaw : base_url($pImageRaw);
-                                }
+                            <?php
+                            $pName = is_array($p) ? $p['name'] : $p;
+                            $pImageRaw = is_array($p) && !empty($p['image']) ? trim($p['image']) : '';
+
+                            $pImage = '';
+                            if ($pImageRaw !== '') {
+                                $pImage = (strpos($pImageRaw, 'http') === 0) ? $pImageRaw : base_url($pImageRaw);
+                            }
                             ?>
                             <div class="player-card">
                                 <div class="player-avatar">

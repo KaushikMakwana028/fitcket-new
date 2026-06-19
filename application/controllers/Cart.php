@@ -131,7 +131,7 @@ class Cart extends User_Controller
             $final_qty = $qty;
         }
 
-        $this->send_provider_notification($provider_id, $user_id, 'added',[
+        $this->send_provider_notification($provider_id, $user_id, 'added', [
             'cart_item_id' => $cart_item_id,
             'quantity' => $final_qty,
             'duration' => $duration

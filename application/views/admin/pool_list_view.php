@@ -185,16 +185,6 @@ $buildPoolPageUrl = function ($pageNumber) {
         color: #fff;
     }
 
-    .admin-pool-list .action-btn.delete {
-        background: linear-gradient(135deg, #dc2626, #ef4444);
-        border-color: transparent;
-        color: #fff;
-    }
-
-    .admin-pool-list .inline-delete-form {
-        margin: 0;
-    }
-
     .admin-pool-list .action-btn::after {
         content: attr(data-label);
         position: absolute;
@@ -351,7 +341,11 @@ $buildPoolPageUrl = function ($pageNumber) {
                                         </div>
 
                                         <div class="pool-subtext">
-                                            <?= date('d M, h:i A', strtotime($pool['match_time'])) ?>
+                                            <?php if (!empty($pool['match_time'])): ?>
+                                                <?= date('d M, h:i A', strtotime($pool['match_time'])) ?>
+                                            <?php else: ?>
+                                                N/A
+                                            <?php endif; ?>
                                         </div>
                                         <!-- <div class="pool-subtext">Pool ID: #<?= (int) $pool['id'] ?></div> -->
                                     </td>
@@ -379,9 +373,12 @@ $buildPoolPageUrl = function ($pageNumber) {
                                     <td>
                                         <div class="action-stack">
                                             <?php $prizeInfo = $pool_prize_map[(int) $pool['id']] ?? null; ?>
-                                            <a href="<?= base_url('admin/pool/prize/' . (int) $pool['id']) ?>" class="btn btn-sm action-btn prize" data-label="<?= $prizeInfo ? 'Edit Winner Amount' : 'Add Winner Amount' ?>" title="<?= $prizeInfo ? 'Edit Winner Amount' : 'Add Winner Amount' ?>">
+
+                                            <a href="<?= base_url('admin/pool/prize/' . (int) $pool['id']) ?>"
+                                                class="btn btn-sm action-btn prize">
                                                 <i class="bx bx-trophy"></i>
                                             </a>
+
                                             <a href="<?= base_url('admin/pool/users/' . (int) $pool['id']) ?>"
                                                 class="btn btn-sm action-btn"
                                                 style="background:#7c3aed;color:#fff;"
@@ -389,17 +386,24 @@ $buildPoolPageUrl = function ($pageNumber) {
                                                 title="View Users">
                                                 <i class="bx bx-group"></i>
                                             </a>
-                                            <a href="<?= base_url('admin/pool/' . (int) $pool['id']) ?>" class="btn btn-sm action-btn manage" data-label="See Questions" title="See Questions">
+
+                                            <a href="<?= base_url('admin/pool/' . (int) $pool['id']) ?>"
+                                                class="btn btn-sm action-btn manage">
                                                 <i class="bx bx-show"></i>
                                             </a>
-                                            <a href="<?= base_url('admin/pool/leaderboard') ?>" class="btn btn-sm action-btn board" data-label="Global Leaderboard" title="Global Leaderboard">
+
+                                            <a href="<?= base_url('admin/pool/leaderboard') ?>"
+                                                class="btn btn-sm action-btn board">
                                                 <i class="bx bx-bar-chart-alt-2"></i>
                                             </a>
-                                            <form method="post" action="<?= base_url('admin/pool/delete/' . (int) $pool['id']) ?>" class="inline-delete-form" onsubmit="return confirm('Delete this pool permanently?');">
-                                                <button type="submit" class="btn btn-sm action-btn delete" data-label="Delete Pool" title="Delete Pool">
-                                                    <i class="bx bx-trash"></i>
-                                                </button>
-                                            </form>
+
+                                            <!-- ✅ DELETE BUTTON -->
+                                            <button type="button"
+                                                class="btn btn-sm action-btn deletePool"
+                                                data-id="<?= (int) $pool['id'] ?>"
+                                                title="Delete Pool">
+                                                <i class="bx bx-trash"></i>
+                                            </button>
                                         </div>
                                     </td>
                                 </tr>

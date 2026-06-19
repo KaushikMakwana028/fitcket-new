@@ -150,9 +150,9 @@
 <script>
   const site_url = "<?= base_url(); ?>";
 </script>
-  <script>
-    const BASE_URL = "<?= base_url(); ?>";
-    const GET_BOOKINGS_URL = "<?= base_url('provider/customers/get_bookings_ajax'); ?>";
+<script>
+  const BASE_URL = "<?= base_url(); ?>";
+  const GET_BOOKINGS_URL = "<?= base_url('provider/customers/get_bookings_ajax'); ?>";
 </script>
 
 <script src="<?= base_url('assets/js/custom.js') ?>?v=<?= time() ?>"></script>
@@ -160,27 +160,28 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        <?php if($this->session->flashdata('success')): ?>
-            Swal.fire({
-                icon: 'success',
-                title: 'Success!',
-                text: '<?= str_replace("'", "\'", $this->session->flashdata("success")) ?>',
-                timer: 3000,
-                showConfirmButton: false
-            });
-        <?php endif; ?>
-        
-        <?php if($this->session->flashdata('error')): ?>
-            Swal.fire({
-                icon: 'error',
-                title: 'Error!',
-                text: '<?= str_replace("'", "\'", $this->session->flashdata("error")) ?>',
-                confirmButtonColor: '#d33'
-            });
-        <?php endif; ?>
-    });
+  document.addEventListener("DOMContentLoaded", function() {
+    <?php if ($this->session->flashdata('success')): ?>
+      Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: '<?= str_replace("'", "\'", $this->session->flashdata("success")) ?>',
+        timer: 3000,
+        showConfirmButton: false
+      });
+    <?php endif; ?>
+
+    <?php if ($this->session->flashdata('error')): ?>
+      Swal.fire({
+        icon: 'error',
+        title: 'Error!',
+        text: '<?= str_replace("'", "\'", $this->session->flashdata("error")) ?>',
+        confirmButtonColor: '#d33'
+      });
+    <?php endif; ?>
+  });
 </script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.13/js/utils.js"></script>
 <script src="https://unpkg.com/libphonenumber-js@1.10.14/bundle/libphonenumber-js.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/js/all.min.js" integrity="sha512-b+nQTCdtTBIRIbraqNEwsjB6UvL3UEMkXnhzd8awtCYh0Kcsjl9uEgwVFVbhoj3uu1DO1ZMacNvLoyJJiNfcvg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
@@ -195,16 +196,14 @@
 <script src="<?= base_url('assets/js/index.js') ?>"></script>
 
 
-		<script src="https://www.gstatic.com/charts/loader.js"></script>
+<script src="https://www.gstatic.com/charts/loader.js"></script>
 
 <script>
-
-
   // $(".data-attributes span").peity("donut")
 
 
 
-  document.addEventListener("DOMContentLoaded", function () {
+  document.addEventListener("DOMContentLoaded", function() {
 
     // Find all alerts (success, danger, warning etc.)
 
@@ -212,11 +211,11 @@
 
 
 
-    alerts.forEach(function (alert) {
+    alerts.forEach(function(alert) {
 
 
 
-      setTimeout(function () {
+      setTimeout(function() {
 
 
 
@@ -228,7 +227,7 @@
 
 
 
-        setTimeout(function () {
+        setTimeout(function() {
 
           alert.remove();
 
@@ -240,12 +239,12 @@
 
   });
 
-  $(document).ready(function () {
+  $(document).ready(function() {
     const $html = $('html');
     const $icon = $('.dark-mode-icon i');
 
 
-    $('.dark-mode-icon').click(function () {
+    $('.dark-mode-icon').click(function() {
       // alert('h');
       // return;
       const currentTheme = $html.attr('data-bs-theme');
@@ -266,38 +265,32 @@
       }
     }
     $('input[type="checkbox"][data-toggle="toggle"]').bootstrapToggle();
-$("#show_hide_password a").on('click', function (event) {
+    $("#show_hide_password a").on('click', function(event) {
 
-                event.preventDefault();
+      event.preventDefault();
 
-                if ($('#show_hide_password input').attr("type") == "text") {
+      if ($('#show_hide_password input').attr("type") == "text") {
 
-                    $('#show_hide_password input').attr('type', 'password');
+        $('#show_hide_password input').attr('type', 'password');
 
-                    $('#show_hide_password i').addClass("bx-hide");
+        $('#show_hide_password i').addClass("bx-hide");
 
-                    $('#show_hide_password i').removeClass("bx-show");
+        $('#show_hide_password i').removeClass("bx-show");
 
-                } else if ($('#show_hide_password input').attr("type") == "password") {
+      } else if ($('#show_hide_password input').attr("type") == "password") {
 
-                    $('#show_hide_password input').attr('type', 'text');
+        $('#show_hide_password input').attr('type', 'text');
 
-                    $('#show_hide_password i').removeClass("bx-hide");
+        $('#show_hide_password i').removeClass("bx-hide");
 
-                    $('#show_hide_password i').addClass("bx-show");
+        $('#show_hide_password i').addClass("bx-show");
 
-                }
+      }
 
-            });
+    });
   });
 
   // notification serviceWorker
-
-
-
-
-
-
 </script>
 
 </body>
