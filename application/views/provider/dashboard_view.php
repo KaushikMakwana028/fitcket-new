@@ -250,7 +250,7 @@
 
             <h6 class="mb-3">Bookings Overview (Jan - Dec)</h6>
 
-            <canvas id="bookingChart" height="120"></canvas>
+            <canvas id="bookingChart" style="height:300px;"></canvas>
 
           </div>
 

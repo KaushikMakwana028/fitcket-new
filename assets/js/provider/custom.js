@@ -754,13 +754,13 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
-  $('#js-example-basic-multiple').select2();({
+  $('#js-example-basic-multiple').select2({
      placeholder: "Select Prefer Languages",
     allowClear: true,
     tags: false,
     width: "100%",
     theme: "bootstrap-5",
-  })
+  });
 });
 $(document).ready(function () {
   $("#offer_form").on("submit", function (e) {
