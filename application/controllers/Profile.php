@@ -627,7 +627,7 @@ class Profile extends User_Controller
 
     {
 
-        $limit = 3;
+        $limit = 10;
 
         $page = (int) $this->input->get('page');
 

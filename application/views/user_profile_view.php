@@ -280,6 +280,10 @@
             <div class="action-icon"><i class="bi bi-credit-card"></i></div>
             <div>Manage Bank Accounts</div>
           </a>
+          <a href="<?= base_url('pay_to_gym'); ?>" class="action-button">
+            <div class="action-icon"><i class="bi bi-cash-coin"></i></div>
+            <div>Pay at Gym</div>
+          </a>
         </div>
       </div>
 

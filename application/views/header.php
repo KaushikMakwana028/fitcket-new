@@ -330,7 +330,7 @@
 
     /* Enhanced Offcanvas */
     .offcanvas {
-      width: 300px !important;
+      width: 260px !important;
     }
 
     .offcanvas-header {
@@ -357,8 +357,8 @@
     }
 
     .offcanvas .nav-link {
-      padding: 14px 18px !important;
-      margin: 6px 0 !important;
+      padding: 10px 16px !important;
+      margin: 3px 0 !important;
       border-radius: 12px !important;
       color: var(--text-dark) !important;
       font-weight: 500 !important;
@@ -531,24 +531,44 @@
       }
 
       .navbar-brand img {
-        width: 85px !important;
         height: 42px !important;
+        width: auto !important;
+        object-fit: contain !important;
       }
 
       .cart-icon a {
-        padding: 10px;
+        width: 40px !important;
+        height: 40px !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
       }
 
       .cart-icon a i {
-        font-size: 18px !important;
+        font-size: 20px !important;
       }
 
       .cart-badge {
-        top: 0;
-        right: 0;
+        top: -4px !important;
+        right: -4px !important;
         min-width: 16px;
         height: 16px;
         font-size: 0.65rem;
+      }
+
+      .mobile-menu-btn {
+        width: 40px !important;
+        height: 40px !important;
+        padding: 0 !important;
+        border-radius: 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+
+      .mobile-menu-btn i {
+        font-size: 20px !important;
       }
 
       body {
@@ -585,12 +605,18 @@
       }
 
       .navbar-brand img {
-        width: 95px !important;
         height: 48px !important;
+        width: auto !important;
+        object-fit: contain !important;
       }
 
       .cart-icon a {
-        padding: 14px;
+        width: 44px !important;
+        height: 44px !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
       }
 
       .cart-icon a i {
@@ -598,8 +624,8 @@
       }
 
       .cart-badge {
-        top: 4px;
-        right: 4px;
+        top: -4px !important;
+        right: -4px !important;
         min-width: 20px;
         height: 20px;
         font-size: 0.75rem;
@@ -611,11 +637,17 @@
       }
 
       .mobile-menu-btn {
-        padding: 12px 16px !important;
+        width: 44px !important;
+        height: 44px !important;
+        padding: 0 !important;
+        border-radius: 12px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
       }
 
       .mobile-menu-btn i {
-        font-size: 1.2rem;
+        font-size: 22px !important;
       }
     }
 
@@ -639,8 +671,9 @@
       }
 
       .navbar-brand img {
-        width: 100px;
-        height: 50px;
+        height: 50px !important;
+        width: auto !important;
+        object-fit: contain !important;
       }
 
       body {
@@ -651,8 +684,9 @@
     /* Small Mobile: under 480px */
     @media (max-width: 480px) {
       .navbar-brand img {
-        width: 75px !important;
         height: 38px !important;
+        width: auto !important;
+        object-fit: contain !important;
       }
 
       .mobile-bottom-menu a {
@@ -674,15 +708,35 @@
       }
 
       .cart-icon a {
-        padding: 8px;
+        width: 36px !important;
+        height: 36px !important;
+        padding: 0 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
       }
 
       .cart-icon a i {
-        font-size: 16px !important;
+        font-size: 18px !important;
+      }
+
+      .cart-badge {
+        top: -4px !important;
+        right: -4px !important;
       }
 
       .mobile-menu-btn {
-        padding: 8px 12px !important;
+        width: 36px !important;
+        height: 36px !important;
+        padding: 0 !important;
+        border-radius: 10px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+      }
+
+      .mobile-menu-btn i {
+        font-size: 18px !important;
       }
 
       .form-control {
@@ -706,8 +760,9 @@
       }
 
       .navbar-brand img {
-        width: 65px !important;
         height: 32px !important;
+        width: auto !important;
+        object-fit: contain !important;
       }
     }
 
@@ -932,7 +987,7 @@
     <div class="container d-flex justify-content-between align-items-center">
       <!-- Logo -->
       <a class="navbar-brand" href="<?= base_url(); ?>">
-        <img src="<?= base_url('assets/images/logo_ficat.png'); ?>" alt="FITCKET Logo" style="width:100px;height:50px">
+        <img src="<?= base_url('assets/images/logo_ficat.png'); ?>" alt="FITCKET Logo" style="height:50px;width:auto;object-fit:contain">
       </a>
 
       <!-- Mobile & Tablet Right Section -->
@@ -1070,18 +1125,9 @@
       <i class="fas fa-users"></i>
       <span>Providers</span>
     </a>
-    <a href="<?= base_url('pay_to_gym'); ?>" class="<?= ($segment == 'pay_to_gym' ? 'active' : '') ?>">
-      <i class="fas fa-dumbbell"></i>
-      <span>Pay at Gym</span>
-    </a>
     <a href="<?= base_url('services'); ?>" class="<?= ($segment == 'services' ? 'active' : '') ?>">
       <i class="fas fa-cogs"></i>
       <span>Services</span>
-    </a>
-
-    <a href="<?= base_url('fittv'); ?>" class="<?= ($segment == 'fittv' ? 'active' : '') ?>">
-      <i class="fas fa-play-circle"></i>
-      <span>FITTV</span>
     </a>
     <a href="<?= $is_logged_in ? base_url('profile') : base_url('login'); ?>" class="<?= ($segment == 'profile' ? 'active' : '') ?>">
       <i class="fas fa-user"></i>

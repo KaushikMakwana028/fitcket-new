@@ -389,24 +389,24 @@ $current_method = $this->router->fetch_method();
             },
             breakpoints: {
                 0: {
-                    slidesPerView: 2,
+                    slidesPerView: 1,
                     spaceBetween: 12
                 },
                 576: {
-                    slidesPerView: 2,
+                    slidesPerView: 1,
                     spaceBetween: 12
                 },
                 768: {
-                    slidesPerView: 3,
-                    spaceBetween: 16
+                    slidesPerView: 2,
+                    spaceBetween: 20
                 },
                 992: {
-                    slidesPerView: 4,
-                    spaceBetween: 20
+                    slidesPerView: 3,
+                    spaceBetween: 24
                 },
                 1200: {
-                    slidesPerView: 5,
-                    spaceBetween: 20
+                    slidesPerView: 3,
+                    spaceBetween: 30
                 }
             }
         };
@@ -414,7 +414,28 @@ $current_method = $this->router->fetch_method();
         new Swiper(selector, config);
     }
 
-    initSwiper(".categorySwiper");
+    new Swiper(".categorySwiper", {
+        slidesPerView: 2,
+        spaceBetween: 12,
+
+        navigation: {
+            nextEl: ".categorySwiper .swiper-button-next",
+            prevEl: ".categorySwiper .swiper-button-prev"
+        },
+
+        breakpoints: {
+            768: {
+                slidesPerView: 3
+            },
+            992: {
+                slidesPerView: 4
+            },
+            1200: {
+                slidesPerView: 5
+            }
+        }
+    });
+
     initSwiper(".nearestSwiper");
     initSwiper(".gymSwiper");
     initSwiper(".trainerSwiper");

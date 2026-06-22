@@ -1,118 +1,263 @@
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
     :root {
         --primary-color: #6f42c1;
+        --primary-dark: #5a32a3;
+        --secondary-color: #1a1a1a;
         --accent-color: #8e44ad;
         --text-dark: #2d3436;
+        --text-muted: #6c757d;
         --bg-light: #f8f9fa;
-        --gradient-primary: linear-gradient(135deg, #6f42c1 0%, #8e44ad 100%);
-        --success-gradient: linear-gradient(135deg, #10ac84, #0fb272);
-        --danger-gradient: linear-gradient(135deg, #ff4757, #ff3742);
-        --info-gradient: linear-gradient(135deg, #667eea, #764ba2);
-        --shadow-light: 0 2px 15px rgba(111, 66, 193, 0.1);
-        --shadow-medium: 0 4px 25px rgba(111, 66, 193, 0.15);
-        --br-sm: 8px;
-        --br-md: 12px;
-        --br-lg: 16px;
-        --br-xl: 20px;
-        --br-pill: 25px;
-        --transition: all 0.25s ease;
+        --white: #ffffff;
+        --warning: #ffc107;
+        --warning-dark: #e0a800;
+        --success-color: #10ac84;
+        --danger-color: #ff4757;
+        --border-color: #ececec;
+        --radius-sm: 10px;
+        --radius-md: 16px;
+        --radius-lg: 22px;
+        --radius-xl: 32px;
+        --radius-pill: 50px;
     }
 
-    /* ── Base ── */
-    .cart-page-wrap {
-        padding: 2rem 0 4rem;
+    .fitket-cart {
+        font-family: 'Poppins', sans-serif;
+        color: var(--text-dark);
+        line-height: 1.6;
+        background: var(--bg-light);
+        padding: 50px 0 80px;
     }
 
-    .cart-header-bar {
+    .fitket-cart *,
+    .fitket-cart *::before,
+    .fitket-cart *::after {
+        box-sizing: border-box;
+    }
+
+    .fitket-cart button,
+    .fitket-cart input {
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .fitket-cart *:focus-visible {
+        outline: 2px solid var(--accent-color);
+        outline-offset: 2px;
+    }
+
+    .fitket-cart .container {
+        max-width: 1200px;
+    }
+
+    /* ══════════════════════════════════════════
+     PAGE HEADER
+  ══════════════════════════════════════════ */
+    .fkc-page-header {
+        position: relative;
+        background: var(--secondary-color);
+        border-radius: var(--radius-xl);
+        padding: 38px 40px;
+        margin-bottom: 36px;
+        color: var(--white);
+        overflow: hidden;
         display: flex;
         align-items: center;
-        gap: 0.75rem;
-        background: var(--gradient-primary);
-        padding: 1rem 1.5rem;
-        border-radius: var(--br-lg);
-        color: #fff;
-        margin-bottom: 2rem;
-        box-shadow: var(--shadow-medium);
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
     }
 
-    .cart-header-bar h3 {
-        margin: 0;
-        font-size: 1.4rem;
+    .fkc-page-header::after {
+        content: '';
+        position: absolute;
+        width: 380px;
+        height: 380px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(111, 66, 193, 0.32) 0%, transparent 70%);
+        top: -160px;
+        right: -100px;
+        pointer-events: none;
+    }
+
+    .fkc-page-header .fkh-label-row {
+        position: relative;
+        z-index: 2;
+    }
+
+    .fkc-page-header .fkh-eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.7rem;
         font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #b19fe8;
+        background: rgba(111, 66, 193, 0.2);
+        border: 1px solid rgba(111, 66, 193, 0.4);
+        padding: 5px 16px;
+        border-radius: var(--radius-pill);
+        margin-bottom: 14px;
     }
 
-    /* ── Cart Card ── */
+    .fkc-page-header h1 {
+        font-size: clamp(1.5rem, 3vw, 2.1rem);
+        font-weight: 800;
+        margin: 0;
+        letter-spacing: -0.02em;
+    }
+
+    .fkc-page-header h1 em {
+        font-style: normal;
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .fkc-item-count-pill {
+        position: relative;
+        z-index: 2;
+        background: rgba(111, 66, 193, 0.18);
+        border: 1px solid rgba(111, 66, 193, 0.4);
+        color: var(--white);
+        padding: 10px 22px;
+        border-radius: var(--radius-pill);
+        font-weight: 600;
+        font-size: 0.9rem;
+        white-space: nowrap;
+    }
+
+    .fkc-item-count-pill strong {
+        color: #ffc107;
+    }
+
+    /* ══════════════════════════════════════════
+     ALERTS
+  ══════════════════════════════════════════ */
+    .fitket-cart .alert {
+        border-radius: var(--radius-md);
+        border: none;
+        font-weight: 500;
+        padding: 14px 20px;
+    }
+
+    .fitket-cart .alert-success {
+        background: linear-gradient(135deg, var(--success-color), #0fb272);
+        color: var(--white);
+    }
+
+    .fitket-cart .alert-danger {
+        background: linear-gradient(135deg, var(--danger-color), #ff3742);
+        color: var(--white);
+    }
+
+    .fitket-cart .alert .btn-close {
+        filter: invert(1);
+    }
+
+    /* ══════════════════════════════════════════
+     CART ITEM CARD
+  ══════════════════════════════════════════ */
     .cart-card {
-        background: #fff;
-        border: 1px solid rgba(111, 66, 193, 0.12);
-        border-radius: var(--br-lg);
-        box-shadow: var(--shadow-light);
-        padding: 1.25rem;
-        margin-bottom: 1rem;
-        transition: var(--transition);
-        /* CRITICAL: store price as data attr to avoid parsing issues */
+        background: var(--white);
+        border: 1.5px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: 22px;
+        margin-bottom: 16px;
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .cart-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s ease;
     }
 
     .cart-card:hover {
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-medium);
+        transform: translateY(-4px);
+        box-shadow: 0 18px 40px rgba(111, 66, 193, 0.13);
+        border-color: rgba(111, 66, 193, 0.25);
     }
 
-    /* ── Provider image ── */
+    .cart-card:hover::before {
+        transform: scaleX(1);
+    }
+
     .prov-img {
-        width: 56px;
-        height: 56px;
-        border-radius: 50%;
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
         object-fit: cover;
-        border: 3px solid rgba(111, 66, 193, 0.2);
+        border: 3px solid rgba(111, 66, 193, 0.15);
         flex-shrink: 0;
+        padding: 2px;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
     }
 
-    /* ── Price badge ── */
     .price-badge {
         display: inline-flex;
         align-items: center;
-        gap: 0.25rem;
-        background: var(--info-gradient);
-        color: #fff;
-        padding: 0.3rem 0.85rem;
-        border-radius: var(--br-pill);
+        gap: 4px;
+        background: rgba(111, 66, 193, 0.1);
+        color: var(--primary-dark);
+        padding: 6px 16px;
+        border-radius: var(--radius-pill);
         font-weight: 700;
-        font-size: 0.875rem;
+        font-size: 0.85rem;
         white-space: nowrap;
+    }
+
+    .price-badge small {
+        color: var(--text-muted);
+        font-weight: 500;
+        font-size: 0.75rem;
     }
 
     /* ── Qty Controls ── */
     .qty-wrap {
         display: inline-flex;
         align-items: center;
-        border-radius: var(--br-pill);
+        border-radius: var(--radius-pill);
         overflow: hidden;
-        box-shadow: 0 2px 8px rgba(111, 66, 193, 0.2);
-        width: 110px;
+        background: var(--bg-light);
+        border: 1.5px solid var(--border-color);
+        width: 112px;
     }
 
     .qty-btn {
         width: 34px;
         height: 36px;
         border: none;
-        background: var(--primary-color);
-        color: #fff;
+        background: transparent;
+        color: var(--primary-color);
         font-size: 1rem;
         cursor: pointer;
-        transition: background 0.15s;
+        transition: all 0.2s;
         flex-shrink: 0;
         display: flex;
         align-items: center;
         justify-content: center;
+        font-weight: 700;
     }
 
-    .qty-btn:hover {
-        background: var(--accent-color);
+    .qty-btn:hover:not(:disabled) {
+        background: var(--primary-color);
+        color: var(--white);
     }
 
     .qty-btn:disabled {
-        opacity: 0.45;
+        opacity: 0.4;
         cursor: not-allowed;
     }
 
@@ -121,8 +266,8 @@
         text-align: center;
         font-weight: 700;
         font-size: 0.95rem;
-        color: var(--primary-color);
-        background: rgba(111, 66, 193, 0.08);
+        color: var(--secondary-color);
+        background: transparent;
         border: none;
         height: 36px;
         line-height: 36px;
@@ -132,52 +277,75 @@
 
     /* ── Remove btn ── */
     .remove-btn {
-        background: var(--danger-gradient);
-        border: none;
-        border-radius: var(--br-pill);
-        color: #fff;
-        padding: 0.45rem 1rem;
-        font-size: 0.825rem;
+        background: var(--white);
+        border: 1.5px solid rgba(255, 71, 87, 0.3);
+        border-radius: var(--radius-pill);
+        color: var(--danger-color);
+        padding: 8px 18px;
+        font-size: 0.8rem;
         font-weight: 600;
         cursor: pointer;
-        transition: var(--transition);
-        box-shadow: 0 2px 8px rgba(255, 71, 87, 0.3);
+        transition: all 0.25s;
         white-space: nowrap;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
     }
 
     .remove-btn:hover {
+        background: var(--danger-color);
+        border-color: var(--danger-color);
+        color: var(--white);
         transform: translateY(-2px);
-        box-shadow: 0 5px 16px rgba(255, 71, 87, 0.4);
+        box-shadow: 0 8px 18px rgba(255, 71, 87, 0.28);
     }
 
     /* ── Item subtotal ── */
     .item-subtotal-val {
-        font-weight: 700;
-        font-size: 1.05rem;
-        color: #10ac84;
+        font-weight: 800;
+        font-size: 1.1rem;
+        color: var(--success-color);
         white-space: nowrap;
+    }
+
+    .col-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #b3a8c9;
+        display: block;
+        margin-bottom: 8px;
     }
 
     /* ── Desktop layout ── */
     .cart-desktop {
         display: grid;
-        grid-template-columns: 60px 1fr 130px 110px 120px 110px;
+        grid-template-columns: 70px 1fr 150px 120px 130px 120px;
         align-items: center;
         gap: 1rem;
-    }
-
-    .cart-desktop .col-label {
-        font-size: 0.75rem;
-        color: #999;
-        display: block;
-        margin-bottom: 0.35rem;
     }
 
     .cart-desktop .text-center {
         text-align: center;
     }
 
-    /* ── Mobile layout (hidden on md+) ── */
+    .item-name-d {
+        font-weight: 700;
+        color: var(--secondary-color);
+        margin-bottom: 5px;
+        font-size: 0.98rem;
+    }
+
+    .start-date-d {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    /* ── Mobile layout ── */
     .cart-mobile {
         display: none;
     }
@@ -191,11 +359,18 @@
             display: block;
         }
 
+        .cart-card {
+            padding: 16px;
+            border-radius: var(--radius-md);
+        }
+
         .cart-mobile .mob-row1 {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            margin-bottom: 0.75rem;
+            gap: 12px;
+            margin-bottom: 14px;
+            padding-bottom: 14px;
+            border-bottom: 1.5px dashed var(--border-color);
         }
 
         .cart-mobile .mob-info {
@@ -204,18 +379,21 @@
         }
 
         .cart-mobile .mob-info .item-name {
-            font-size: 0.95rem;
+            font-size: 0.92rem;
             font-weight: 700;
-            color: var(--text-dark);
+            color: var(--secondary-color);
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
         .cart-mobile .mob-info .start-date {
-            font-size: 0.78rem;
-            color: #999;
-            margin-top: 2px;
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            margin-top: 3px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
         }
 
         .cart-mobile .mob-row2 {
@@ -229,17 +407,18 @@
         .cart-mobile .mob-subtotal {
             width: 100%;
             text-align: right;
-            font-size: 0.9rem;
-            color: #10ac84;
-            font-weight: 700;
-            margin-top: 0.5rem;
-            padding-top: 0.5rem;
-            border-top: 1px solid #f0f0f0;
+            font-size: 0.92rem;
+            color: var(--success-color);
+            font-weight: 800;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1.5px dashed var(--border-color);
         }
 
         .prov-img {
-            width: 46px;
-            height: 46px;
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
         }
 
         .qty-wrap {
@@ -257,162 +436,246 @@
         }
 
         .remove-btn {
-            padding: 0.4rem 0.7rem;
-            font-size: 0.78rem;
+            padding: 8px 10px;
+            font-size: 0;
+            gap: 0;
+        }
+
+        .remove-btn i {
+            font-size: 0.95rem;
         }
     }
 
     /* ── Empty Cart ── */
     .empty-cart {
         text-align: center;
-        padding: 4rem 2rem;
-        background: linear-gradient(135deg, var(--bg-light), #e9ecef);
-        border-radius: var(--br-xl);
-        box-shadow: var(--shadow-light);
+        padding: 70px 30px;
+        background: var(--white);
+        border: 1.5px dashed rgba(111, 66, 193, 0.25);
+        border-radius: var(--radius-xl);
+    }
+
+    .empty-cart .empty-icon-wrap {
+        width: 90px;
+        height: 90px;
+        margin: 0 auto 20px;
+        border-radius: 50%;
+        background: rgba(111, 66, 193, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
     .empty-cart i {
-        font-size: 4rem;
-        color: #dee2e6;
-        margin-bottom: 1rem;
-        display: block;
+        font-size: 2.6rem;
+        color: var(--primary-color);
     }
 
     .empty-cart h4 {
-        font-size: 1.4rem;
-        color: #495057;
+        font-size: 1.3rem;
+        color: var(--secondary-color);
         font-weight: 700;
-        margin-bottom: 0.5rem;
+        margin-bottom: 8px;
     }
 
-    /* ── Summary card ── */
+    .empty-cart p {
+        color: var(--text-muted);
+        margin-bottom: 24px;
+    }
+
+    .empty-cart .browse-btn {
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        color: var(--white);
+        border: none;
+        padding: 12px 32px;
+        border-radius: var(--radius-pill);
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-block;
+        transition: all 0.25s;
+    }
+
+    .empty-cart .browse-btn:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 28px rgba(111, 66, 193, 0.3);
+        color: var(--white);
+    }
+
+    /* ══════════════════════════════════════════
+     SUMMARY CARD
+  ══════════════════════════════════════════ */
     .summary-card {
-        background: #fff;
-        border-radius: var(--br-xl);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        background: var(--white);
+        border-radius: var(--radius-lg);
         overflow: hidden;
+        border: 1.5px solid var(--border-color);
         position: sticky;
         top: 1rem;
     }
 
     .summary-header {
-        background: var(--gradient-primary);
-        color: #fff;
-        padding: 1.25rem 1.75rem;
+        background: var(--secondary-color);
+        position: relative;
+        overflow: hidden;
+        color: var(--white);
+        padding: 22px 26px;
+    }
+
+    .summary-header::after {
+        content: '';
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(111, 66, 193, 0.35) 0%, transparent 70%);
+        top: -90px;
+        right: -60px;
+        pointer-events: none;
     }
 
     .summary-header h5 {
         margin: 0;
-        font-size: 1.1rem;
+        font-size: 1.05rem;
         font-weight: 700;
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        gap: 8px;
     }
 
     .summary-body {
-        padding: 1.5rem 1.75rem;
+        padding: 24px 26px 26px;
     }
 
     .summary-row {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 0.75rem;
-        font-size: 0.95rem;
+        margin-bottom: 12px;
+        font-size: 0.92rem;
+        color: var(--text-muted);
+    }
+
+    .summary-row .fw-bold {
+        color: var(--secondary-color);
+        font-weight: 700;
     }
 
     .summary-total {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        font-size: 1.05rem;
+        font-size: 1rem;
         font-weight: 700;
-        margin-top: 0.5rem;
+        margin-top: 8px;
+        color: var(--secondary-color);
     }
 
     #cartTotal {
-        font-size: 1.6rem;
+        font-size: 1.5rem;
         font-weight: 800;
-        color: #10ac84;
+        color: var(--success-color);
+    }
+
+    .duration-breakdown-title {
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--primary-color);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
     }
 
     .duration-block {
-        background: linear-gradient(135deg, var(--bg-light), #eef0f3);
-        border-left: 4px solid var(--primary-color);
-        border-radius: var(--br-sm);
-        padding: 0.75rem 1rem;
-        margin-bottom: 0.5rem;
+        background: var(--bg-light);
+        border-left: 3px solid var(--primary-color);
+        border-radius: var(--radius-sm);
+        padding: 12px 14px;
+        margin-bottom: 10px;
     }
 
     .duration-block .dur-title {
         font-weight: 700;
-        color: var(--primary-color);
-        font-size: 0.85rem;
+        color: var(--primary-dark);
+        font-size: 0.8rem;
         text-transform: capitalize;
-        margin-bottom: 0.4rem;
+        margin-bottom: 6px;
     }
 
     .dur-row {
         display: flex;
         justify-content: space-between;
-        font-size: 0.82rem;
-        color: #555;
-        padding: 0.15rem 0;
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        padding: 3px 0;
     }
 
     .discount-alert {
-        background: var(--success-gradient);
-        color: #fff;
-        border-radius: var(--br-md);
-        padding: 0.6rem 1rem;
+        background: linear-gradient(135deg, var(--success-color), #0fb272);
+        color: var(--white);
+        border-radius: var(--radius-md);
+        padding: 12px 16px;
         text-align: center;
-        font-size: 0.875rem;
+        font-size: 0.85rem;
         font-weight: 600;
-        margin-bottom: 1rem;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    hr.fkc-divider {
+        border: none;
+        border-top: 1.5px dashed var(--border-color);
+        margin: 14px 0;
     }
 
     .pay-btn {
         width: 100%;
-        background: var(--success-gradient);
+        background: var(--warning);
         border: none;
-        border-radius: var(--br-pill);
-        color: #fff;
-        padding: 0.875rem;
-        font-size: 1.05rem;
+        border-radius: var(--radius-pill);
+        color: #1a1a1a;
+        padding: 15px;
+        font-size: 1rem;
         font-weight: 700;
         cursor: pointer;
-        transition: var(--transition);
-        box-shadow: 0 4px 15px rgba(16, 172, 132, 0.3);
-        margin-top: 1rem;
+        transition: all 0.25s;
+        margin-top: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        letter-spacing: 0.01em;
     }
 
     .pay-btn:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(16, 172, 132, 0.4);
+        background: var(--warning-dark);
+        transform: translateY(-3px);
+        box-shadow: 0 12px 28px rgba(255, 193, 7, 0.35);
     }
 
     .pay-btn:disabled {
-        background: #adb5bd;
+        background: #e2e2e2;
+        color: #999;
         cursor: not-allowed;
         box-shadow: none;
     }
 
-    /* Alerts */
-    .alert {
-        border-radius: var(--br-md);
-        border: none;
-    }
-
-    .alert-success {
-        background: var(--success-gradient);
-        color: #fff;
-    }
-
-    .alert-danger {
-        background: var(--danger-gradient);
-        color: #fff;
-    }
-
-    .alert .btn-close {
-        filter: invert(1);
+    .secure-note {
+        text-align: center;
+        font-size: 0.78rem;
+        color: var(--text-muted);
+        margin-top: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
     }
 
     @media (max-width: 991px) {
@@ -421,160 +684,181 @@
             margin-top: 1.5rem;
         }
     }
+
+    @media (max-width: 576px) {
+        .fkc-page-header {
+            padding: 26px 22px;
+            border-radius: var(--radius-lg);
+        }
+
+        .fitket-cart {
+            padding: 26px 0 60px;
+        }
+    }
 </style>
 
-<div class="container cart-page-wrap">
+<div class="fitket-cart">
+    <div class="container">
 
-    <?php if ($this->session->flashdata('success')): ?>
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="bi bi-check-circle-fill me-2"></i>
-            <?= $this->session->flashdata('success'); ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <?php if ($this->session->flashdata('success')): ?>
+            <div class="alert alert-success alert-dismissible fade show mb-3" role="alert">
+                <i class="bi bi-check-circle-fill me-2"></i>
+                <?= $this->session->flashdata('success'); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php elseif ($this->session->flashdata('error')): ?>
+            <div class="alert alert-danger alert-dismissible fade show mb-3" role="alert">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <?= $this->session->flashdata('error'); ?>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        <?php endif; ?>
+
+        <!-- ═══ PAGE HEADER ═══ -->
+        <div class="fkc-page-header">
+            <div class="fkh-label-row">
+                <span class="fkh-eyebrow"><i class="bi bi-cart3"></i> Your Selections</span>
+                <h1>Review Your <em>Cart</em></h1>
+            </div>
+            <div class="fkc-item-count-pill">
+                <strong><?= !empty($cart_items) ? count($cart_items) : 0; ?></strong> item<?= (!empty($cart_items) && count($cart_items) == 1) ? '' : 's'; ?> in cart
+            </div>
         </div>
-    <?php elseif ($this->session->flashdata('error')): ?>
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="bi bi-exclamation-triangle-fill me-2"></i>
-            <?= $this->session->flashdata('error'); ?>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    <?php endif; ?>
 
-    <div class="cart-header-bar">
-        <i class="bi bi-cart3 fs-4"></i>
-        <h3>Your Cart Items</h3>
-    </div>
+        <div class="row">
+            <!-- ── Cart Items ── -->
+            <div class="col-12 col-lg-8" id="cartItemsCol">
 
-    <div class="row">
-        <!-- ── Cart Items ── -->
-        <div class="col-12 col-lg-8" id="cartItemsCol">
+                <?php if (!empty($cart_items)): ?>
+                    <?php foreach ($cart_items as $item): ?>
+                        <?php
+                        $item_price = (float)($item['price'] ?? 0);
+                        $item_qty   = (int)($item['qty'] ?? 1);
+                        $item_total = $item_price * $item_qty;
+                        ?>
+                        <!-- data-price stores the unit price for JS — single source of truth -->
+                        <div class="cart-card cart-item-row"
+                            data-id="<?= (int)$item['id']; ?>"
+                            data-price="<?= $item_price; ?>">
 
-            <?php if (!empty($cart_items)): ?>
-                <?php foreach ($cart_items as $item): ?>
-                    <?php
-                    $item_price = (float)($item['price'] ?? 0);
-                    $item_qty   = (int)($item['qty'] ?? 1);
-                    $item_total = $item_price * $item_qty;
-                    ?>
-                    <!-- data-price stores the unit price for JS — single source of truth -->
-                    <div class="cart-card cart-item-row"
-                        data-id="<?= (int)$item['id']; ?>"
-                        data-price="<?= $item_price; ?>">
-
-                        <!-- ═══ DESKTOP ═══ -->
-                        <div class="cart-desktop d-none d-md-grid">
-                            <!-- Image -->
-                            <div>
-                                <img src="<?= !empty($item['provider_image']) ? base_url($item['provider_image']) : base_url('assets/images/3d-cartoon-fitness-man.jpg'); ?>"
-                                    class="prov-img" alt="Provider">
-                            </div>
-                            <!-- Name + date -->
-                            <div>
-                                <div style="font-weight:700;color:var(--text-dark);margin-bottom:0.25rem;">
-                                    <?= htmlspecialchars($item['provider_name']); ?>
+                            <!-- ═══ DESKTOP ═══ -->
+                            <div class="cart-desktop d-none d-md-grid">
+                                <!-- Image -->
+                                <div>
+                                    <img src="<?= !empty($item['provider_image']) ? base_url($item['provider_image']) : base_url('assets/images/3d-cartoon-fitness-man.jpg'); ?>"
+                                        class="prov-img" alt="Provider">
                                 </div>
-                                <small class="text-muted">
-                                    <i class="bi bi-calendar-event me-1"></i><?= $item['start_date']; ?>
-                                </small>
-                            </div>
-                            <!-- Price badge -->
-                            <div class="text-center">
-                                <span class="col-label">Price / Duration</span>
-                                <div class="price-badge">
-                                    &#8377;<?= number_format($item_price, 2); ?><small>/<?= $item['duration']; ?></small>
+                                <!-- Name + date -->
+                                <div>
+                                    <div class="item-name-d"><?= htmlspecialchars($item['provider_name']); ?></div>
+                                    <div class="start-date-d">
+                                        <i class="bi bi-calendar-event"></i><?= $item['start_date']; ?>
+                                    </div>
                                 </div>
-                            </div>
-                            <!-- Qty -->
-                            <div class="text-center">
-                                <span class="col-label">Quantity</span>
-                                <div class="qty-wrap">
-                                    <button class="qty-btn decreaseQty" data-id="<?= (int)$item['id']; ?>">
-                                        <i class="bi bi-dash"></i>
+                                <!-- Price badge -->
+                                <div class="text-center">
+                                    <span class="col-label">Price / Duration</span>
+                                    <div class="price-badge">
+                                        &#8377;<?= number_format($item_price, 2); ?><small>/<?= $item['duration']; ?></small>
+                                    </div>
+                                </div>
+                                <!-- Qty -->
+                                <div class="text-center">
+                                    <span class="col-label">Quantity</span>
+                                    <div class="qty-wrap">
+                                        <button class="qty-btn decreaseQty" data-id="<?= (int)$item['id']; ?>">
+                                            <i class="bi bi-dash"></i>
+                                        </button>
+                                        <div class="qty-display"><?= $item_qty; ?></div>
+                                        <button class="qty-btn increaseQty" data-id="<?= (int)$item['id']; ?>">
+                                            <i class="bi bi-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                <!-- Subtotal -->
+                                <div class="text-center">
+                                    <span class="col-label">Subtotal</span>
+                                    <div class="item-subtotal-val">
+                                        &#8377;<span class="itemSubtotalNum"><?= number_format($item_total, 2); ?></span>
+                                    </div>
+                                </div>
+                                <!-- Remove -->
+                                <div class="text-center">
+                                    <button class="remove-btn remove-cart-item" data-id="<?= (int)$item['id']; ?>">
+                                        <i class="bi bi-trash"></i>Remove
                                     </button>
-                                    <div class="qty-display"><?= $item_qty; ?></div>
-                                    <button class="qty-btn increaseQty" data-id="<?= (int)$item['id']; ?>">
-                                        <i class="bi bi-plus"></i>
-                                    </button>
                                 </div>
                             </div>
-                            <!-- Subtotal -->
-                            <div class="text-center">
-                                <span class="col-label">Subtotal</span>
-                                <div class="item-subtotal-val">
-                                    &#8377;<span class="itemSubtotalNum"><?= number_format($item_total, 2); ?></span>
-                                </div>
-                            </div>
-                            <!-- Remove -->
-                            <div class="text-center">
-                                <button class="remove-btn remove-cart-item" data-id="<?= (int)$item['id']; ?>">
-                                    <i class="bi bi-trash me-1"></i>Remove
-                                </button>
-                            </div>
-                        </div>
 
-                        <!-- ═══ MOBILE ═══ -->
-                        <div class="cart-mobile d-md-none">
-                            <div class="mob-row1">
-                                <img src="<?= !empty($item['provider_image']) ? base_url($item['provider_image']) : base_url('assets/images/3d-cartoon-fitness-man.jpg'); ?>"
-                                    class="prov-img" alt="Provider">
-                                <div class="mob-info">
-                                    <div class="item-name"><?= htmlspecialchars($item['provider_name']); ?></div>
-                                    <div class="start-date"><i class="bi bi-calendar-event me-1"></i><?= $item['start_date']; ?></div>
-                                </div>
-                                <button class="remove-btn remove-cart-item" data-id="<?= (int)$item['id']; ?>" style="padding:0.4rem 0.7rem;">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                            <div class="mob-row2">
-                                <div class="price-badge">
-                                    &#8377;<?= number_format($item_price, 2); ?><small>/<?= $item['duration']; ?></small>
-                                </div>
-                                <div class="qty-wrap">
-                                    <button class="qty-btn decreaseQty" data-id="<?= (int)$item['id']; ?>">
-                                        <i class="bi bi-dash"></i>
+                            <!-- ═══ MOBILE ═══ -->
+                            <div class="cart-mobile d-md-none">
+                                <div class="mob-row1">
+                                    <img src="<?= !empty($item['provider_image']) ? base_url($item['provider_image']) : base_url('assets/images/3d-cartoon-fitness-man.jpg'); ?>"
+                                        class="prov-img" alt="Provider">
+                                    <div class="mob-info">
+                                        <div class="item-name"><?= htmlspecialchars($item['provider_name']); ?></div>
+                                        <div class="start-date"><i class="bi bi-calendar-event"></i><?= $item['start_date']; ?></div>
+                                    </div>
+                                    <button class="remove-btn remove-cart-item" data-id="<?= (int)$item['id']; ?>">
+                                        <i class="bi bi-trash"></i>
                                     </button>
-                                    <div class="qty-display"><?= $item_qty; ?></div>
-                                    <button class="qty-btn increaseQty" data-id="<?= (int)$item['id']; ?>">
-                                        <i class="bi bi-plus"></i>
-                                    </button>
+                                </div>
+                                <div class="mob-row2">
+                                    <div class="price-badge">
+                                        &#8377;<?= number_format($item_price, 2); ?><small>/<?= $item['duration']; ?></small>
+                                    </div>
+                                    <div class="qty-wrap">
+                                        <button class="qty-btn decreaseQty" data-id="<?= (int)$item['id']; ?>">
+                                            <i class="bi bi-dash"></i>
+                                        </button>
+                                        <div class="qty-display"><?= $item_qty; ?></div>
+                                        <button class="qty-btn increaseQty" data-id="<?= (int)$item['id']; ?>">
+                                            <i class="bi bi-plus"></i>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div class="mob-subtotal">
                                     Total: &#8377;<span class="itemSubtotalNum"><?= number_format($item_total, 2); ?></span>
                                 </div>
                             </div>
+
+                        </div><!-- /.cart-card -->
+                    <?php endforeach; ?>
+
+                <?php else: ?>
+                    <div class="empty-cart">
+                        <div class="empty-icon-wrap">
+                            <i class="bi bi-cart-x"></i>
+                        </div>
+                        <h4>Your cart is empty</h4>
+                        <p>Looks like you haven't added any services yet. Let's find something for you!</p>
+                        <a href="<?= base_url('services'); ?>" class="browse-btn">
+                            <i class="bi bi-search me-2"></i>Browse Services
+                        </a>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+            <!-- ── Order Summary ── -->
+            <div class="col-12 col-lg-4">
+                <div class="summary-card">
+                    <div class="summary-header">
+                        <h5><i class="bi bi-receipt"></i>Order Summary</h5>
+                    </div>
+                    <div class="summary-body">
+
+                        <div class="summary-row">
+                            <span><i class="bi bi-calculator me-2"></i>Subtotal</span>
+                            <span class="fw-bold" id="cartSubtotal">
+                                &#8377;<?= number_format((float)($subtotal ?? 0), 2); ?>
+                            </span>
                         </div>
 
-                    </div><!-- /.cart-card -->
-                <?php endforeach; ?>
-
-            <?php else: ?>
-                <div class="empty-cart">
-                    <i class="bi bi-cart-x"></i>
-                    <h4>Your cart is empty</h4>
-                    <p class="text-muted mb-0">Add some items to get started!</p>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- ── Order Summary ── -->
-        <div class="col-12 col-lg-4">
-            <div class="summary-card">
-                <div class="summary-header">
-                    <h5><i class="bi bi-receipt me-2"></i>Order Summary</h5>
-                </div>
-                <div class="summary-body">
-
-                    <div class="summary-row">
-                        <span><i class="bi bi-calculator me-2"></i>Subtotal</span>
-                        <span class="fw-bold" id="cartSubtotal">
-                            &#8377;<?= number_format((float)($subtotal ?? 0), 2); ?>
-                        </span>
-                    </div>
-
-                    <!-- Duration Breakdown -->
-                    <?php if (!empty($duration_items)): ?>
-                        <div style="margin-bottom:1rem;">
-                            <div style="font-size:0.8rem;color:#888;margin-bottom:0.5rem;">
-                                <i class="bi bi-clock me-1"></i>Duration Breakdown
+                        <!-- Duration Breakdown -->
+                        <?php if (!empty($duration_items)): ?>
+                            <hr class="fkc-divider">
+                            <div class="duration-breakdown-title">
+                                <i class="bi bi-clock-history"></i>Duration Breakdown
                             </div>
                             <?php foreach ($duration_items as $dur => $ditems): ?>
                                 <div class="duration-block">
@@ -592,39 +876,43 @@
                                     <?php endforeach; ?>
                                 </div>
                             <?php endforeach; ?>
+                        <?php endif; ?>
+
+                        <!-- Discount -->
+                        <div id="platformDiscountRow"
+                            class="discount-alert <?= (!empty($discount_amount) && $discount_amount > 0) ? '' : 'd-none'; ?>">
+                            <i class="bi bi-gift"></i>
+                            You save <span id="platformDiscountAmount">&#8377;<?= number_format((float)($discount_amount ?? 0), 2); ?></span>
+                            (<?= (float)($offer_percent ?? 0); ?>% platform offer)
                         </div>
-                    <?php endif; ?>
 
-                    <!-- Discount -->
-                    <div id="platformDiscountRow"
-                        class="discount-alert <?= (!empty($discount_amount) && $discount_amount > 0) ? '' : 'd-none'; ?>">
-                        <i class="bi bi-gift me-1"></i>
-                        You save <span id="platformDiscountAmount">&#8377;<?= number_format((float)($discount_amount ?? 0), 2); ?></span>
-                        (<?= (float)($offer_percent ?? 0); ?>% platform offer)
+                        <hr class="fkc-divider">
+
+                        <div class="summary-total">
+                            <strong><i class="bi bi-currency-rupee me-1"></i>Total</strong>
+                            <strong id="cartTotal">
+                                &#8377;<?= number_format((float)($total_after_discount ?? $subtotal ?? 0), 2); ?>
+                            </strong>
+                        </div>
+
+                        <button class="pay-btn"
+                            id="payNowBtn"
+                            <?= (($subtotal ?? 0) == 0) ? 'disabled' : ''; ?>
+                            onclick="window.location.href='<?= site_url('cart/pay'); ?>'">
+                            <i class="bi bi-credit-card"></i>Pay Now
+                        </button>
+
+                        <?php if (($subtotal ?? 0) == 0): ?>
+                            <small class="text-muted d-block text-center mt-2">
+                                <i class="bi bi-info-circle me-1"></i>Add items to proceed
+                            </small>
+                        <?php else: ?>
+                            <div class="secure-note">
+                                <i class="bi bi-shield-lock"></i>100% Secure Checkout
+                            </div>
+                        <?php endif; ?>
+
                     </div>
-
-                    <hr style="margin:0.75rem 0;">
-
-                    <div class="summary-total">
-                        <strong><i class="bi bi-currency-rupee me-1"></i>Total</strong>
-                        <strong id="cartTotal">
-                            &#8377;<?= number_format((float)($total_after_discount ?? $subtotal ?? 0), 2); ?>
-                        </strong>
-                    </div>
-
-                    <button class="pay-btn"
-                        id="payNowBtn"
-                        <?= (($subtotal ?? 0) == 0) ? 'disabled' : ''; ?>
-                        onclick="window.location.href='<?= site_url('cart/pay'); ?>'">
-                        <i class="bi bi-credit-card me-2"></i>Pay Now
-                    </button>
-
-                    <?php if (($subtotal ?? 0) == 0): ?>
-                        <small class="text-muted d-block text-center mt-2">
-                            <i class="bi bi-info-circle me-1"></i>Add items to proceed
-                        </small>
-                    <?php endif; ?>
-
                 </div>
             </div>
         </div>
@@ -691,14 +979,10 @@
 
                 /* Read from data-price + qty-display — no text parsing of currency strings */
                 $('.cart-item-row').each(function() {
-                    var id = $(this).data('id');
                     var price = parseFloat($(this).data('price')) || 0;
                     var qty = parseInt($(this).find('.qty-display').first().text(), 10) || 0;
                     subtotal += price * qty;
                 });
-
-                /* Avoid double-counting by only reading first occurrence (desktop wins) */
-                /* The above is already safe because .each iterates cards (not inner elements) */
 
                 var discount = 0;
                 if (OFFER_PCT > 0 && (MIN_FOR_OFFER === 0 || subtotal >= MIN_FOR_OFFER)) {
@@ -807,9 +1091,10 @@
                                 if ($('.cart-item-row').length === 0) {
                                     $('#cartItemsCol').html(
                                         '<div class="empty-cart">' +
-                                        '<i class="bi bi-cart-x"></i>' +
+                                        '<div class="empty-icon-wrap"><i class="bi bi-cart-x"></i></div>' +
                                         '<h4>Your cart is empty</h4>' +
-                                        '<p class="text-muted mb-0">Add some items to get started!</p>' +
+                                        '<p>Looks like you haven\'t added any services yet. Let\'s find something for you!</p>' +
+                                        '<a href="<?= base_url('services'); ?>" class="browse-btn"><i class="bi bi-search me-2"></i>Browse Services</a>' +
                                         '</div>'
                                     );
                                 }

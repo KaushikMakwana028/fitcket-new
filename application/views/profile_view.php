@@ -185,12 +185,10 @@
     /* Mobile fix for search bar */
     @media (max-width: 576px) {
         .search-box {
-            display: flex;
+            position: relative !important;
+            display: flex !important;
             flex-direction: column !important;
-            align-items: stretch;
-            gap: 0.5rem;
             box-shadow: none;
-            /* remove weird box overflow */
         }
 
         /* Hide search icon span only on mobile */
@@ -199,19 +197,47 @@
         }
 
         .search-box .form-control {
-            border: 2px solid var(--border-color);
-            border-radius: 14px !important;
-            width: 100%;
-            padding: 0.6rem 1rem;
-            font-size: 0.9rem;
+            border: 2px solid var(--border-color) !important;
+            border-radius: 12px !important;
+            width: 100% !important;
+            padding: 0.75rem 2.5rem 0.75rem 1rem !important; /* Space for the clear button */
+            font-size: 0.95rem;
+        }
+
+        #clearSearchBtn {
+            position: absolute !important;
+            right: 8px !important;
+            top: 22px !important; /* Align vertically with the input box center */
+            transform: translateY(-50%) !important;
+            z-index: 5 !important;
+            border: none !important;
+            background: transparent !important;
+            color: var(--text-muted) !important;
+            padding: 0 !important;
+            width: 32px !important;
+            height: 32px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            box-shadow: none !important;
+        }
+
+        #clearSearchBtn:hover {
+            color: var(--primary-color) !important;
+        }
+
+        /* Hide clear button when input placeholder is shown (input is empty) */
+        #providerSearch:placeholder-shown ~ #clearSearchBtn {
+            display: none !important;
         }
 
         .search-box .btn-search {
-            border-radius: var(--border-radius);
-            width: 100%;
-            padding: 0.6rem;
+            border-radius: 12px !important;
+            width: 100% !important;
+            padding: 0.75rem !important;
             font-size: 0.95rem;
             font-weight: 600;
+            margin-top: 5px;
         }
 
         /* Accordion filter spacing */
@@ -378,6 +404,7 @@
         display: flex;
         justify-content: center;
         margin-top: 2rem;
+        margin-bottom: 2.5rem;
     }
 
     .pagination {
@@ -692,7 +719,7 @@
         left: 0;
         right: 0;
         z-index: 1000;
-        background: var(--white);
+        background: #ffffff !important;
         border-radius: 0 0 var(--border-radius) var(--border-radius);
         box-shadow: var(--shadow-hover);
         border: 1px solid var(--border-color);
@@ -703,6 +730,7 @@
         max-height: 400px;
         overflow-y: auto;
         padding: 1rem;
+        background: #ffffff !important;
     }
 
     /* Custom Scrollbar for Filter */
@@ -735,10 +763,17 @@
             border-radius: var(--border-radius) var(--border-radius) 0 0;
             max-height: 70vh;
             border: 1px solid var(--border-color);
+            background: #ffffff !important;
+            z-index: 1060 !important;
+        }
+
+        .pagination-container {
+            margin-bottom: 5rem !important;
         }
 
         #collapseFilter .accordion-body {
             max-height: calc(70vh - 20px);
+            background: #ffffff !important;
         }
 
         /* Backdrop when filter is open on mobile */

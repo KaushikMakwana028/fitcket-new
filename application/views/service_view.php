@@ -1,4 +1,6 @@
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
     :root {
         --primary-color: #6f42c1;
         --primary-dark: #5a2ca6;
@@ -14,81 +16,37 @@
         --border-color: #e2e8f0;
         --border-radius: 16px;
         --shadow: 0 10px 30px rgba(111, 66, 193, 0.06);
-        --shadow-hover: 0 20px 40px rgba(111, 66, 193, 0.12);
-        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        --shadow-hover: 0 16px 32px rgba(111, 66, 193, 0.12);
+        --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
-    /* body {
-        background-color: var(--light-bg);
-        font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        padding: 2rem;
-        margin: 0;
-    } */
+    .fks-page {
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .fks-page *,
+    .fks-page *::before,
+    .fks-page *::after {
+        box-sizing: border-box;
+    }
 
     .container {
         max-width: 1200px;
         margin: 0 auto;
     }
 
-    /* Header Styles */
-    .demo-content {
-        background: var(--white);
-        border-radius: var(--border-radius);
-        padding: 2rem;
-        box-shadow: var(--shadow);
-        border: 1px solid var(--border-color);
-        text-align: center;
-        margin-bottom: 2rem;
-        position: relative;
-        overflow: hidden;
-    }
-
-    .demo-content::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 4px;
-        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
-    }
-
-    .demo-content i {
-        font-size: 3rem;
-        color: var(--primary-color);
-        margin-bottom: 1rem;
-    }
-
-    .demo-content h4 {
-        font-size: 1.8rem;
-        margin: 0.5rem 0;
-        color: var(--secondary-color);
-    }
-
-    .demo-content p {
-        color: var(--text-muted);
-        margin-bottom: 1.5rem;
-    }
-
-    .provider-count {
-        background: var(--primary-light);
-        color: var(--primary-dark);
-        padding: 0.5rem 1.5rem;
-        border-radius: 20px;
-        font-weight: 600;
-        display: inline-block;
-    }
-
-    /* Filter Controls */
+    /* ══════════════════════════════════════════
+       FILTER BAR
+    ══════════════════════════════════════════ */
     .filter-controls {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 2rem;
+        margin-bottom: 1.75rem;
         flex-wrap: wrap;
         gap: 1rem;
         background: var(--white);
-        padding: 1.5rem;
+        padding: 1.1rem 1.25rem;
         border-radius: var(--border-radius);
         box-shadow: var(--shadow);
         border: 1px solid var(--border-color);
@@ -102,17 +60,19 @@
 
     .search-box input {
         width: 100%;
-        padding: 0.75rem 1rem 0.75rem 3rem;
-        border: 1px solid var(--border-color);
+        padding: 0.7rem 1rem 0.7rem 2.75rem;
+        border: 1.5px solid var(--border-color);
         border-radius: var(--border-radius);
-        font-size: 1rem;
+        font-size: 0.92rem;
+        font-family: 'Poppins', sans-serif;
         transition: var(--transition);
+        color: var(--text-dark);
     }
 
     .search-box input:focus {
         outline: none;
         border-color: var(--primary-color);
-        box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+        box-shadow: 0 0 0 3px rgba(111, 66, 193, 0.12);
     }
 
     .search-box i {
@@ -121,39 +81,17 @@
         top: 50%;
         transform: translateY(-50%);
         color: var(--text-muted);
+        font-size: 0.9rem;
     }
 
-    .view-options {
-        display: flex;
-        gap: 0.5rem;
-    }
-
-    .view-btn {
-        background: var(--light-bg);
-        border: 1px solid var(--border-color);
-        border-radius: var(--border-radius);
-        padding: 0.5rem;
-        cursor: pointer;
-        transition: var(--transition);
-    }
-
-    .view-btn:hover {
-        background: var(--primary-light);
-        color: var(--white);
-    }
-
-    .view-btn.active {
-        background: var(--primary-color);
-        color: var(--white);
-        border-color: var(--primary-color);
-    }
-
-    /* Providers Grid */
+    /* ══════════════════════════════════════════
+       PROVIDERS GRID — compact cards
+    ══════════════════════════════════════════ */
     .providers-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 2rem;
-        margin-bottom: 3rem;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2.5rem;
     }
 
     .provider-card {
@@ -165,130 +103,152 @@
         border: 1px solid var(--border-color);
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
         position: relative;
     }
 
     .provider-card:hover {
-        transform: translateY(-8px);
+        transform: translateY(-5px);
         box-shadow: var(--shadow-hover);
         border-color: var(--primary-light);
     }
 
     .card-header {
         position: relative;
-        height: 200px;
+        height: 168px;
         overflow: hidden;
+        flex-shrink: 0;
+        background: var(--light-bg);
     }
 
     .card-header img {
         width: 100%;
         height: 100%;
         object-fit: cover;
+        object-position: center;
         transition: var(--transition);
+        display: block;
+    }
+
+    /* Logo-style / broken / non-photo images fall back to "contain"
+       via this class added by JS so nothing crops oddly */
+    .card-header img.fks-fit-contain {
+        object-fit: contain;
+        padding: 14px;
+        background: var(--light-bg);
     }
 
     .provider-card:hover .card-header img {
-        transform: scale(1.06);
+        transform: scale(1.05);
     }
 
     .card-rating {
         position: absolute;
-        top: 1rem;
-        right: 1rem;
-        background: rgba(255, 255, 255, 0.85);
-        backdrop-filter: blur(8px);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-        padding: 0.35rem 0.85rem;
+        top: 0.65rem;
+        right: 0.65rem;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(6px);
+        padding: 0.3rem 0.75rem;
         border-radius: 30px;
         font-weight: 700;
-        color: #e67e22;
+        color: var(--warning-color);
         display: flex;
         align-items: center;
         gap: 0.3rem;
-        font-size: 0.85rem;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        font-size: 0.8rem;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    }
+
+    .card-rating i {
+        font-size: 0.75rem;
     }
 
     .card-body {
-        padding: 1.75rem;
+        padding: 1.1rem 1.2rem 0.9rem;
         flex-grow: 1;
         display: flex;
         flex-direction: column;
-        gap: 0.75rem;
+        gap: 0.5rem;
     }
 
     .card-title {
-        font-size: 1.35rem;
-        font-weight: 750;
+        font-size: 1.08rem;
+        font-weight: 700;
         margin: 0;
         color: var(--text-dark);
         line-height: 1.3;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .card-subtitle {
         color: var(--primary-color);
         font-weight: 600;
         margin: 0;
-        font-size: 0.95rem;
+        font-size: 0.86rem;
         display: flex;
         align-items: center;
         gap: 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
-    .info-row {
+    .card-subtitle i {
+        font-size: 0.78rem;
+        flex-shrink: 0;
+    }
+
+    /* City + distance combined into one compact line */
+    .info-line {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 8px;
         margin-top: 0.25rem;
-        font-size: 0.9rem;
-        color: var(--text-muted);
     }
 
-    .info-item {
-        display: flex;
+    .badge-city,
+    .badge-distance {
+        font-weight: 600;
+        padding: 0.28rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.76rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-flex;
         align-items: center;
-        gap: 6px;
-    }
-
-    .info-item i {
-        color: var(--primary-color);
-        width: 16px;
-        text-align: center;
+        gap: 5px;
+        max-width: 50%;
     }
 
     .badge-city {
         background: var(--light-bg);
         color: var(--text-dark);
-        font-weight: 600;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        border: 1px solid #e2e8f0;
-        max-width: 150px;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: inline-block;
-        text-align: center;
-        vertical-align: middle;
+        border: 1px solid var(--border-color);
+    }
+
+    .badge-city i {
+        color: var(--primary-color);
+        font-size: 0.7rem;
     }
 
     .badge-distance {
         background: #fff3cd;
         color: #856404;
-        font-weight: 600;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.8rem;
         border: 1px solid #ffeeba;
+    }
+
+    .badge-distance i {
+        font-size: 0.7rem;
     }
 
     .card-footer {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 1.25rem 1.75rem 1.75rem;
+        padding: 0.9rem 1.2rem;
         border-top: 1px solid var(--border-color);
         background: #fafafa;
     }
@@ -296,29 +256,31 @@
     .price {
         font-weight: 800;
         color: var(--text-dark);
-        font-size: 1.4rem;
+        font-size: 1.25rem;
         display: flex;
         align-items: baseline;
+        line-height: 1;
     }
 
     .price span {
-        font-size: 0.85rem;
+        font-size: 0.78rem;
         font-weight: 500;
         color: var(--text-muted);
-        margin-left: 4px;
+        margin-left: 3px;
     }
 
     .btn-book {
         background: var(--primary-color);
         color: #fff !important;
         border: none;
-        padding: 0.65rem 1.5rem;
+        padding: 0.55rem 1.4rem;
         border-radius: 30px;
         font-weight: 600;
+        font-size: 0.88rem;
         cursor: pointer;
         transition: var(--transition);
         text-decoration: none;
-        box-shadow: 0 4px 15px rgba(111, 66, 193, 0.2);
+        box-shadow: 0 4px 12px rgba(111, 66, 193, 0.22);
         display: inline-block;
         text-align: center;
     }
@@ -326,51 +288,57 @@
     .btn-book:hover {
         background: var(--primary-dark);
         transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(111, 66, 193, 0.3);
+        box-shadow: 0 6px 16px rgba(111, 66, 193, 0.3);
     }
 
-    /* Pagination Styles */
+    /* ══════════════════════════════════════════
+       PAGINATION
+    ══════════════════════════════════════════ */
     .pagination-container {
         display: flex;
         justify-content: center;
         align-items: center;
-        margin-top: 2rem;
+        margin-top: 1.5rem;
         flex-wrap: wrap;
         gap: 1rem;
     }
 
     .pagination-info {
         color: var(--text-muted);
-        font-size: 0.9rem;
+        font-size: 0.85rem;
+        font-family: 'Poppins', sans-serif;
     }
 
     .pagination {
         background: var(--white);
         border-radius: var(--border-radius);
         box-shadow: var(--shadow);
-        padding: 0.5rem;
+        padding: 0.4rem;
         border: 1px solid var(--border-color);
         display: flex;
         align-items: center;
     }
 
     .page-item {
-        margin: 0 0.25rem;
+        margin: 0 0.2rem;
+        list-style: none;
     }
 
     .page-link {
         border-radius: 8px;
         border: 1px solid var(--border-color);
-        /* color: var(--primary-color); */
         font-weight: 600;
-        min-width: 42px;
-        height: 42px;
+        font-size: 0.85rem;
+        min-width: 36px;
+        height: 36px;
         display: flex;
         align-items: center;
         justify-content: center;
         text-decoration: none;
         transition: var(--transition);
         cursor: pointer;
+        color: var(--text-dark);
+        background: var(--white);
     }
 
     .page-link:hover {
@@ -397,96 +365,31 @@
         gap: 1rem;
     }
 
-    .btn-control {
-        background: var(--primary-color);
-        color: white;
-        border: none;
-        padding: 0.75rem 1.5rem;
-        border-radius: var(--border-radius);
-        font-weight: 600;
-        transition: var(--transition);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+    /* ══════════════════════════════════════════
+       EMPTY STATE
+    ══════════════════════════════════════════ */
+    .fks-empty {
+        text-align: center;
+        padding: 50px 20px;
+        font-family: 'Poppins', sans-serif;
+        grid-column: 1 / -1;
     }
 
-    .btn-control:hover {
-        background: var(--primary-dark);
-        transform: translateY(-2px);
+    .fks-empty h4 {
+        font-weight: 700;
+        color: var(--text-dark);
+        margin-bottom: 6px;
     }
 
-    .btn-control:disabled {
-        background: var(--border-color);
+    .fks-empty p {
         color: var(--text-muted);
-        cursor: not-allowed;
-        transform: none;
+        margin: 0;
+        font-size: 0.9rem;
     }
 
-    /* Responsive Design */
-    @media (max-width: 992px) {
-        .providers-grid {
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-        }
-    }
-
-    @media (max-width: 768px) {
-        /* body {
-            padding: 1rem;
-        } */
-
-        .filter-controls {
-            flex-direction: column;
-            align-items: stretch;
-        }
-
-        .search-box {
-            max-width: 100%;
-        }
-
-        .view-options {
-            align-self: center;
-        }
-
-        .pagination-container {
-            flex-direction: column;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .pagination {
-            padding: 0.25rem;
-        }
-
-        .page-link {
-            min-width: 36px;
-            height: 36px;
-            font-size: 0.9rem;
-        }
-
-        .page-item {
-            margin: 0 0.1rem;
-        }
-
-        .btn-control {
-            padding: 0.6rem 1rem;
-            font-size: 0.9rem;
-        }
-
-        .providers-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .demo-content {
-            padding: 1.5rem;
-        }
-
-        .demo-content h4 {
-            font-size: 1.5rem;
-        }
-    }
-
-    /* Breadcrumb Styles */
+    /* ══════════════════════════════════════════
+       BREADCRUMB
+    ══════════════════════════════════════════ */
     .breadcrumb-container {
         background: var(--white);
         border-radius: var(--border-radius);
@@ -494,6 +397,7 @@
         padding: 0.75rem 1rem;
         margin: 0.75rem;
         border: 1px solid var(--border-color);
+        font-family: 'Poppins', sans-serif;
     }
 
     .breadcrumb {
@@ -503,7 +407,7 @@
     }
 
     .breadcrumb-item {
-        font-size: 0.9rem;
+        font-size: 0.88rem;
         font-weight: 500;
     }
 
@@ -529,18 +433,13 @@
     }
 
     @media (min-width: 576px) {
-        .bredcum {}
-
         .breadcrumb-container {
             margin: 1rem;
             padding: 1rem 1.25rem;
         }
-
     }
 
     @media (min-width: 768px) {
-        .bredcum {}
-
         .breadcrumb-container {
             margin: 1rem auto;
             max-width: 95%;
@@ -548,66 +447,186 @@
     }
 
     @media (min-width: 992px) {
-        .bredcum {}
-
         .breadcrumb-container {
             max-width: 1170px;
         }
     }
+
+    /* ══════════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════════ */
+    @media (max-width: 992px) {
+        .providers-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .filter-controls {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .search-box {
+            max-width: 100%;
+        }
+
+        .pagination-container {
+            flex-direction: column;
+        }
+
+        .providers-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+
+        .card-header {
+            height: 140px;
+        }
+
+        .card-body {
+            padding: 0.9rem 1rem 0.75rem;
+        }
+
+        .card-title {
+            font-size: 0.95rem;
+        }
+
+        .card-subtitle {
+            font-size: 0.78rem;
+        }
+
+        .badge-city,
+        .badge-distance {
+            font-size: 0.68rem;
+            padding: 0.22rem 0.55rem;
+        }
+
+        .card-footer {
+            padding: 0.75rem 1rem;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .price {
+            font-size: 1.05rem;
+        }
+
+        .btn-book {
+            padding: 0.48rem 1.1rem;
+            font-size: 0.82rem;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .providers-grid {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+
+        .card-header {
+            height: 170px;
+        }
+
+        .card-rating {
+            font-size: 0.74rem;
+            padding: 0.26rem 0.65rem;
+        }
+
+        .card-body {
+            padding: 1rem 1.1rem 0.85rem;
+            gap: 0.45rem;
+        }
+
+        .card-title {
+            font-size: 1rem;
+        }
+
+        .card-subtitle {
+            font-size: 0.82rem;
+        }
+
+        .info-line {
+            gap: 8px;
+        }
+
+        .badge-city,
+        .badge-distance {
+            max-width: 50%;
+            font-size: 0.72rem;
+        }
+
+        .card-footer {
+            padding: 0.85rem 1.1rem;
+        }
+
+        .price {
+            font-size: 1.1rem;
+        }
+
+        .price span {
+            font-size: 0.72rem;
+        }
+
+        .btn-book {
+            padding: 0.5rem 1.2rem;
+            font-size: 0.84rem;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+
+        .provider-card,
+        .card-header img,
+        .btn-book,
+        .page-link {
+            transition: none !important;
+        }
+
+        .provider-card:hover,
+        .btn-book:hover,
+        .page-link:hover {
+            transform: none !important;
+        }
+    }
 </style>
-<div class="breadcrumb-container">
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb mb-0">
-            <li class="breadcrumb-item">
-                <a href="<?= base_url(); ?>">
-                    <i class="fas fa-home me-1"></i>Home
-                </a>
-            </li>
-            <li class="breadcrumb-item active" aria-current="page">
-                <i class="fas fa-users me-1"></i>Services
-            </li>
-        </ol>
-    </nav>
-</div>
 
-<div class="container">
-    <!-- <div class="demo-content">
-        <i class="fas fa-dumbbell"></i>
-        <h4>Fitness Providers Directory</h4>
-        <p>Browse through our curated list of fitness service providers</p>
-        <div class="provider-count" id="provider-count">24 Providers Available</div>
-    </div> -->
+<div class="fks-page">
 
-    <div class="filter-controls">
-        <div class="search-box">
-            <i class="fas fa-search"></i>
-            <input type="text" placeholder="Search providers..." id="search-input">
-        </div>
-        <!-- <div class="view-options">
-            <button class="view-btn active" title="Grid View">
-                <i class="fas fa-th"></i>
-            </button>
-            <button class="view-btn" title="List View">
-                <i class="fas fa-list"></i>
-            </button>
-        </div> -->
+    <div class="breadcrumb-container">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item">
+                    <a href="<?= base_url(); ?>">
+                        <i class="fas fa-home me-1" aria-hidden="true"></i>Home
+                    </a>
+                </li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    <i class="fas fa-users me-1" aria-hidden="true"></i>Services
+                </li>
+            </ol>
+        </nav>
     </div>
 
-    <div class="providers-grid" id="providers-container">
-        <!-- Example Static Provider Card -->
-        <!-- <div id="services-container" class="services-grid">
+    <div class="container">
 
-       </div> -->
-
-
-    </div>
-
-    <div class="pagination-container" style="margin-bottom: 5rem !important;">
-        <div class="pagination-info" id="pagination-info">
-            Showing 1-6 of 24 providers
+        <div class="filter-controls">
+            <div class="search-box">
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input type="text" placeholder="Search providers..." id="search-input">
+            </div>
         </div>
-        <div class="page-controls">
-            <div class="pagination" id="pagination"></div>
+
+        <div class="providers-grid" id="providers-container"></div>
+
+        <div class="pagination-container" style="margin-bottom: 5rem !important;">
+            <div class="pagination-info" id="pagination-info">
+                Showing 1-6 of 24 providers
+            </div>
+            <div class="page-controls">
+                <div class="pagination" id="pagination"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -631,9 +650,9 @@
 
                     if (res.services.length === 0) {
                         html = `
-                            <div style="text-align:center; padding:20px;">
-                                <h4>No Services Found 😢</h4>
-                                <p>Try different search</p>
+                            <div class="fks-empty">
+                                <h4>No Services Found</h4>
+                                <p>Try a different search term</p>
                             </div>
                         `;
                     } else {
@@ -641,45 +660,37 @@
                             let ratingText = (service.avg_rating && parseFloat(service.avg_rating) > 0) ? parseFloat(service.avg_rating).toFixed(1) : 'New';
                             html += `
                             <div class="provider-card">
-                                
+
                                 <!-- IMAGE -->
                                 <div class="card-header">
-                                    <img src="${service.image ? '<?= base_url() ?>' + service.image : '<?= base_url("assets/images/default.jpg") ?>'}" onerror="this.onerror=null;this.src='<?= base_url("assets/images/default.jpg") ?>';" alt="">
-                                    
+                                    <img class="fks-card-img" src="${service.image ? '<?= base_url() ?>' + service.image : '<?= base_url("assets/images/default.jpg") ?>'}" alt="${service.name || ''}">
+
                                     <!-- RATING -->
                                     <div class="card-rating">
-                                        <i class="fas fa-star"></i> ${ratingText}
+                                        <i class="fas fa-star" aria-hidden="true"></i> ${ratingText}
                                     </div>
                                 </div>
 
                                 <!-- BODY -->
                                 <div class="card-body">
-                                    <h5 class="card-title">${service.name || ''}</h5>
-                                    <p class="card-subtitle"><i class="fas fa-dumbbell"></i> ${service.gym_name || ''}</p>
+                                    <h5 class="card-title" title="${service.name || ''}">${service.name || ''}</h5>
+                                    <p class="card-subtitle" title="${service.gym_name || ''}"><i class="fas fa-dumbbell" aria-hidden="true"></i> ${service.gym_name || ''}</p>
 
-                                    <!-- CITY -->
-                                    <div class="info-row">
-                                        <div class="info-item">
-                                            <i class="fas fa-map-marker-alt"></i>
-                                            <span>Available in:</span>
-                                        </div>
-                                        <span class="badge-city" title="${service.city || 'N/A'}">${service.city || 'N/A'}</span>
-                                    </div>
-
-                                    <!-- DISTANCE -->
-                                    <div class="info-row">
-                                        <div class="info-item">
-                                            <i class="fas fa-route"></i>
-                                            <span>Distance:</span>
-                                        </div>
-                                        <span class="badge-distance">${service.distance || 'N/A'}</span>
+                                    <!-- CITY + DISTANCE in one line -->
+                                    <div class="info-line">
+                                        <span class="badge-city" title="${service.city || 'N/A'}">
+                                            <i class="fas fa-map-marker-alt" aria-hidden="true"></i>${service.city || 'N/A'}
+                                        </span>
+                                        <span class="badge-distance" title="${service.distance || 'N/A'}">
+                                            <i class="fas fa-route" aria-hidden="true"></i>${service.distance || 'N/A'}
+                                        </span>
                                     </div>
                                 </div>
 
                                 <!-- FOOTER -->
                                 <div class="card-footer">
-                                    <div class="price">₹${service.month_price || '0'}<span>/ month</span></div>
-                                    <a href="<?= base_url('provider_details/') ?>${service.provider_id}" class="btn-book" style="color: #fff !important;">View</a>
+                                    <div class="price">₹${service.month_price || '0'}<span>/mo</span></div>
+                                    <a href="<?= base_url('provider_details/') ?>${service.provider_id}" class="btn-book">View</a>
                                 </div>
 
                             </div>
@@ -689,6 +700,36 @@
 
                     $('#providers-container').html(html);
                     renderPagination(res.total, res.limit, res.page, search);
+                    fixCardImages();
+                }
+            });
+        }
+
+        // Make sure broken images fall back to a default photo, and that
+        // small/low-res or logo-style images (which would look stretched/cropped
+        // under object-fit:cover) switch to object-fit:contain instead.
+        function fixCardImages() {
+            $('.fks-card-img').each(function() {
+                let $img = $(this);
+                const defaultSrc = '<?= base_url("assets/images/default.jpg") ?>';
+
+                $img.off('error').on('error', function() {
+                    $(this).off('error').attr('src', defaultSrc);
+                });
+
+                $img.off('load').on('load', function() {
+                    const naturalW = this.naturalWidth;
+                    const naturalH = this.naturalHeight;
+                    // Small/low-res images (icons, logos) tend to look bad when
+                    // force-cropped to fill the header — show them whole instead.
+                    if (naturalW && naturalH && (naturalW < 300 || naturalH < 200)) {
+                        $(this).addClass('fks-fit-contain');
+                    }
+                });
+
+                // If the image is already loaded (cached) by the time we bind, run the check now
+                if (this.complete && this.naturalWidth) {
+                    $img.trigger('load');
                 }
             });
         }
@@ -706,15 +747,13 @@
             $('#pagination-info').html(`Showing ${start}-${end} of ${total} services`);
 
             let paginationHtml = '';
-            
-            // Previous
+
             paginationHtml += `
                 <div class="page-item ${currentPage === 1 ? 'disabled' : ''}">
                     <a class="page-link" data-page="${currentPage - 1}">&laquo;</a>
                 </div>
             `;
 
-            // Numbers
             for (let i = 1; i <= totalPages; i++) {
                 if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
                     paginationHtml += `
@@ -731,7 +770,6 @@
                 }
             }
 
-            // Next
             paginationHtml += `
                 <div class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
                     <a class="page-link" data-page="${currentPage + 1}">&raquo;</a>
@@ -740,7 +778,6 @@
 
             $('#pagination').html(paginationHtml);
 
-            // Add click listener
             $('#pagination .page-link').off('click').on('click', function(e) {
                 e.preventDefault();
                 let selectedPage = $(this).data('page');

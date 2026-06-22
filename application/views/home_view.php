@@ -541,7 +541,7 @@
     .fitket-home .expert-left {
         display: flex;
         align-items: center;
-        padding: 24px 24px 20px;
+        padding: 30px 28px 24px;
         gap: 16px;
         flex-grow: 1;
     }
@@ -582,12 +582,13 @@
     }
 
     .fitket-home .expert-footer {
-        padding: 14px 20px;
+        padding: 18px 22px;
         background: var(--bg-light);
         border-top: 1.5px solid var(--border-color);
         display: flex;
         justify-content: space-between;
         align-items: center;
+        gap: 14px;
     }
 
     .fitket-home .distance-pill {
@@ -598,7 +599,7 @@
         align-items: center;
         gap: 6px;
         background: rgba(111, 66, 193, 0.09);
-        padding: 6px 14px;
+        padding: 8px 16px;
         border-radius: var(--radius-pill);
         white-space: nowrap;
     }
@@ -609,7 +610,7 @@
         align-items: center;
         gap: 6px;
         transition: transform 0.25s;
-        padding: 6px 14px;
+        padding: 8px 18px;
         border-radius: var(--radius-pill);
         background: rgba(111, 66, 193, 0.06);
         border: 1px solid rgba(111, 66, 193, 0.15);
@@ -698,15 +699,27 @@
 
     @media (max-width: 576px) {
 
-        .fitket-home .nearestSwiper .swiper-slide,
-        .fitket-home .gymSwiper .swiper-slide,
-        .fitket-home .trainerSwiper .swiper-slide {
-            width: 100% !important;
-        }
-
         .fitket-home .expert-card {
             width: 100%;
             min-width: 100%;
+        }
+
+        .fitket-home .categorySwiper .service-card {
+            padding: 10px;
+            gap: 8px;
+        }
+
+        .fitket-home .categorySwiper .service-icon {
+            width: 40px;
+            height: 40px;
+        }
+
+        .fitket-home .categorySwiper .service-title {
+            font-size: 12px;
+        }
+
+        .fitket-home .categorySwiper .service-subtitle {
+            font-size: 10px;
         }
     }
 
@@ -1014,11 +1027,7 @@
         }
     }
 
-    @media (max-width: 576px) {
-        .fitket-home .swiper-slide {
-            width: 100% !important;
-        }
-    }
+    /* Removed width: 100% !important from .swiper-slide to let Swiper JS manage layout */
 
 
     /* ══════════════════════════════════════════
@@ -1035,7 +1044,7 @@
             left: auto;
             bottom: auto;
             width: 94%;
-            margin: -20px auto 0;
+            margin: 20px auto 0;
             padding: 16px 18px;
             flex-direction: row;
             flex-wrap: wrap;
@@ -1092,7 +1101,7 @@
 
         .fitket-home #heroCarousel .carousel-indicators {
             padding-left: 24px;
-            bottom: 70px;
+            bottom: 20px;
         }
 
         .fitket-home .search-bar-container {
@@ -1100,7 +1109,7 @@
             gap: 10px;
             padding: 14px 16px;
             width: 92%;
-            margin: -16px auto 0;
+            margin: 20px auto 0;
         }
 
         .fitket-home .search-input-group {
@@ -1232,6 +1241,10 @@
         .fitket-home .carousel-item {
             height: 300px;
         }
+
+        .fitket-home #heroCarousel .carousel-indicators {
+            bottom: 15px;
+        }
     }
 
     @media (max-width: 768px) and (orientation: landscape) {
@@ -1248,7 +1261,7 @@
         }
 
         .fitket-home #heroCarousel .carousel-indicators {
-            bottom: 60px;
+            bottom: 15px;
         }
     }
 </style>
