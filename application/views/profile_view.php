@@ -870,15 +870,11 @@
                                 </label>
                                 <select class="form-select" id="category_filter">
                                     <option value="" selected>Select...</option>
-                                    <option value="yoga">Yoga</option>
-                                    <option value="weight_lifting">Weight Lifting</option>
-                                    <option value="cardio">Cardio</option>
-                                    <option value="crossfit">CrossFit</option>
-                                    <option value="pilates">Pilates</option>
-                                    <option value="zumba">Zumba</option>
-                                    <option value="martial_arts">Martial Arts</option>
-                                    <option value="swimming">Swimming</option>
-                                    <option value="personal_training">Personal Training</option>
+                                    <?php if (!empty($categories)): ?>
+                                        <?php foreach ($categories as $cat): ?>
+                                            <option value="<?= $cat->id; ?>" <?= ($this->input->get('category') == $cat->id) ? 'selected' : ''; ?>><?= htmlspecialchars(ucwords(strtolower($cat->name))); ?></option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
                                 </select>
                             </div>
 

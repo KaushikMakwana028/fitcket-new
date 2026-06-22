@@ -1,20 +1,20 @@
 <style>
     :root {
-        --primary-color: #6c5ce7;
-        --primary-dark: #5a4fcf;
-        --primary-light: #a29bfe;
-        --secondary-color: #2d3436;
-        --accent-color: #fd79a8;
-        --warning-color: #fdcb6e;
-        --success-color: #00b894;
+        --primary-color: #6f42c1;
+        --primary-dark: #5a2ca6;
+        --primary-light: #d1c4e9;
+        --secondary-color: #1e293b;
+        --accent-color: #8e44ad;
+        --warning-color: #e67e22;
+        --success-color: #2ecc71;
         --white: #ffffff;
         --light-bg: #f8f9fa;
-        --text-dark: #2d3436;
-        --text-muted: #636e72;
-        --border-color: #e9ecef;
-        --border-radius: 12px;
-        --shadow: 0 4px 20px rgba(108, 92, 231, 0.08);
-        --shadow-hover: 0 8px 30px rgba(108, 92, 231, 0.15);
+        --text-dark: #0f172a;
+        --text-muted: #64748b;
+        --border-color: #e2e8f0;
+        --border-radius: 16px;
+        --shadow: 0 10px 30px rgba(111, 66, 193, 0.06);
+        --shadow-hover: 0 20px 40px rgba(111, 66, 193, 0.12);
         --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
@@ -151,9 +151,9 @@
     /* Providers Grid */
     .providers-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-        gap: 1.5rem;
-        margin-bottom: 2rem;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 2rem;
+        margin-bottom: 3rem;
     }
 
     .provider-card {
@@ -163,16 +163,21 @@
         box-shadow: var(--shadow);
         transition: var(--transition);
         border: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
     }
 
     .provider-card:hover {
-        transform: translateY(-5px);
+        transform: translateY(-8px);
         box-shadow: var(--shadow-hover);
+        border-color: var(--primary-light);
     }
 
     .card-header {
         position: relative;
-        height: 160px;
+        height: 200px;
         overflow: hidden;
     }
 
@@ -184,154 +189,144 @@
     }
 
     .provider-card:hover .card-header img {
-        transform: scale(1.05);
-    }
-
-    /* City section */
-    .city-section {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        flex-wrap: wrap;
-    }
-
-    .city-section i {
-        color: var(--primary-color);
-        font-size: 1rem;
-    }
-
-    .city-section .label {
-        font-weight: 600;
-        color: var(--secondary-color);
-        font-size: 0.85rem;
-    }
-
-    .cities {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 0.4rem;
-    }
-
-    .city-tag {
-        background: var(--light-bg);
-        color: var(--secondary-color);
-        font-weight: 600;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        transition: var(--transition);
-    }
-
-    .city-tag:hover {
-        background: var(--primary-color);
-        color: var(--white);
-    }
-
-    /* Distance section */
-    .distance-section {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .distance-section i {
-        color: var(--primary-color);
-        font-size: 1rem;
-    }
-
-    .distance-section .label {
-        font-weight: 600;
-        color: var(--secondary-color);
-        font-size: 0.85rem;
-    }
-
-    .distance {
-        background: var(--warning-light, #fff3cd);
-        color: var(--warning-color, #856404);
-        font-weight: 600;
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-size: 0.8rem;
+        transform: scale(1.06);
     }
 
     .card-rating {
         position: absolute;
         top: 1rem;
         right: 1rem;
-        background: rgba(255, 255, 255, 0.9);
-        padding: 0.25rem 0.75rem;
-        border-radius: 20px;
-        font-weight: 600;
-        color: var(--warning-color);
+        background: rgba(255, 255, 255, 0.85);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        padding: 0.35rem 0.85rem;
+        border-radius: 30px;
+        font-weight: 700;
+        color: #e67e22;
         display: flex;
         align-items: center;
-        gap: 0.25rem;
-        font-size: 0.9rem;
+        gap: 0.3rem;
+        font-size: 0.85rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
     }
 
     .card-body {
-        padding: 1.5rem;
+        padding: 1.75rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
     }
 
     .card-title {
-        font-size: 1.25rem;
-        margin: 0 0 0.5rem 0;
-        color: var(--secondary-color);
+        font-size: 1.35rem;
+        font-weight: 750;
+        margin: 0;
+        color: var(--text-dark);
+        line-height: 1.3;
     }
 
     .card-subtitle {
         color: var(--primary-color);
         font-weight: 600;
-        margin: 0 0 1rem 0;
-        font-size: 0.9rem;
-    }
-
-    .card-features {
+        margin: 0;
+        font-size: 0.95rem;
         display: flex;
-        flex-wrap: wrap;
-        gap: 0.5rem;
-        margin-bottom: 1.5rem;
+        align-items: center;
+        gap: 6px;
     }
 
-    .feature-tag {
-        background: var(--light-bg);
+    .info-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 0.25rem;
+        font-size: 0.9rem;
         color: var(--text-muted);
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .info-item i {
+        color: var(--primary-color);
+        width: 16px;
+        text-align: center;
+    }
+
+    .badge-city {
+        background: var(--light-bg);
+        color: var(--text-dark);
+        font-weight: 600;
         padding: 0.25rem 0.75rem;
         border-radius: 20px;
         font-size: 0.8rem;
+        border: 1px solid #e2e8f0;
+        max-width: 150px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
+        text-align: center;
+        vertical-align: middle;
+    }
+
+    .badge-distance {
+        background: #fff3cd;
+        color: #856404;
+        font-weight: 600;
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        border: 1px solid #ffeeba;
     }
 
     .card-footer {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 0 1.5rem 1.5rem;
+        padding: 1.25rem 1.75rem 1.75rem;
+        border-top: 1px solid var(--border-color);
+        background: #fafafa;
     }
 
     .price {
-        font-weight: 700;
-        color: var(--secondary-color);
-        font-size: 1.1rem;
+        font-weight: 800;
+        color: var(--text-dark);
+        font-size: 1.4rem;
+        display: flex;
+        align-items: baseline;
     }
 
-    .page-link {
-        background: var(--gradient-primary);
-        color: #fff;
+    .price span {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-muted);
+        margin-left: 4px;
     }
 
     .btn-book {
-        background: var(--gradient-primary);
-        color: #fff;
+        background: var(--primary-color);
+        color: #fff !important;
         border: none;
-        padding: 0.5rem 1rem;
-        border-radius: var(--border-radius);
+        padding: 0.65rem 1.5rem;
+        border-radius: 30px;
         font-weight: 600;
         cursor: pointer;
         transition: var(--transition);
+        text-decoration: none;
+        box-shadow: 0 4px 15px rgba(111, 66, 193, 0.2);
+        display: inline-block;
+        text-align: center;
     }
 
     .btn-book:hover {
         background: var(--primary-dark);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(111, 66, 193, 0.3);
     }
 
     /* Pagination Styles */
@@ -643,43 +638,48 @@
                         `;
                     } else {
                         res.services.forEach(service => {
+                            let ratingText = (service.avg_rating && parseFloat(service.avg_rating) > 0) ? parseFloat(service.avg_rating).toFixed(1) : 'New';
                             html += `
                             <div class="provider-card">
                                 
                                 <!-- IMAGE -->
                                 <div class="card-header">
-                                    <img src="${service.image ? '<?= base_url() ?>' + service.image : '<?= base_url("assets/images/default.jpg") ?>'}" alt="">
+                                    <img src="${service.image ? '<?= base_url() ?>' + service.image : '<?= base_url("assets/images/default.jpg") ?>'}" onerror="this.onerror=null;this.src='<?= base_url("assets/images/default.jpg") ?>';" alt="">
                                     
                                     <!-- RATING -->
                                     <div class="card-rating">
-                                        ⭐ ${service.rating ? service.rating : '4.5'}
+                                        <i class="fas fa-star"></i> ${ratingText}
                                     </div>
                                 </div>
 
                                 <!-- BODY -->
                                 <div class="card-body">
                                     <h5 class="card-title">${service.name || ''}</h5>
-                                    <p class="card-subtitle">${service.gym_name || ''}</p>
+                                    <p class="card-subtitle"><i class="fas fa-dumbbell"></i> ${service.gym_name || ''}</p>
 
                                     <!-- CITY -->
-                                    <div class="city-section">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                        <span class="label">Available in:</span>
-                                        <span class="city-tag">${service.city || 'N/A'}</span>
+                                    <div class="info-row">
+                                        <div class="info-item">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                            <span>Available in:</span>
+                                        </div>
+                                        <span class="badge-city" title="${service.city || 'N/A'}">${service.city || 'N/A'}</span>
                                     </div>
 
                                     <!-- DISTANCE -->
-                                    <div class="distance-section">
-                                        <i class="fas fa-route"></i>
-                                        <span class="label">Distance:</span>
-                                        <span class="distance">${service.distance || 'N/A'}</span>
+                                    <div class="info-row">
+                                        <div class="info-item">
+                                            <i class="fas fa-route"></i>
+                                            <span>Distance:</span>
+                                        </div>
+                                        <span class="badge-distance">${service.distance || 'N/A'}</span>
                                     </div>
                                 </div>
 
                                 <!-- FOOTER -->
                                 <div class="card-footer">
-                                    <div class="price">₹${service.month_price || '0'}</div>
-                                    <button class="btn-book">View</button>
+                                    <div class="price">₹${service.month_price || '0'}<span>/ month</span></div>
+                                    <a href="<?= base_url('provider_details/') ?>${service.provider_id}" class="btn-book" style="color: #fff !important;">View</a>
                                 </div>
 
                             </div>
@@ -688,6 +688,64 @@
                     }
 
                     $('#providers-container').html(html);
+                    renderPagination(res.total, res.limit, res.page, search);
+                }
+            });
+        }
+
+        function renderPagination(total, limit, currentPage, search) {
+            let totalPages = Math.ceil(total / limit);
+            if (totalPages <= 1) {
+                $('#pagination').html('');
+                $('#pagination-info').html(`Showing all ${total} services`);
+                return;
+            }
+
+            let start = (currentPage - 1) * limit + 1;
+            let end = Math.min(currentPage * limit, total);
+            $('#pagination-info').html(`Showing ${start}-${end} of ${total} services`);
+
+            let paginationHtml = '';
+            
+            // Previous
+            paginationHtml += `
+                <div class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" data-page="${currentPage - 1}">&laquo;</a>
+                </div>
+            `;
+
+            // Numbers
+            for (let i = 1; i <= totalPages; i++) {
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    paginationHtml += `
+                        <div class="page-item ${currentPage === i ? 'active' : ''}">
+                            <a class="page-link" data-page="${i}">${i}</a>
+                        </div>
+                    `;
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    paginationHtml += `
+                        <div class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </div>
+                    `;
+                }
+            }
+
+            // Next
+            paginationHtml += `
+                <div class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" data-page="${currentPage + 1}">&raquo;</a>
+                </div>
+            `;
+
+            $('#pagination').html(paginationHtml);
+
+            // Add click listener
+            $('#pagination .page-link').off('click').on('click', function(e) {
+                e.preventDefault();
+                let selectedPage = $(this).data('page');
+                if (selectedPage && selectedPage !== currentPage) {
+                    loadServices(selectedPage, search);
                 }
             });
         }

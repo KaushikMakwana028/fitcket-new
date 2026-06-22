@@ -59,7 +59,10 @@ class Profile extends User_Controller
                 $this->db->group_end();
             }
             if (!empty($category)) {
+                $this->db->group_start();
                 $this->db->where('provider.category', $category);
+                $this->db->or_where('provider.sub_category', $category);
+                $this->db->group_end();
             }
             if (!empty($language)) {
                 $this->db->where(
@@ -182,6 +185,7 @@ class Profile extends User_Controller
         unset($p);
 
         $data['provider'] = $providers;
+        $data['categories'] = $this->general_model->getAll('categories', ['isActive' => 1]);
 
         /* ======================================================
        PAGINATION
@@ -343,13 +347,13 @@ class Profile extends User_Controller
 
 
 
-        // Fetch services with limit
-
-        $this->db->where(['provider_id' => $provider_id, 'isactive' => 1]);
-
+        // Fetch services with limit and join provider to get month_price
+        $this->db->select('service.*, provider.month_price');
+        $this->db->from('service');
+        $this->db->join('provider', 'provider.provider_id = service.provider_id', 'left');
+        $this->db->where(['service.provider_id' => $provider_id, 'service.isActive' => 1]);
         $this->db->limit($perPage, $offset);
-
-        $services = $this->db->get('service')->result();
+        $services = $this->db->get()->result();
 
 
 

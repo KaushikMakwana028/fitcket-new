@@ -464,7 +464,7 @@
                         <div class="cart-desktop d-none d-md-grid">
                             <!-- Image -->
                             <div>
-                                <img src="<?= !empty($item['provider_image']) ? base_url($item['provider_image']) : base_url('assets/no-image.png'); ?>"
+                                <img src="<?= !empty($item['provider_image']) ? base_url($item['provider_image']) : base_url('assets/images/3d-cartoon-fitness-man.jpg'); ?>"
                                     class="prov-img" alt="Provider">
                             </div>
                             <!-- Name + date -->
@@ -514,7 +514,7 @@
                         <!-- ═══ MOBILE ═══ -->
                         <div class="cart-mobile d-md-none">
                             <div class="mob-row1">
-                                <img src="<?= !empty($item['provider_image']) ? base_url($item['provider_image']) : base_url('assets/no-image.png'); ?>"
+                                <img src="<?= !empty($item['provider_image']) ? base_url($item['provider_image']) : base_url('assets/images/3d-cartoon-fitness-man.jpg'); ?>"
                                     class="prov-img" alt="Provider">
                                 <div class="mob-info">
                                     <div class="item-name"><?= htmlspecialchars($item['provider_name']); ?></div>

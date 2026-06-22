@@ -1031,6 +1031,402 @@
             font-size: 2rem;
         }
     }
+
+    /* Swipeable Horizontal Tabs on Mobile */
+    @media (max-width: 991px) {
+        .custom-tabs {
+            display: flex !important;
+            flex-wrap: nowrap !important;
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+            gap: 8px !important;
+            padding: 0.5rem !important;
+            scrollbar-width: none; /* Firefox */
+        }
+        .custom-tabs::-webkit-scrollbar {
+            display: none; /* Safari and Chrome */
+        }
+        .custom-tabs .nav-item {
+            flex: 0 0 auto !important;
+            width: auto !important;
+            margin: 0 !important;
+        }
+        .custom-tabs .nav-link {
+            white-space: nowrap !important;
+            padding: 0.5rem 1rem !important;
+            font-size: 0.85rem !important;
+        }
+    }
+
+    /* Pricing Option Cards Grid */
+    .pricing-card-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+        margin-top: 1.5rem;
+    }
+
+    @media (max-width: 576px) {
+        .pricing-card-grid {
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+    }
+
+    .pricing-option-card {
+        position: relative;
+        background: #ffffff;
+        border: 2px solid #e2e8f0;
+        border-radius: var(--border-radius);
+        padding: 1.25rem 1rem;
+        cursor: pointer;
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 0;
+        user-select: none;
+    }
+
+    .pricing-option-card:hover {
+        border-color: var(--primary-light);
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(108, 92, 231, 0.06);
+    }
+
+    .pricing-option-card.active {
+        border-color: var(--primary-color);
+        background-color: rgba(108, 92, 231, 0.03);
+        box-shadow: 0 8px 20px rgba(108, 92, 231, 0.08);
+    }
+
+    .pricing-option-card input[type="radio"] {
+        position: absolute;
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .pricing-option-card .custom-radio-indicator {
+        width: 20px;
+        height: 20px;
+        border: 2px solid #cbd5e1;
+        border-radius: 50%;
+        position: relative;
+        flex-shrink: 0;
+        transition: var(--transition);
+    }
+
+    .pricing-option-card.active .custom-radio-indicator {
+        border-color: var(--primary-color);
+    }
+
+    .pricing-option-card.active .custom-radio-indicator::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 10px;
+        height: 10px;
+        background-color: var(--primary-color);
+        border-radius: 50%;
+    }
+
+    .pricing-option-card .pricing-card-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        background-color: rgba(108, 92, 231, 0.08);
+        color: var(--primary-color);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        transition: var(--transition);
+        flex-shrink: 0;
+    }
+
+    .pricing-option-card.active .pricing-card-icon {
+        background-color: var(--primary-color);
+        color: #ffffff;
+    }
+
+    .pricing-option-card .pricing-card-details {
+        flex-grow: 1;
+    }
+
+    .pricing-option-card .pricing-card-label {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+    }
+
+    .pricing-option-card .pricing-card-price {
+        font-size: 1.25rem;
+        font-weight: 800;
+        color: var(--text-dark);
+    }
+
+    .pricing-option-card .pricing-card-period {
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--text-muted);
+    }
+
+    /* Premium Ticket Offer Card */
+    .offer-card {
+        background: linear-gradient(135deg, #ffffff 0%, #fdfdfd 100%);
+        border: 1.5px dashed rgba(108, 92, 231, 0.35);
+        border-radius: var(--border-radius);
+        position: relative;
+        overflow: hidden;
+        transition: var(--transition);
+        padding: 1.5rem 1rem !important;
+    }
+
+    .offer-card::before, .offer-card::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        width: 14px;
+        height: 28px;
+        background-color: #ffffff;
+        transform: translateY(-50%);
+        z-index: 2;
+        border: 1.5px dashed rgba(108, 92, 231, 0.35);
+    }
+    
+    .offer-card::before {
+        left: -8px;
+        border-radius: 0 14px 14px 0;
+        border-left: 0;
+    }
+    
+    .offer-card::after {
+        right: -8px;
+        border-radius: 14px 0 0 14px;
+        border-right: 0;
+    }
+
+    .offer-card:hover {
+        transform: translateY(-3px);
+        border-color: var(--primary-color);
+        box-shadow: 0 8px 24px rgba(108, 92, 231, 0.08);
+    }
+
+    .offer-duration-badge {
+        background: rgba(108, 92, 231, 0.1);
+        color: var(--primary-color);
+        font-weight: 750;
+        padding: 4px 12px;
+        border-radius: 20px;
+        display: inline-block;
+        font-size: 0.85rem;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .offer-deal {
+        font-size: 1.25rem;
+        font-weight: 850;
+        color: var(--text-dark);
+        margin-bottom: 6px;
+    }
+
+    .offer-deal span {
+        color: var(--accent-color);
+    }
+
+    .offer-details {
+        font-size: 0.825rem;
+        color: var(--text-muted);
+        margin-bottom: 0;
+        font-weight: 500;
+    }
+
+    /* Booking Inputs Alignment */
+    .qty-input-group {
+        width: 140px;
+        border: 2px solid #cbd5e1;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        background-color: #ffffff;
+    }
+
+    .qty-input-group .btn-qty-btn {
+        border: none !important;
+        background-color: transparent !important;
+        color: var(--primary-color) !important;
+        font-size: 0.95rem;
+        padding: 0.5rem 0.85rem;
+        transition: var(--transition);
+        box-shadow: none !important;
+    }
+
+    .qty-input-group .btn-qty-btn:hover {
+        background-color: #f1f5f9 !important;
+    }
+
+    .qty-input-group .qty-input-value {
+        border: none !important;
+        background-color: transparent !important;
+        font-weight: 750;
+        font-size: 1.15rem;
+        color: var(--text-dark) !important;
+        padding: 0;
+        box-shadow: none !important;
+    }
+
+    /* Contact Block Optimizations */
+    .contact-text-wrapper {
+        flex-grow: 1;
+        word-break: break-all;
+    }
+
+    .contact-label {
+        font-size: 0.775rem;
+        font-weight: 700;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 1px;
+    }
+
+    .contact-value {
+        font-size: 0.975rem;
+        font-weight: 600;
+        color: var(--text-dark);
+    }
+
+    .contact-icon {
+        flex-shrink: 0;
+    }
+
+    .map-container img {
+        border-bottom-left-radius: var(--border-radius);
+        border-bottom-right-radius: var(--border-radius);
+        transition: var(--transition);
+    }
+    
+    .map-container:hover img {
+        transform: scale(1.02);
+    }
+
+    /* Provider card adjustments */
+    .provider-body {
+        background: #ffffff;
+    }
+
+    .provider-card:hover .provider-img {
+        transform: scale(1.05);
+    }
+
+    /* Service Cards list details */
+    .service-item-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        transition: var(--transition);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .service-item-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-hover);
+        border-color: var(--primary-light);
+    }
+
+    .service-item-img-wrapper {
+        position: relative;
+        height: 180px;
+        overflow: hidden;
+    }
+
+    .service-item-img-wrapper img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: var(--transition);
+    }
+
+    .service-item-card:hover .service-item-img-wrapper img {
+        transform: scale(1.06);
+    }
+
+    .service-item-body {
+        padding: 1.25rem;
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .service-item-title {
+        font-size: 1.15rem;
+        font-weight: 750;
+        color: var(--text-dark);
+        margin-bottom: 2px;
+        line-height: 1.3;
+    }
+
+    .service-item-desc {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        line-height: 1.5;
+        margin-bottom: 10px;
+    }
+
+    .service-item-footer {
+        padding: 1rem 1.25rem;
+        background-color: #fafbfc;
+        border-top: 1px solid #f1f5f9;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .service-item-price {
+        font-size: 1.2rem;
+        font-weight: 800;
+        color: var(--primary-color);
+    }
+
+    .service-item-price small {
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    .service-item-btn {
+        background: var(--gradient-primary);
+        color: #ffffff !important;
+        border: none;
+        border-radius: 8px;
+        padding: 0.5rem 1.25rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-decoration: none;
+        transition: var(--transition);
+        box-shadow: 0 4px 10px rgba(108, 92, 231, 0.2);
+    }
+
+    .service-item-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 15px rgba(108, 92, 231, 0.3);
+    }
 </style>
 
 <div class="breadcrumb-container">
@@ -1063,14 +1459,16 @@
                 <input type="hidden" name="provider_id" value="<?= $provider->provider_id; ?>">
 
                 <!-- Gym Image -->
-                <img src="<?= base_url($provider->profile_image); ?>" class="provider-img mx-auto d-block"
-                    alt="<?= $provider->gym_name; ?>">
+                <div class="provider-img-container">
+                    <img src="<?= base_url($provider->profile_image); ?>" class="provider-img mx-auto d-block"
+                        alt="<?= $provider->gym_name; ?>">
+                </div>
 
-                <div class="card shadow-sm border-0 p-3">
+                <div class="provider-body p-4">
                     <!-- Header -->
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="fw-bold mb-0"><?= $provider->gym_name; ?></h5>
-                        <a href="#" class="text-primary fw-bold small"><?= $provider->service_count; ?> Services</a>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="fw-bold mb-0 text-dark"><?= $provider->gym_name; ?></h4>
+                        <a href="#services" class="text-primary fw-bold small" onclick="openServicesTab()"><?= $provider->service_count; ?> Services</a>
                     </div>
 
                     <!-- Location -->
@@ -1081,11 +1479,10 @@
 
                     <!-- Description -->
                     <p class="text-muted small mb-2 text-truncate-3"
-                        style="overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical;">
+                        style="overflow: hidden; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; line-height: 1.6;">
                         <?= $provider->description; ?>
                     </p>
-                    <a href="#about" class="text-primary fw-bold small d-inline-block" onclick="openAboutTab()">Read
-                        More</a>
+                    <a href="#about" class="text-primary fw-bold small d-inline-block mb-3" onclick="openAboutTab()">Read More</a>
 
                     <!-- Expertise Tags -->
                     <?php
@@ -1095,17 +1492,17 @@
                     }
                     ?>
 
-                    <div class="mt-3">
-                        <h6 class="fw-bold mb-2">Expertise</h6>
+                    <div class="mt-3 pt-3 border-top">
+                        <h6 class="fw-bold mb-2 text-uppercase text-secondary" style="font-size: 0.8rem; letter-spacing: 0.5px;">Expertise</h6>
                         <div class="d-flex flex-wrap gap-2">
                             <?php if (!empty($tags)): ?>
                                 <?php foreach ($tags as $tag): ?>
-                                    <span class="badge rounded-pill bg-light text-primary border px-3 py-2 fade-in">
+                                    <span class="badge rounded-pill bg-light text-primary border px-3 py-2 fade-in" style="font-size: 0.8rem;">
                                         <?= htmlspecialchars(trim($tag)); ?>
                                     </span>
                                 <?php endforeach; ?>
                             <?php else: ?>
-                                <span class="text-muted">No expertise added</span>
+                                <span class="text-muted small">No expertise added</span>
                             <?php endif; ?>
                         </div>
                     </div>
@@ -1179,15 +1576,15 @@
                 <div class="tab-pane fade show active" id="pricing-section" role="tabpanel"
                     aria-labelledby="pricing-tab">
                     <div class="card shadow-sm p-4 mt-3 fade-in">
-                        <h6 class="fw-bold mb-2 text-uppercase text-secondary">
-                            <i class="fa fa-map-marker-alt me-2"></i>Available in Cities
+                        <h6 class="fw-bold mb-2 text-uppercase text-secondary" style="font-size: 0.8rem; letter-spacing: 0.5px;">
+                            <i class="fa fa-map-marker-alt me-2 text-primary"></i>Available in Cities
                         </h6>
                         <div class="d-flex flex-wrap gap-2">
                             <?php
                             if (!empty($provider->city)) {
                                 $cities = explode(',', $provider->city);
                                 foreach ($cities as $city) { ?>
-                                    <span class="badge rounded-pill bg-info px-3 py-2 fade-in">
+                                    <span class="badge rounded-pill bg-info px-3 py-2 fade-in" style="font-size: 0.8rem; background: var(--gradient-primary) !important;">
                                         <?= htmlspecialchars(trim($city)); ?>
                                     </span>
                                 <?php }
@@ -1196,39 +1593,62 @@
                             <?php } ?>
                         </div>
 
-                        <div class="list-group mt-5">
+                        <!-- Modern Pricing Grid -->
+                        <div class="pricing-card-grid">
                             <?php if (!empty($provider)): ?>
-                                <label class="list-group-item">
-                                    <input class="form-check-input me-2" type="radio" name="priceOption"
+                                <label class="pricing-option-card active">
+                                    <input type="radio" name="priceOption"
                                         data-price="<?= $provider->day_price; ?>" data-label="Day" checked>
-                                    <i class="fa fa-calendar-day me-2 text-primary"></i>
-                                    ₹<?= number_format($provider->day_price, 2); ?> <small class="text-muted">/day</small>
+                                    <div class="custom-radio-indicator"></div>
+                                    <div class="pricing-card-icon">
+                                        <i class="fa fa-calendar-day"></i>
+                                    </div>
+                                    <div class="pricing-card-details">
+                                        <div class="pricing-card-label">Day Pass</div>
+                                        <div class="pricing-card-price">₹<?= number_format($provider->day_price, 2); ?><span class="pricing-card-period">/day</span></div>
+                                    </div>
                                 </label>
 
-                                <label class="list-group-item">
-                                    <input class="form-check-input me-2" type="radio" name="priceOption"
+                                <label class="pricing-option-card">
+                                    <input type="radio" name="priceOption"
                                         data-price="<?= $provider->week_price; ?>" data-label="Week">
-                                    <i class="fa fa-calendar-week me-2 text-primary"></i>
-                                    ₹<?= number_format($provider->week_price, 2); ?> <small class="text-muted">/week</small>
+                                    <div class="custom-radio-indicator"></div>
+                                    <div class="pricing-card-icon">
+                                        <i class="fa fa-calendar-week"></i>
+                                    </div>
+                                    <div class="pricing-card-details">
+                                        <div class="pricing-card-label">Weekly Pass</div>
+                                        <div class="pricing-card-price">₹<?= number_format($provider->week_price, 2); ?><span class="pricing-card-period">/week</span></div>
+                                    </div>
                                 </label>
 
-                                <label class="list-group-item">
-                                    <input class="form-check-input me-2" type="radio" name="priceOption"
+                                <label class="pricing-option-card">
+                                    <input type="radio" name="priceOption"
                                         data-price="<?= $provider->month_price; ?>" data-label="Month">
-                                    <i class="fa fa-calendar-alt me-2 text-primary"></i>
-                                    ₹<?= number_format($provider->month_price, 2); ?> <small
-                                        class="text-muted">/month</small>
+                                    <div class="custom-radio-indicator"></div>
+                                    <div class="pricing-card-icon">
+                                        <i class="fa fa-calendar-alt"></i>
+                                    </div>
+                                    <div class="pricing-card-details">
+                                        <div class="pricing-card-label">Monthly Pass</div>
+                                        <div class="pricing-card-price">₹<?= number_format($provider->month_price, 2); ?><span class="pricing-card-period">/month</span></div>
+                                    </div>
                                 </label>
 
                                 <?php
                                 $yearPrice = is_numeric($provider->year_price) ? (float)$provider->year_price : 0;
                                 ?>
-                                <label class="list-group-item">
-                                    <input class="form-check-input me-2" type="radio" name="priceOption"
+                                <label class="pricing-option-card">
+                                    <input type="radio" name="priceOption"
                                         data-price="<?= $yearPrice; ?>" data-label="Year">
-                                    <i class="fa fa-calendar me-2 text-primary"></i>
-                                    ₹<?= $yearPrice > 0 ? number_format($yearPrice, 2) : 'N/A'; ?>
-                                    <small class="text-muted">/year</small>
+                                    <div class="custom-radio-indicator"></div>
+                                    <div class="pricing-card-icon">
+                                        <i class="fa fa-calendar"></i>
+                                    </div>
+                                    <div class="pricing-card-details">
+                                        <div class="pricing-card-label">Yearly Pass</div>
+                                        <div class="pricing-card-price"><?= $yearPrice > 0 ? '₹' . number_format($yearPrice, 2) : 'N/A'; ?><span class="pricing-card-period">/year</span></div>
+                                    </div>
                                 </label>
                             <?php endif; ?>
                         </div>
@@ -1239,74 +1659,64 @@
                             <input type="hidden" name="provider_name" value="<?= $provider->gym_name; ?>">
                             <input type="hidden" name="provider_image"
                                 value="<?= base_url($provider->profile_image); ?>">
-                            <input type="hidden" name="price" id="priceInput" value="100">
+                            <!-- Dynamic Day Price Initializer -->
+                            <input type="hidden" name="price" id="priceInput" value="<?= $provider->day_price; ?>">
                             <input type="hidden" name="duration" id="durationInput" value="day">
+                            
+                            <!-- Premium Special Offers Section -->
                             <?php if (!empty($offers)): ?>
-                                <div class="mt-4">
-                                    <h6 class="fw-bold mb-3 text-secondary text-uppercase">
-                                        <i class="fa fa-gift me-2"></i>Special Offers
+                                <div class="mt-5 pt-3 border-top">
+                                    <h6 class="fw-bold mb-3 text-secondary text-uppercase" style="font-size: 0.8rem; letter-spacing: 0.5px;">
+                                        <i class="fa fa-gift me-2 text-primary"></i>Special Offers
                                     </h6>
                                     <div class="row g-3">
                                         <?php foreach ($offers as $offer): ?>
-                                            <div class="col-md-6 col-lg-3">
-                                                <div class="card shadow-sm border-0 h-100">
-                                                    <div class="card-body text-center">
-                                                        <!-- Duration -->
-                                                        <h5 class="card-title text-primary"><?= $offer->duration ?></h5>
-
-                                                        <!-- Buy & Free Quantity -->
-                                                        <p class="mb-1">
-                                                            <i class="fa fa-shopping-cart text-info me-1"></i>
-                                                            Buy: <strong><?= $offer->buy_quantity ?></strong>
-                                                        </p>
-                                                        <p class="mb-2">
-                                                            <i class="fa fa-gift text-warning me-1"></i>
-                                                            Free: <strong><?= $offer->free_quantity ?></strong>
-                                                        </p>
-
-                                                        <!-- Valid Till Date -->
-                                                        <p class="mb-0">
-                                                            <i class="fa fa-calendar-alt text-success me-1"></i>
-                                                            Valid Till:
-                                                            <strong><?= date('d M Y', strtotime($offer->valid_till)) ?></strong>
-                                                        </p>
-                                                    </div>
+                                            <div class="col-md-6 col-lg-3 col-sm-6">
+                                                <div class="offer-card text-center shadow-sm h-100">
+                                                    <div class="offer-badge-ribbon">Offer</div>
+                                                    <div class="offer-duration-badge"><?= htmlspecialchars($offer->duration) ?></div>
+                                                    <div class="offer-deal">Buy <?= $offer->buy_quantity ?> Get <span><?= $offer->free_quantity ?> Free</span></div>
+                                                    <p class="offer-details">
+                                                        <i class="fa fa-calendar-alt text-success me-1"></i>
+                                                        Valid: <?= date('d M Y', strtotime($offer->valid_till)) ?>
+                                                    </p>
                                                 </div>
                                             </div>
                                         <?php endforeach; ?>
                                     </div>
                                 </div>
                             <?php else: ?>
-                                <p class="text-muted mt-4">No Offers Available Right Now</p>
+                                <p class="text-muted small mt-4 pt-3 border-top"><i class="fa fa-info-circle me-1"></i>No offers available right now.</p>
                             <?php endif; ?>
 
+                            <!-- Quantity Selector and Start Date in single flex layout -->
+                            <div class="d-flex flex-wrap gap-4 align-items-center mt-5 mb-3">
+                                <div class="qty-selector-container">
+                                    <span class="qty-label small fw-bold text-uppercase text-muted mb-2"><i class="fa fa-shopping-cart me-1"></i>Quantity</span>
+                                    <div class="input-group qty-input-group">
+                                        <button class="btn btn-qty-btn" type="button" id="decreaseQty">
+                                            <i class="fa fa-minus"></i>
+                                        </button>
+                                        <input type="text" id="quantityInput" name="quantity" class="form-control qty-input-value text-center"
+                                            value="1" readonly>
+                                        <button class="btn btn-qty-btn" type="button" id="increaseQty">
+                                            <i class="fa fa-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
 
-                            <h6 id="selectedOption" class="fw-bold mb-2 text-uppercase text-secondary mt-4">
-                                <i class="fa fa-shopping-cart me-2"></i>Book for Day
-                            </h6>
-                            <div class=" mb-3" style="width: 5%;
-    display: inline;">
-                                <button class="btn btn-outline-primary" type="button" id="decreaseQty">
-                                    <i class="fa fa-minus"></i>
-                                </button>
-                                <input type="text" id="quantityInput" name="quantity" class="form-controll text-center"
-                                    value="1" readonly style="display: inline;
-        width: 16%;">
-                                <button class="btn btn-outline-primary" type="button" id="increaseQty">
-                                    <i class="fa fa-plus"></i>
-                                </button>
+                                <div class="date-selector-container flex-grow-1" style="min-width: 200px;">
+                                    <span class="date-label small fw-bold text-uppercase text-muted mb-2"><i class="fa fa-calendar-plus me-1"></i>Start Date</span>
+                                    <div class="input-group">
+                                        <span class="input-group-text bg-white text-muted border-end-0"><i class="fa fa-calendar-alt"></i></span>
+                                        <input type="date" class="form-control border-start-0 ps-1" id="startDate" name="start_date" required>
+                                    </div>
+                                </div>
                             </div>
-
-                            <h6 class="fw-bold mb-2 text-uppercase text-secondary mt-4">
-                                <i class="fa fa-calendar-plus me-2"></i>Start From
-                            </h6>
-                            <input type="text" class="form-control" id="startDate" placeholder="dd-mm-yyyy"
-                                name="start_date">
-
 
                             <small id="dateError" class="text-danger d-none"></small>
 
-                            <button type="button" class="btn btn-primary w-100 py-3 mt-3 fw-bold mb-5"
+                            <button type="button" class="btn btn-primary w-100 py-3 mt-4 fw-bold mb-3" style="border-radius: 12px; font-size: 1.1rem; box-shadow: 0 8px 25px rgba(108, 92, 231, 0.25);"
                                 onclick="validateAndBook(<?= isset($this->user['id']) ? $this->user['id'] : '0'; ?>)">
                                 <i class="fa fa-rocket me-2"></i>Book Now
                             </button>
@@ -1470,54 +1880,57 @@
                             </div>
                             <!-- Contact Info -->
                             <div class="col-lg-4 col-md-5 mb-4">
-                                <div class="card shadow-sm border-0 h-100 fade-in">
-                                    <div class="card-header bg-primary text-white fw-bold">
+                                <div class="card shadow-sm border-0 h-100 fade-in" style="border-radius: var(--border-radius); overflow: hidden;">
+                                    <div class="card-header bg-primary text-white fw-bold py-3" style="background: var(--gradient-primary) !important;">
                                         <i class="fa fa-address-card me-2"></i> Contact Information
                                     </div>
-                                    <div class="card-body">
-                                        <div class="mb-3 d-flex align-items-center">
-                                            <div class="contact-icon user">
+                                    <div class="card-body p-4">
+                                        <div class="mb-4 d-flex align-items-center">
+                                            <div class="contact-icon user me-3">
                                                 <i class="fa fa-user text-white"></i>
                                             </div>
-                                            <div>
-                                                <strong>Owner:</strong> <span><?= $provider->name; ?></span>
+                                            <div class="contact-text-wrapper">
+                                                <span class="contact-label d-block text-uppercase text-muted">Owner</span>
+                                                <span class="contact-value fw-bold text-dark"><?= htmlspecialchars($provider->name); ?></span>
                                             </div>
                                         </div>
-                                        <div class="mb-3 d-flex align-items-center">
-                                            <div class="contact-icon email">
+                                        <div class="mb-4 d-flex align-items-center">
+                                            <div class="contact-icon email me-3">
                                                 <i class="fa fa-envelope text-white"></i>
                                             </div>
-                                            <div>
-                                                <strong>Email:</strong> <span><?= $provider->email; ?></span>
+                                            <div class="contact-text-wrapper text-break">
+                                                <span class="contact-label d-block text-uppercase text-muted">Email</span>
+                                                <span class="contact-value fw-bold text-dark"><?= htmlspecialchars($provider->email); ?></span>
                                             </div>
                                         </div>
-                                        <div class="mb-3 d-flex align-items-center">
-                                            <div class="contact-icon phone">
+                                        <div class="mb-4 d-flex align-items-center">
+                                            <div class="contact-icon phone me-3">
                                                 <i class="fa fa-phone text-white"></i>
                                             </div>
-                                            <div>
-                                                <strong>Mobile:</strong> <span><?= $provider->mobile; ?></span>
+                                            <div class="contact-text-wrapper">
+                                                <span class="contact-label d-block text-uppercase text-muted">Mobile</span>
+                                                <span class="contact-value fw-bold text-dark"><?= htmlspecialchars($provider->mobile); ?></span>
                                             </div>
                                         </div>
                                         <div class="mb-3 d-flex align-items-start">
-                                            <div class="contact-icon location">
+                                            <div class="contact-icon location me-3 mt-1">
                                                 <i class="fa fa-map-marker-alt text-white"></i>
                                             </div>
-                                            <div>
-                                                <strong>Address:</strong>
-                                                <div><?= $provider->address; ?></div>
+                                            <div class="contact-text-wrapper">
+                                                <span class="contact-label d-block text-uppercase text-muted">Address</span>
+                                                <span class="contact-value fw-bold text-dark" style="line-height: 1.5;"><?= htmlspecialchars($provider->address); ?></span>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="card-footer p-0 map-container">
+                                    <div class="card-footer p-0 map-container border-0">
                                         <!-- Clickable Static Map -->
                                         <img
                                             src="https://maps.googleapis.com/maps/api/staticmap?center=<?= urlencode($provider->address); ?>&zoom=15&size=400x200&markers=color:red%7C<?= $provider->latitude; ?>,<?= $provider->longitude; ?>&key=AIzaSyAR5-9XtV0r0VyR7uu0ppEKhNHanKlGwWk"
-                                            class="img-fluid w-100 rounded-bottom map-image"
+                                            class="img-fluid w-100 map-image"
                                             alt="Map of <?= $provider->address; ?>"
                                             data-gym-lat="<?= $provider->latitude; ?>"
                                             data-gym-lng="<?= $provider->longitude; ?>"
-                                            style="cursor:pointer;">
+                                            style="cursor:pointer; display: block; border-bottom-left-radius: var(--border-radius); border-bottom-right-radius: var(--border-radius);">
                                     </div>
                                 </div>
                             </div>
@@ -1785,3 +2198,190 @@
         </div>
     </div>
 </div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+    $(document).ready(function() {
+        const providerId = "<?= $provider->provider_id; ?>";
+        const baseUrl = "<?= base_url(); ?>";
+
+        // 1. Services Loader Functions
+        function loadServices(page = 1) {
+            const container = $('#service-list');
+            container.html(`
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            `);
+
+            $.ajax({
+                url: `${baseUrl}profile/get_services_ajax/${providerId}`,
+                type: 'GET',
+                data: { page: page },
+                dataType: 'json',
+                success: function(res) {
+                    let html = '';
+                    if (!res.services || res.services.length === 0) {
+                        html = `
+                            <div class="text-center py-5 bg-white rounded shadow-sm">
+                                <i class="fa fa-dumbbell fa-3x text-muted mb-3"></i>
+                                <h5 class="fw-bold text-muted">No Services Found</h5>
+                                <p class="text-muted mb-0">This provider hasn't listed any services yet.</p>
+                            </div>
+                        `;
+                        $('#service-pagination').html('');
+                    } else {
+                        html = '<div class="row g-4">';
+                        res.services.forEach(service => {
+                            const imgUrl = service.image ? `${baseUrl}${service.image}` : `${baseUrl}assets/images/default.jpg`;
+                            const desc = service.description ? service.description : 'No description available.';
+                            html += `
+                                <div class="col-md-6 col-sm-12">
+                                    <div class="service-item-card">
+                                        <div class="service-item-img-wrapper">
+                                            <img src="${imgUrl}" alt="${service.name}" onerror="this.src='${baseUrl}assets/images/default.jpg'">
+                                        </div>
+                                        <div class="service-item-body">
+                                            <h5 class="service-item-title">${service.name}</h5>
+                                            <p class="service-item-desc">${desc}</p>
+                                        </div>
+                                        <div class="service-item-footer">
+                                            <div class="service-item-price">₹${parseFloat(service.month_price).toFixed(2)}<small>/month</small></div>
+                                            <a href="${baseUrl}services" class="service-item-btn">View All</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                        renderServicePagination(res.totalPages, res.currentPage);
+                    }
+                    container.html(html);
+                },
+                error: function() {
+                    container.html(`
+                        <div class="text-center py-5 bg-white rounded shadow-sm text-danger">
+                            <i class="fa fa-exclamation-triangle fa-3x mb-3"></i>
+                            <h5 class="fw-bold">Unable to Load Services</h5>
+                            <p class="mb-0">Please reload the page or try again later.</p>
+                        </div>
+                    `);
+                    $('#service-pagination').html('');
+                }
+            });
+        }
+
+        function renderServicePagination(totalPages, currentPage) {
+            let html = '';
+            if (totalPages <= 1) {
+                $('#service-pagination').html('');
+                return;
+            }
+
+            // Previous button
+            html += `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="${currentPage - 1}" aria-label="Previous">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+            `;
+
+            for (let i = 1; i <= totalPages; i++) {
+                html += `
+                    <li class="page-item ${currentPage === i ? 'active' : ''}">
+                        <a class="page-link" href="#" data-page="${i}">${i}</a>
+                    </li>
+                `;
+            }
+
+            // Next button
+            html += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" data-page="${currentPage + 1}" aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+            `;
+
+            $('#service-pagination').html(html);
+
+            // Click listener
+            $('#service-pagination .page-link').off('click').on('click', function(e) {
+                e.preventDefault();
+                const selectedPage = $(this).data('page');
+                if (selectedPage && selectedPage !== currentPage) {
+                    loadServices(selectedPage);
+                }
+            });
+        }
+
+        // 2. Tab Event Hooks
+        $('#services-tab').on('shown.bs.tab', function() {
+            loadServices(1);
+        });
+
+        // If page is loaded with #services hash
+        if (window.location.hash === '#services') {
+            loadServices(1);
+        }
+
+        // 3. Pricing Active Card Toggle
+        function updatePricingActiveCards() {
+            $('.pricing-option-card').each(function() {
+                const radio = $(this).find('input[type="radio"]');
+                if (radio.is(':checked')) {
+                    $(this).addClass('active');
+                    // Synchronize the hidden form inputs
+                    $('#priceInput').val(radio.data('price'));
+                    $('#durationInput').val(radio.data('label').toLowerCase());
+                    $('#selectedOption').html(`<i class="fa fa-shopping-cart me-2"></i>Book for ${radio.data('label')}`);
+                } else {
+                    $(this).removeClass('active');
+                }
+            });
+        }
+
+        $('.pricing-option-card input[type="radio"]').on('change', updatePricingActiveCards);
+        
+        // Let label card clicks check the radio button and trigger change
+        $('.pricing-option-card').on('click', function() {
+            const radio = $(this).find('input[type="radio"]');
+            if (!radio.is(':checked')) {
+                radio.prop('checked', true).trigger('change');
+            }
+        });
+
+        // Initialize active pricing option state
+        updatePricingActiveCards();
+
+        // 4. Quantity Increment/Decrement
+        $('#increaseQty').off('click').on('click', function(e) {
+            e.preventDefault();
+            let val = parseInt($('#quantityInput').val()) || 1;
+            $('#quantityInput').val(val + 1);
+        });
+
+        $('#decreaseQty').off('click').on('click', function(e) {
+            e.preventDefault();
+            let val = parseInt($('#quantityInput').val()) || 1;
+            if (val > 1) {
+                $('#quantityInput').val(val - 1);
+            }
+        });
+    });
+
+    // Helper functions for left sidebar navigation clicks
+    function openServicesTab() {
+        var servicesTab = document.getElementById("services-tab");
+        if (servicesTab) {
+            servicesTab.click();
+            window.scrollTo({
+                top: document.getElementById("services").offsetTop - 100,
+                behavior: "smooth"
+            });
+        }
+    }
+</script>

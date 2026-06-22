@@ -49,7 +49,18 @@ class Home extends User_Controller
     {
 
 
-        $this->data['category'] = $this->general_model->getAll('categories', ['isActive' => 1]);
+        $categories = $this->general_model->getAll('categories', ['isActive' => 1]);
+        foreach ($categories as &$cat) {
+            $cat->provider_count = $this->db
+                ->group_start()
+                    ->where('category', $cat->id)
+                    ->or_where('sub_category', $cat->id)
+                ->group_end()
+                ->where('isActive', 1)
+                ->count_all_results('provider');
+        }
+        $this->data['category'] = $categories;
+        $this->data['total_providers_count'] = $this->db->where('isActive', 1)->count_all_results('provider');
 
 
         $this->data['sliders'] = $this->db

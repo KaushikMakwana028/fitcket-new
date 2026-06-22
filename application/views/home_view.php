@@ -1,779 +1,1576 @@
 <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
+
     :root {
         --primary-color: #6f42c1;
+        --primary-dark: #5a32a3;
         --secondary-color: #1a1a1a;
         --accent-color: #8e44ad;
         --text-dark: #2d3436;
+        --text-muted: #6c757d;
         --bg-light: #f8f9fa;
+        --white: #ffffff;
+        --warning: #ffc107;
+        --warning-dark: #e0a800;
+        --border-color: #ececec;
+        --radius-sm: 10px;
+        --radius-md: 16px;
+        --radius-lg: 22px;
+        --radius-xl: 32px;
+        --radius-pill: 50px;
     }
 
+    .fitket-home {
+        font-family: 'Poppins', sans-serif;
+        color: var(--text-dark);
+        overflow-x: hidden;
+        line-height: 1.6;
+    }
 
-    #heroCarousel {
+    .fitket-home *,
+    .fitket-home *::before,
+    .fitket-home *::after {
+        box-sizing: border-box;
+    }
+
+    .fitket-home input,
+    .fitket-home button,
+    .fitket-home select,
+    .fitket-home textarea {
+        font-family: 'Poppins', sans-serif;
+    }
+
+    .fitket-home *:focus-visible {
+        outline: 2px solid var(--accent-color);
+        outline-offset: 2px;
+    }
+
+    /* ══════════════════════════════════════════
+     HERO CAROUSEL
+  ══════════════════════════════════════════ */
+    .fitket-home .hero-wrapper {
         position: relative;
-        margin-bottom: 120px;
+        margin-bottom: 70px;
     }
 
-    .swiper {
-        padding: 10px 5px 40px;
-    }
-
-    .swiper-slide {
-        height: auto;
-    }
-
-    .carousel-item {
-        height: 500px;
+    .fitket-home .carousel-item {
+        height: 600px;
         background-size: cover;
         background-position: center;
         position: relative;
     }
 
-    .carousel-item::before {
+    /* Layered gradient — deep dark bottom for text, purple glow top-right */
+    .fitket-home .carousel-item::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(ellipse at 80% 20%, rgba(111, 66, 193, 0.35) 0%, transparent 55%),
+            linear-gradient(160deg, rgba(26, 26, 26, 0.35) 0%, rgba(26, 26, 26, 0.78) 60%, rgba(26, 26, 26, 0.9) 100%);
+        z-index: 1;
+    }
+
+    .fitket-home .carousel-caption {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        padding: 0 clamp(20px, 6vw, 80px);
+        z-index: 2;
+        text-align: left;
+        max-width: 680px;
+    }
+
+    /* Eyebrow pill */
+    .fitket-home .carousel-caption::before {
+        content: 'Premium Fitness Platform';
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(111, 66, 193, 0.22);
+        border: 1px solid rgba(111, 66, 193, 0.45);
+        color: #c9b0f0;
+        padding: 6px 18px;
+        border-radius: var(--radius-pill);
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-bottom: 20px;
+    }
+
+    .fitket-home .carousel-caption h1 {
+        font-size: clamp(1.8rem, 4.5vw, 3.6rem);
+        font-weight: 900;
+        margin-bottom: 14px;
+        color: var(--white);
+        line-height: 1.1;
+        letter-spacing: -0.03em;
+        text-shadow: none;
+    }
+
+    .fitket-home .carousel-caption h1 span {
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .fitket-home .carousel-caption p {
+        font-size: clamp(0.9rem, 1.6vw, 1.05rem);
+        font-weight: 300;
+        margin-bottom: 32px;
+        color: rgba(255, 255, 255, 0.65);
+        line-height: 1.75;
+        max-width: 480px;
+    }
+
+    .fitket-home .cta-group {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .fitket-home .btn-warning {
+        background: var(--warning);
+        border: none;
+        color: #1a1a1a;
+        font-weight: 700;
+        padding: 14px 34px;
+        border-radius: var(--radius-pill);
+        font-size: 0.95rem;
+        transition: all 0.25s;
+        letter-spacing: 0.01em;
+    }
+
+    .fitket-home .btn-warning:hover {
+        background: var(--warning-dark);
+        transform: translateY(-3px);
+        box-shadow: 0 12px 28px rgba(255, 193, 7, 0.38);
+        color: #1a1a1a;
+    }
+
+    .fitket-home .btn-outline-light {
+        border: 1.5px solid rgba(255, 255, 255, 0.3);
+        color: var(--white);
+        padding: 14px 34px;
+        border-radius: var(--radius-pill);
+        font-weight: 600;
+        font-size: 0.95rem;
+        background: transparent;
+        transition: all 0.25s;
+    }
+
+    .fitket-home .btn-outline-light:hover {
+        border-color: var(--primary-color);
+        background: var(--primary-color);
+        color: var(--white);
+        transform: translateY(-3px);
+    }
+
+    /* Carousel controls */
+    .fitket-home #heroCarousel .carousel-control-prev,
+    .fitket-home #heroCarousel .carousel-control-next {
+        width: 48px;
+        height: 48px;
+        top: 50%;
+        bottom: auto;
+        transform: translateY(-50%);
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        backdrop-filter: blur(8px);
+        opacity: 0.9;
+        transition: all 0.25s;
+    }
+
+    .fitket-home #heroCarousel .carousel-control-prev {
+        left: 20px;
+    }
+
+    .fitket-home #heroCarousel .carousel-control-next {
+        right: 20px;
+    }
+
+    .fitket-home #heroCarousel .carousel-control-prev:hover,
+    .fitket-home #heroCarousel .carousel-control-next:hover {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        opacity: 1;
+    }
+
+    /* Slide counter dots */
+    .fitket-home #heroCarousel .carousel-indicators {
+        bottom: 80px;
+        justify-content: flex-start;
+        padding-left: clamp(20px, 6vw, 80px);
+        gap: 6px;
+        margin: 0;
+    }
+
+    .fitket-home #heroCarousel .carousel-indicators [data-bs-target] {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.35);
+        border: none;
+        transition: all 0.3s;
+        flex-shrink: 0;
+    }
+
+    .fitket-home #heroCarousel .carousel-indicators .active {
+        width: 24px;
+        border-radius: var(--radius-pill);
+        background: var(--primary-color);
+    }
+
+
+    /* ══════════════════════════════════════════
+     FLOATING SEARCH BAR
+  ══════════════════════════════════════════ */
+    .fitket-home .search-bar-container {
+        position: absolute;
+        bottom: -38px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 86%;
+        max-width: 900px;
+        background: var(--white);
+        border-radius: var(--radius-xl);
+        padding: 20px 24px;
+        box-shadow: 0 20px 50px rgba(111, 66, 193, 0.18);
+        z-index: 100;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .fitket-home .search-input-group {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    .fitket-home .search-input-group .input-group-text {
+        background: var(--bg-light);
+        border: 1.5px solid var(--border-color);
+        border-right: none;
+        color: var(--primary-color);
+        border-radius: var(--radius-md) 0 0 var(--radius-md);
+        padding: 0 14px;
+    }
+
+    .fitket-home .search-input-group .form-control {
+        border: 1.5px solid var(--border-color);
+        border-left: none;
+        padding: 13px 16px;
+        border-radius: 0 var(--radius-md) var(--radius-md) 0;
+        font-size: 0.92rem;
+        color: var(--text-dark);
+        background: var(--bg-light);
+        transition: border-color 0.25s, box-shadow 0.25s;
+    }
+
+    .fitket-home .search-input-group .form-control:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(111, 66, 193, 0.1);
+        background: var(--white);
+        outline: none;
+    }
+
+    /* Divider between inputs */
+    .fitket-home .search-divider {
+        width: 1px;
+        height: 36px;
+        background: var(--border-color);
+        flex-shrink: 0;
+    }
+
+    .fitket-home .search-btn {
+        background: var(--primary-color);
+        border: none;
+        border-radius: var(--radius-md);
+        padding: 13px 36px;
+        color: var(--white);
+        font-weight: 700;
+        font-size: 0.95rem;
+        transition: all 0.25s;
+        white-space: nowrap;
+        cursor: pointer;
+        letter-spacing: 0.02em;
+    }
+
+    .fitket-home .search-btn:hover {
+        background: var(--accent-color);
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(111, 66, 193, 0.32);
+    }
+
+
+    /* ══════════════════════════════════════════
+     SECTION HEADINGS
+  ══════════════════════════════════════════ */
+    .fitket-home .fkh-section-label {
+        display: inline-block;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--primary-color);
+        background: rgba(111, 66, 193, 0.1);
+        padding: 5px 14px;
+        border-radius: var(--radius-pill);
+        margin-bottom: 12px;
+    }
+
+    .fitket-home .fkh-section-title {
+        font-size: clamp(1.5rem, 3vw, 2.2rem);
+        font-weight: 800;
+        color: var(--secondary-color);
+        letter-spacing: -0.025em;
+        margin-bottom: 6px;
+        line-height: 1.2;
+    }
+
+    .fitket-home .fkh-section-title em {
+        font-style: normal;
+        color: var(--primary-color);
+    }
+
+    .fitket-home .fkh-section-sub {
+        font-size: 0.9rem;
+        color: var(--text-muted);
+        font-weight: 400;
+        margin-bottom: 0;
+    }
+
+    /* ── Dark section variants ── */
+    .fitket-home .fkh-section-label--dark {
+        color: #b19fe8;
+        background: rgba(111, 66, 193, 0.2);
+    }
+
+    .fitket-home .fkh-section-title--dark {
+        color: var(--white);
+    }
+
+    .fitket-home .fkh-section-sub--dark {
+        color: rgba(255, 255, 255, 0.45);
+    }
+
+
+    /* ══════════════════════════════════════════
+     CATEGORY SECTION
+  ══════════════════════════════════════════ */
+    .fitket-home .services-section {
+        padding: 90px 0 60px;
+        background: var(--white);
+    }
+
+    .fitket-home .fkh-section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        margin-bottom: 44px;
+        flex-wrap: wrap;
+        gap: 16px;
+    }
+
+    .fitket-home .fkh-view-all {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: var(--primary-color);
+        font-weight: 600;
+        font-size: 0.88rem;
+        text-decoration: none;
+        padding: 9px 20px;
+        border: 1.5px solid rgba(111, 66, 193, 0.25);
+        border-radius: var(--radius-pill);
+        transition: all 0.25s;
+        white-space: nowrap;
+    }
+
+    .fitket-home .fkh-view-all:hover {
+        background: var(--primary-color);
+        color: var(--white);
+        border-color: var(--primary-color);
+        transform: translateY(-2px);
+    }
+
+    /* Category cards */
+    .fitket-home .category-link {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        height: 100%;
+    }
+
+    .fitket-home .service-card {
+        display: flex;
+        align-items: center;
+        padding: 20px 22px;
+        border-radius: var(--radius-lg);
+        background: var(--white);
+        border: 1.5px solid var(--border-color);
+        transition: all 0.3s ease;
+        height: 100%;
+        cursor: pointer;
+        gap: 16px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .fitket-home .service-card::before {
         content: '';
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
-        bottom: 0;
-        background: rgba(0, 0, 0, 0.3);
-        z-index: 1;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.3s ease;
     }
 
-    .carousel-caption {
-        position: absolute;
-        bottom: 17%;
-        left: 50%;
-        transform: translateX(-50%);
-        text-align: center;
-        padding: 30px;
-        background-color: rgba(0, 0, 0, 0.7);
-        border-radius: 15px;
-        max-width: 85%;
-        z-index: 2;
-        backdrop-filter: blur(10px);
+    .fitket-home .service-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 18px 40px rgba(111, 66, 193, 0.13);
+        border-color: rgba(111, 66, 193, 0.25);
     }
 
-    .carousel-caption h1 {
-        font-size: 2.5rem;
-        font-weight: 700;
-        margin-bottom: 15px;
-        color: white;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    .fitket-home .service-card:hover::before {
+        transform: scaleX(1);
     }
 
-    .carousel-caption p {
-        font-size: 1.2rem;
-        margin-bottom: 25px;
-        color: rgba(255, 255, 255, 0.9);
-    }
-
-    .btn-warning {
-        background-color: #ffc107;
-        border-color: #ffc107;
-        color: #212529;
-        font-weight: 600;
-        padding: 12px 30px;
-        border-radius: 25px;
-        transition: all 0.3s ease;
-    }
-
-    .btn-warning:hover {
-        background-color: #e0a800;
-        transform: translateY(-2px);
-    }
-
-    .btn-outline-light {
-        border: 2px solid white;
-        color: white;
-        padding: 12px 30px;
-        border-radius: 25px;
-        transition: all 0.3s ease;
-    }
-
-    .btn-outline-light:hover {
-        background-color: var(--primary-color);
-        border-color: var(--primary-color);
-        color: white;
-    }
-
-    /* Search Bar Improvements */
-    .search-bar-container {
-        position: absolute;
-        bottom: -60px;
-        left: 50%;
-        transform: translateX(-50%);
-        width: 95%;
-        max-width: 900px;
-        background: white;
-        border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        z-index: 100;
+    .fitket-home .service-icon {
+        flex-shrink: 0;
+        width: 62px;
+        height: 62px;
+        border-radius: 16px;
+        padding: 3px;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
         display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
         align-items: center;
+        justify-content: center;
+        transition: transform 0.3s;
     }
 
-    .search-input-group {
-        flex: 1;
-        min-width: 200px;
-        position: relative;
+    .fitket-home .service-card:hover .service-icon {
+        transform: scale(1.08) rotate(-4deg);
     }
 
-    .search-input-group .input-group-text {
-        background: var(--bg-light);
-        border: 1px solid #e0e0e0;
+    .fitket-home .avatar-img {
+        width: 100%;
+        height: 100%;
+        border-radius: 13px;
+        object-fit: cover;
+        border: 2px solid var(--white);
+    }
+
+    .fitket-home .service-icon .avatar-img {
+        border-radius: 13px;
+    }
+
+    .fitket-home .service-title {
+        font-weight: 700;
+        color: var(--secondary-color);
+        margin-bottom: 3px;
+        font-size: 0.95rem;
+        letter-spacing: 0.02em;
+    }
+
+    .fitket-home .service-subtitle {
         color: var(--primary-color);
-        border-radius: 10px 0 0 10px;
-    }
-
-    .search-input-group .form-control {
-        border: 1px solid #e0e0e0;
-        border-left: none;
-        padding: 12px 15px;
-        border-radius: 0 10px 10px 0;
-        font-size: 0.95rem;
-    }
-
-    .search-input-group .form-control:focus {
-        box-shadow: 0 0 0 0.2rem rgba(111, 66, 193, 0.25);
-        border-color: var(--primary-color);
-    }
-
-    .search-btn {
-        background: var(--primary-color);
-        border: none;
-        border-radius: 12px;
-        padding: 12px 30px;
-        color: white;
+        font-size: 0.82rem;
         font-weight: 600;
-        transition: all 0.3s ease;
-        white-space: nowrap;
     }
 
-    .search-btn:hover {
-        background: var(--accent-color);
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(111, 66, 193, 0.3);
+
+    /* ══════════════════════════════════════════
+     PROVIDER / EXPERT CARDS
+  ══════════════════════════════════════════ */
+    .fitket-home .experts-section {
+        padding: 70px 0;
     }
 
-    /* Service Cards */
-    .services-section {
-        padding: 80px 0 60px;
-        background-color: white;
-    }
-
-    .service-card {
-        display: flex;
-        align-items: center;
-        padding: 25px;
-        border-radius: 15px;
-        background: white;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    .fitket-home .expert-card {
+        background: var(--white);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        border: 1.5px solid var(--border-color);
         transition: all 0.3s ease;
         height: 100%;
-        border: 1px solid #f0f0f0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        position: relative;
+        width: 100%;
     }
 
-    .service-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.12);
-        border-color: var(--primary-color);
+    .fitket-home .expert-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 0.35s ease;
     }
 
-    .service-icon {
-        margin-right: 20px;
-        flex-shrink: 0;
-        width: 70px;
-        height: 70px;
+    .fitket-home .expert-card:hover {
+        transform: translateY(-7px);
+        box-shadow: 0 22px 48px rgba(111, 66, 193, 0.14);
+        border-color: rgba(111, 66, 193, 0.22);
+    }
+
+    .fitket-home .expert-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .fitket-home .expert-left {
+        display: flex;
+        align-items: center;
+        padding: 24px 24px 20px;
+        gap: 16px;
+        flex-grow: 1;
+    }
+
+    .fitket-home .expert-logo {
+        width: 66px;
+        height: 66px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        overflow: hidden;
-    }
-
-    .service-title {
-        font-weight: 700;
-        color: var(--secondary-color);
-        margin-bottom: 5px;
-        font-size: 1.1rem;
-    }
-
-    .service-subtitle {
-        color: #6c757d;
-        font-size: 0.9rem;
-    }
-
-    /* Expert Cards */
-    .experts-section {
-        padding: 60px 0;
-    }
-
-    .expert-card {
-        background: white;
-        border-radius: 18px;
-        overflow: hidden;
-        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
-        transition: all 0.3s ease;
-        height: 100%;
-        border: 1px solid #f0f0f0;
-    }
-
-    .expert-card:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-    }
-
-    .expert-left {
-        display: flex;
-        align-items: center;
-        padding: 30px;
-    }
-
-    .expert-logo {
-        width: 70px;
-        height: 70px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-right: 20px;
         flex-shrink: 0;
-        background: var(--primary-color);
-        overflow: hidden;
+        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
+        padding: 3px;
+        transition: transform 0.3s;
     }
 
-    .expert-title {
+    .fitket-home .expert-logo .avatar-img {
+        border-radius: 50%;
+    }
+
+    .fitket-home .expert-card:hover .expert-logo {
+        transform: scale(1.06);
+    }
+
+    .fitket-home .expert-title {
         font-weight: 700;
         color: var(--secondary-color);
-        font-size: 1.2rem;
-        margin-bottom: 5px;
+        font-size: 1rem;
+        margin-bottom: 4px;
+        line-height: 1.3;
     }
 
-    .expert-services {
-        color: #6c757d;
-        font-size: 0.95rem;
+    .fitket-home .expert-services {
+        color: var(--text-muted);
+        font-size: 0.82rem;
+        font-weight: 500;
     }
 
-    .expert-footer {
-        padding: 20px 30px;
+    .fitket-home .expert-footer {
+        padding: 14px 20px;
         background: var(--bg-light);
-        border-top: 1px solid #f0f0f0;
+        border-top: 1.5px solid var(--border-color);
         display: flex;
         justify-content: space-between;
         align-items: center;
     }
 
-    .expert-footer span {
+    .fitket-home .distance-pill {
+        color: var(--primary-dark);
+        font-weight: 600;
+        font-size: 0.83rem;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(111, 66, 193, 0.09);
+        padding: 6px 14px;
+        border-radius: var(--radius-pill);
+        white-space: nowrap;
+    }
+
+    .fitket-home .view-more-btn {
+        text-decoration: none;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        transition: transform 0.25s;
+        padding: 6px 14px;
+        border-radius: var(--radius-pill);
+        background: rgba(111, 66, 193, 0.06);
+        border: 1px solid rgba(111, 66, 193, 0.15);
+        transition: all 0.25s;
+    }
+
+    .fitket-home .view-more-btn:hover {
+        background: var(--primary-color);
+        border-color: var(--primary-color);
+        transform: translateX(3px);
+    }
+
+    .fitket-home .view-more-text {
         color: var(--primary-color);
         font-weight: 600;
+        font-size: 0.83rem;
+    }
+
+    .fitket-home .view-more-btn:hover .view-more-text {
+        color: var(--white);
+    }
+
+    .fitket-home .view-more-btn:hover .fkh-arrow-icon {
+        color: var(--white) !important;
+    }
+
+
+    /* ══════════════════════════════════════════
+     SWIPER
+  ══════════════════════════════════════════ */
+    .fitket-home .swiper {
+        padding: 8px 0 30px;
+        min-height: 120px;
+        position: relative;
+    }
+
+    .fitket-home .swiper-slide {
+        height: auto;
         display: flex;
-        align-items: center;
-        gap: 8px;
+        width: 100%;
     }
 
-    .view-more-btn {
-        text-decoration: none;
-        transition: all 0.3s ease;
+    .fitket-home .swiper-pagination {
         display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
+        position: relative;
+        margin-top: 18px;
+        bottom: auto !important;
     }
 
-    .view-more-btn:hover {
-        transform: translateX(5px);
+    .fitket-home .swiper-pagination-bullet {
+        width: 7px;
+        height: 7px;
+        background: var(--border-color);
+        opacity: 1;
+        margin: 0 !important;
+        border-radius: 50%;
+        transition: all 0.25s;
     }
 
-    .view-more-text {
-        color: var(--primary-color) !important;
-        font-weight: 600;
+    .fitket-home .swiper-pagination-bullet-active {
+        width: 20px;
+        border-radius: var(--radius-pill);
+        background: var(--primary-color);
     }
 
-    /* Edemand Banner */
-    .edemand-banner {
-        background: linear-gradient(135deg, var(--primary-color), var(--accent-color));
-        border-radius: 20px;
-        padding: 50px;
-        color: white;
+    .fitket-home .swiper-pagination-bullet {
+        width: 7px;
+        height: 7px;
+        background: var(--border-color);
+        opacity: 1;
+        transition: all 0.25s;
+    }
+
+    .fitket-home .swiper-pagination-bullet-active {
+        background: var(--primary-color);
+    }
+
+    .fitket-home .swiper-pagination-bullets-dynamic {
+        overflow: hidden;
+        white-space: nowrap;
+    }
+
+    @media (max-width: 576px) {
+
+        .fitket-home .nearestSwiper .swiper-slide,
+        .fitket-home .gymSwiper .swiper-slide,
+        .fitket-home .trainerSwiper .swiper-slide {
+            width: 100% !important;
+        }
+
+        .fitket-home .expert-card {
+            width: 100%;
+            min-width: 100%;
+        }
+    }
+
+
+    /* ══════════════════════════════════════════
+     PROMO BANNERS
+  ══════════════════════════════════════════ */
+    .fitket-home .fkh-banner-wrap {
+        padding: 60px 0 70px;
+    }
+
+    .fitket-home .edemand-banner {
+        position: relative;
+        background: var(--secondary-color);
+        border-radius: var(--radius-xl);
+        padding: 0;
+        color: var(--white);
         display: flex;
-        align-items: center;
-        margin: 60px 0;
+        align-items: stretch;
+        overflow: hidden;
+        min-height: 260px;
     }
 
-    .banner-text {
+    /* Diagonal accent strip */
+    .fitket-home .edemand-banner::before {
+        content: '';
+        position: absolute;
+        width: 3px;
+        height: 160%;
+        background: linear-gradient(180deg, transparent, rgba(111, 66, 193, 0.7), transparent);
+        top: -30%;
+        left: 52%;
+        transform: rotate(14deg);
+        pointer-events: none;
+    }
+
+    /* Radial glow */
+    .fitket-home .edemand-banner::after {
+        content: '';
+        position: absolute;
+        width: 420px;
+        height: 420px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(111, 66, 193, 0.28) 0%, transparent 70%);
+        top: -120px;
+        right: -80px;
+        pointer-events: none;
+    }
+
+    /* Ghost watermark text in banners */
+    .fitket-home .banner-watermark {
+        position: absolute;
+        bottom: -10px;
+        left: -10px;
+        font-size: 120px;
+        font-weight: 900;
+        letter-spacing: -0.06em;
+        color: transparent;
+        -webkit-text-stroke: 1px rgba(111, 66, 193, 0.12);
+        pointer-events: none;
+        user-select: none;
+        line-height: 1;
+    }
+
+    .fitket-home .banner-text {
         flex: 1;
+        padding: 52px 48px;
+        position: relative;
+        z-index: 2;
     }
 
-    .banner-text h2 {
+    .fitket-home .banner-eyebrow {
+        display: inline-block;
+        font-size: 0.68rem;
         font-weight: 700;
-        margin-bottom: 20px;
-        font-size: 2.5rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #b19fe8;
+        background: rgba(111, 66, 193, 0.2);
+        border: 1px solid rgba(111, 66, 193, 0.35);
+        padding: 5px 14px;
+        border-radius: var(--radius-pill);
+        margin-bottom: 18px;
     }
 
-    .banner-text p {
-        font-size: 1.2rem;
-        margin-bottom: 30px;
-        line-height: 1.6;
-        opacity: 0.9;
-    }
-
-    .buy-btn {
-        background: #ffc107;
-        color: #212529;
-        border: none;
-        padding: 16px 40px;
-        border-radius: 50px;
-        font-weight: bold;
-        transition: all 0.3s ease;
-        font-size: 1.1rem;
-    }
-
-    .buy-btn:hover {
-        background: #e0a800;
-        transform: translateY(-3px);
-        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
-    }
-
-    /* Section Headings */
-    h2.fw-bold {
-        color: var(--secondary-color);
-        font-size: 2.5rem;
-        margin-bottom: 15px;
+    .fitket-home .banner-text h2 {
         font-weight: 800;
+        margin-bottom: 14px;
+        font-size: clamp(1.4rem, 3.2vw, 2.2rem);
+        color: var(--white);
+        line-height: 1.15;
+        letter-spacing: -0.02em;
     }
 
-    .text-primary {
-        color: var(--primary-color) !important;
-        /* font-size: 1.1rem;
-            margin-bottom: 30px !important; */
+    .fitket-home .banner-text h2 em {
+        font-style: normal;
+        background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
 
-    /* Mobile Responsive Design */
-    @media (max-width: 768px) {
-        #heroCarousel {
-            margin-bottom: 180px;
-            /* More space for mobile search bar */
+    .fitket-home .banner-text p {
+        font-size: clamp(0.88rem, 1.5vw, 1rem);
+        margin-bottom: 32px;
+        line-height: 1.75;
+        color: rgba(255, 255, 255, 0.55);
+        font-weight: 300;
+        max-width: 480px;
+    }
+
+    .fitket-home .buy-btn {
+        background: var(--warning);
+        color: #1a1a1a;
+        border: none;
+        padding: 14px 36px;
+        border-radius: var(--radius-pill);
+        font-weight: 700;
+        transition: all 0.25s;
+        font-size: 0.95rem;
+        display: inline-block;
+        text-decoration: none;
+        letter-spacing: 0.02em;
+    }
+
+    .fitket-home .buy-btn:hover {
+        background: var(--warning-dark);
+        transform: translateY(-3px);
+        box-shadow: 0 12px 28px rgba(255, 193, 7, 0.3);
+        color: #1a1a1a;
+    }
+
+    .fitket-home .banner-illustration {
+        position: relative;
+        z-index: 2;
+        flex-shrink: 0;
+        width: 240px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 30px 40px 0;
+    }
+
+    .fitket-home .banner-illustration svg {
+        width: 180px;
+        height: 180px;
+        opacity: 0.18;
+    }
+
+    /* ── Alternate banner (light accent bg) ── */
+    .fitket-home .edemand-banner--accent {
+        background: linear-gradient(135deg, var(--primary-color) 0%, #8b5cf6 50%, var(--accent-color) 100%);
+    }
+
+    .fitket-home .edemand-banner--accent::before {
+        background: linear-gradient(180deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+    }
+
+    .fitket-home .edemand-banner--accent::after {
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.12) 0%, transparent 70%);
+    }
+
+    .fitket-home .edemand-banner--accent .banner-eyebrow {
+        color: rgba(255, 255, 255, 0.8);
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .fitket-home .edemand-banner--accent .banner-text p {
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .fitket-home .edemand-banner--accent .banner-watermark {
+        -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1);
+    }
+
+
+    /* ══════════════════════════════════════════
+     BG ALTERNATION
+  ══════════════════════════════════════════ */
+    .fitket-home .fkh-bg-dark {
+        background: var(--secondary-color);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .fitket-home .fkh-bg-dark::after {
+        content: '';
+        position: absolute;
+        width: 500px;
+        height: 500px;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(111, 66, 193, 0.14) 0%, transparent 70%);
+        bottom: -200px;
+        left: -100px;
+        pointer-events: none;
+    }
+
+    .fitket-home .fkh-bg-dark .fkh-section-label {
+        color: #b19fe8;
+        background: rgba(111, 66, 193, 0.2);
+    }
+
+    .fitket-home .fkh-bg-dark .fkh-section-title {
+        color: var(--white);
+    }
+
+    .fitket-home .fkh-bg-dark .fkh-section-sub {
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    .fitket-home .fkh-bg-dark .expert-card {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(255, 255, 255, 0.08);
+    }
+
+    .fitket-home .fkh-bg-dark .expert-card:hover {
+        background: rgba(111, 66, 193, 0.1);
+        border-color: rgba(111, 66, 193, 0.3);
+    }
+
+    .fitket-home .fkh-bg-dark .expert-title {
+        color: var(--white);
+    }
+
+    .fitket-home .fkh-bg-dark .expert-services {
+        color: rgba(255, 255, 255, 0.45);
+    }
+
+    .fitket-home .fkh-bg-dark .expert-footer {
+        background: rgba(255, 255, 255, 0.03);
+        border-color: rgba(255, 255, 255, 0.07);
+    }
+
+    .fitket-home .fkh-bg-dark .distance-pill {
+        background: rgba(111, 66, 193, 0.2);
+        color: #b19fe8;
+    }
+
+    .fitket-home .fkh-bg-dark .view-more-btn {
+        background: rgba(111, 66, 193, 0.15);
+        border-color: rgba(111, 66, 193, 0.25);
+    }
+
+    .fitket-home .fkh-bg-dark .view-more-text {
+        color: #b19fe8;
+    }
+
+    .fitket-home .fkh-bg-dark .swiper-pagination-bullet {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .fitket-home .fkh-bg-dark .swiper-pagination-bullet-active {
+        background: var(--primary-color);
+    }
+
+    .fitket-home .swiper {
+        position: relative;
+        padding: 8px 4px 30px;
+    }
+
+    .fitket-home .swiper-button-prev,
+    .fitket-home .swiper-button-next {
+        width: 30px;
+        height: 30px;
+        background: rgba(111, 66, 193, 0.55);
+        border-radius: 50%;
+        top: 24px;
+        margin-top: 0;
+        color: var(--white);
+        transition: all 0.25s;
+        z-index: 5;
+    }
+
+    .fitket-home .swiper-button-prev:after,
+    .fitket-home .swiper-button-next:after {
+        font-size: 12px;
+        font-weight: 900;
+    }
+
+    .fitket-home .swiper-button-prev:hover,
+    .fitket-home .swiper-button-next:hover {
+        background: var(--primary-color);
+        transform: scale(1.1);
+    }
+
+    .fitket-home .swiper-button-prev {
+        left: 6px;
+    }
+
+    .fitket-home .swiper-button-next {
+        right: 6px;
+    }
+
+    .fitket-home .swiper-button-disabled {
+        opacity: 0.35;
+    }
+
+    /* Hide arrows on desktop where multiple cards already show, keep on mobile */
+    @media (min-width: 992px) {
+
+        .fitket-home .swiper-button-prev,
+        .fitket-home .swiper-button-next {
+            display: none;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .fitket-home .swiper-slide {
+            width: 100% !important;
+        }
+    }
+
+
+    /* ══════════════════════════════════════════
+     MOBILE RESPONSIVE
+  ══════════════════════════════════════════ */
+    @media (max-width: 991px) {
+        .fitket-home .hero-wrapper {
+            margin-bottom: 0;
         }
 
-        .carousel-item {
-            height: 350px;
+        .fitket-home .search-bar-container {
+            position: static;
+            transform: none;
+            left: auto;
+            bottom: auto;
+            width: 94%;
+            margin: -20px auto 0;
+            padding: 16px 18px;
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 10px;
+            border-radius: var(--radius-lg);
         }
 
-        .carousel-caption {
-            bottom: 25%;
-            padding: 20px;
-            max-width: 90%;
+        .fitket-home .search-divider {
             display: none;
         }
 
-        .carousel-caption h1 {
-            font-size: 1.8rem;
-            margin-bottom: 12px;
+        .fitket-home .search-input-group {
+            flex: 1 1 180px;
+            min-width: 0;
         }
 
-        .carousel-caption p {
-            font-size: 1rem;
+        .fitket-home .search-btn {
+            flex: 0 0 auto;
+            padding: 12px 24px;
+        }
+
+        .fitket-home .banner-illustration {
+            width: 160px;
+        }
+
+        .fitket-home .banner-illustration svg {
+            width: 130px;
+            height: 130px;
+        }
+
+        .fitket-home .banner-text {
+            padding: 40px 36px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .fitket-home .carousel-item {
+            height: 420px;
+        }
+
+        .fitket-home .carousel-caption {
+            padding: 0 24px;
+            max-width: 100%;
+        }
+
+        .fitket-home .carousel-caption h1 {
+            font-size: clamp(1.4rem, 5vw, 2rem);
+        }
+
+        .fitket-home .carousel-caption p {
+            font-size: 0.88rem;
             margin-bottom: 20px;
         }
 
-        .carousel-caption .btn {
-            display: block;
+        .fitket-home #heroCarousel .carousel-indicators {
+            padding-left: 24px;
+            bottom: 70px;
+        }
+
+        .fitket-home .search-bar-container {
+            flex-direction: column;
+            gap: 10px;
+            padding: 14px 16px;
+            width: 92%;
+            margin: -16px auto 0;
+        }
+
+        .fitket-home .search-input-group {
             width: 100%;
-            margin: 8px 0;
-            padding: 12px;
-            font-size: 1rem;
+            flex: unset;
         }
 
-        /* Mobile Search Bar */
-        .search-bar-container {
-            bottom: -200px;
-            width: 90%;
-            padding: 20px;
-            flex-direction: column;
-            gap: 15px;
-        }
-
-        .search-input-group {
+        .fitket-home .search-btn {
             width: 100%;
-            min-width: unset;
+            padding: 13px;
+            font-size: 0.95rem;
+            border-radius: var(--radius-md);
         }
 
-        .search-btn {
+        .fitket-home .services-section {
+            padding: 42px 0 40px;
+        }
+
+        .fitket-home .experts-section {
+            padding: 70px 0;
+        }
+
+        .fitket-home .fkh-section-header {
+            justify-content: center;
+            text-align: center;
+        }
+
+        .fitket-home .service-card {
+            flex-direction: row;
+            text-align: left;
+            padding: 14px 16px;
+            gap: 12px;
+        }
+
+        .fitket-home .service-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
+        }
+
+        .fitket-home .service-title {
+            font-size: 0.9rem;
+        }
+
+        .fitket-home .service-subtitle {
+            font-size: 0.78rem;
+        }
+
+        .fitket-home .expert-left {
+            padding: 18px 18px 14px;
+            gap: 12px;
+        }
+
+        .fitket-home .expert-logo {
+            width: 54px;
+            height: 54px;
+        }
+
+        .fitket-home .expert-title {
+            font-size: 0.95rem;
+        }
+
+        .fitket-home .expert-footer {
+            padding: 12px 16px;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .fitket-home .edemand-banner {
+            flex-direction: column;
+            min-height: auto;
+        }
+
+        .fitket-home .banner-text {
+            padding: 36px 28px 30px;
+        }
+
+        .fitket-home .banner-illustration {
+            display: none;
+        }
+
+        .fitket-home .buy-btn {
             width: 100%;
-            padding: 15px;
-            font-size: 1.1rem;
-        }
-
-        /* Mobile Services */
-        .services-section {
-            padding: 100px 0 60px;
-        }
-
-        .service-card {
-            flex-direction: column;
             text-align: center;
-            padding: 20px;
+            padding: 13px 28px;
         }
 
-        .service-icon {
-            margin-right: 0;
-            margin-bottom: 15px;
+        .fitket-home .fkh-banner-wrap {
+            padding-bottom: 50px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .fitket-home .carousel-item {
+            height: 340px;
         }
 
-        /* Mobile Expert Cards */
-        .expert-left {
-            flex-direction: column;
-            text-align: center;
-            padding: 25px;
+        .fitket-home .carousel-caption::before {
+            display: none;
         }
 
-        .expert-logo {
-            margin-right: 0;
-            margin-bottom: 15px;
+        .fitket-home .carousel-caption h1 {
+            font-size: clamp(1.2rem, 5.5vw, 1.7rem);
         }
 
-        .expert-footer {
-            flex-direction: column;
-            gap: 15px;
-            text-align: center;
-            padding: 20px;
+        .fitket-home .carousel-caption p {
+            display: none;
         }
 
-        /* Mobile Banner */
-        .edemand-banner {
-            padding: 30px 20px;
-            text-align: center;
-            flex-direction: column;
+        .fitket-home .cta-group .btn {
+            padding: 10px 20px;
+            font-size: 0.82rem;
         }
 
-        .banner-text h2 {
-            font-size: 1.8rem;
+        .fitket-home .banner-text {
+            padding: 28px 22px;
         }
 
-        .banner-text p {
-            font-size: 1rem;
+        .fitket-home .banner-text h2 {
+            font-size: 1.3rem;
         }
 
-        .buy-btn {
-            width: 100%;
-            padding: 15px;
-        }
-
-        /* Mobile Typography */
-        h2.fw-bold {
-            font-size: 2rem;
-            text-align: center;
-        }
-
-        .text-primary {
-            /* font-size: 1rem; */
-            text-align: center;
+        .fitket-home .fkh-view-all {
+            display: none;
         }
     }
 
     @media (max-width: 480px) {
-        .carousel-item {
+        .fitket-home .carousel-item {
             height: 300px;
         }
+    }
 
-        .carousel-caption {
-            bottom: 20%;
-            padding: 15px;
+    @media (max-width: 768px) and (orientation: landscape) {
+        .fitket-home .carousel-item {
+            height: 250px;
+        }
+
+        .fitket-home .carousel-caption::before {
             display: none;
         }
 
-        .carousel-caption h1 {
-            font-size: 1.5rem;
+        .fitket-home .carousel-caption p {
+            display: none;
         }
 
-        .carousel-caption p {
-            font-size: 0.9rem;
-        }
-
-        .search-bar-container {
-            bottom: -190px;
-            width: 95%;
-            padding: 15px;
-        }
-
-        .service-card {
-            padding: 15px;
-        }
-
-        .expert-left {
-            padding: 20px;
-        }
-
-        .edemand-banner {
-            padding: 25px 15px;
-        }
-
-        .banner-text h2 {
-            font-size: 1.6rem;
-        }
-
-        h2.fw-bold {
-            font-size: 1.8rem;
-        }
-    }
-
-    /* Additional Mobile Fixes */
-    @media (max-width: 576px) {
-        .container {
-            padding-left: 15px;
-            padding-right: 15px;
-        }
-
-        .row {
-            margin-left: -10px;
-            margin-right: -10px;
-        }
-
-        .row>* {
-            padding-left: 10px;
-            padding-right: 10px;
+        .fitket-home #heroCarousel .carousel-indicators {
+            bottom: 60px;
         }
     }
 </style>
-<div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
-    <div class="carousel-inner">
-        <?php $first = true; ?>
-        <?php foreach ($sliders as $slide): ?>
-            <div class="carousel-item <?= $first ? 'active' : '' ?>"
-                style="background-image: url('<?= base_url('uploads/slider/' . $slide->slider_image); ?>');">
-                <div class="carousel-caption">
-                    <h1><?= htmlspecialchars($slide->slider_title) ?></h1>
-                    <p><?= htmlspecialchars($slide->sub_title) ?></p>
-                    <div class="mt-3 d-flex flex-wrap justify-content-center">
-                        <a href="<?= base_url('providers'); ?>" class="btn btn-warning me-2 mb-2">Book Now</a>
-                        <a href="<?= base_url('services'); ?>" class="btn btn-outline-light mb-2">Explore Services</a>
+
+<div class="fitket-home">
+
+    <!-- ═══ HERO CAROUSEL ═══ -->
+    <div class="hero-wrapper">
+        <div id="heroCarousel" class="carousel slide" data-bs-ride="carousel">
+
+            <div class="carousel-indicators">
+                <?php $i = 0;
+                foreach ($sliders as $s): ?>
+                    <button type="button" data-bs-target="#heroCarousel" data-bs-slide-to="<?= $i ?>"
+                        <?= $i === 0 ? 'class="active" aria-current="true"' : '' ?>
+                        aria-label="Slide <?= $i + 1 ?>"></button>
+                <?php $i++;
+                endforeach; ?>
+            </div>
+
+            <div class="carousel-inner">
+                <?php $first = true;
+                foreach ($sliders as $slide): ?>
+                    <div class="carousel-item <?= $first ? 'active' : '' ?>"
+                        style="background-image: url('<?= base_url('uploads/slider/' . $slide->slider_image) ?>');">
+                        <div class="carousel-caption">
+                            <h1><?= htmlspecialchars($slide->slider_title) ?></h1>
+                            <p><?= htmlspecialchars($slide->sub_title) ?></p>
+                            <div class="cta-group">
+                                <a href="<?= base_url('providers') ?>" class="btn btn-warning">
+                                    <i class="fas fa-calendar-check me-2" aria-hidden="true"></i>Book Now
+                                </a>
+                                <a href="<?= base_url('services') ?>" class="btn btn-outline-light">
+                                    Explore Services
+                                </a>
+                            </div>
+                        </div>
                     </div>
+                <?php $first = false;
+                endforeach; ?>
+            </div>
+
+            <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Previous</span>
+            </button>
+            <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                <span class="visually-hidden">Next</span>
+            </button>
+        </div>
+
+        <!-- Floating Search Bar -->
+        <div class="search-bar-container">
+            <div class="search-input-group">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-map-marker-alt" aria-hidden="true"></i></span>
+                    <input type="text" id="locationInput" class="form-control" placeholder="Your location"
+                        aria-label="Your location"
+                        value="<?= !empty($user_location) ? htmlspecialchars($user_location) : '' ?>">
                 </div>
             </div>
-            <?php $first = false; ?>
-        <?php endforeach; ?>
+            <div class="search-divider"></div>
+            <div class="search-input-group">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search" aria-hidden="true"></i></span>
+                    <input type="text" class="form-control" placeholder="Search service or trainer…" aria-label="Search Service">
+                </div>
+            </div>
+            <button class="search-btn" type="button">
+                <i class="fas fa-search me-2" aria-hidden="true"></i>Search
+            </button>
+        </div>
     </div>
 
-    <button class="carousel-control-prev" type="button" data-bs-target="#heroCarousel" data-bs-slide="prev">
-        <span class="carousel-control-prev-icon"></span>
-    </button>
-    <button class="carousel-control-next" type="button" data-bs-target="#heroCarousel" data-bs-slide="next">
-        <span class="carousel-control-next-icon"></span>
-    </button>
 
-    <!-- Improved Floating Search Bar -->
-    <div class="search-bar-container">
-        <div class="search-input-group">
-            <div class="input-group">
-                <span class="input-group-text"><i class="fa fa-map-marker-alt"></i></span>
-                <input type="text" id="locationInput" class="form-control" placeholder="Your location"
-                    value="<?= !empty($user_location) ? $user_location : ''; ?>">
+    <!-- ═══ CATEGORIES ═══ -->
+    <section class="services-section">
+        <div class="container">
+            <div class="fkh-section-header">
+                <div>
+                    <span class="fkh-section-label">Explore</span>
+                    <h2 class="fkh-section-title">Choose Your <em>Category</em></h2>
+                    <p class="fkh-section-sub">Discover tailored services built for your fitness goals</p>
+                </div>
+                <a href="<?= base_url('services') ?>" class="fkh-view-all">
+                    View All <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                </a>
+            </div>
+
+            <div class="swiper categorySwiper">
+                <div class="swiper-wrapper">
+                    <?php foreach ($category as $cat): ?>
+                        <div class="swiper-slide">
+                            <a href="<?= base_url('providers?category=' . $cat->id) ?>" class="category-link">
+                                <div class="service-card">
+                                    <div class="service-icon">
+                                        <img src="<?= base_url($cat->image) ?>" alt="<?= htmlspecialchars($cat->name) ?>" class="avatar-img">
+                                    </div>
+                                    <div>
+                                        <div class="service-title"><?= strtoupper($cat->name) ?></div>
+                                        <div class="service-subtitle"><?= $cat->provider_count ?> Providers</div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="swiper-button-prev"></div>
+                <div class="swiper-button-next"></div>
             </div>
         </div>
-        <div class="search-input-group">
-            <div class="input-group">
-                <span class="input-group-text"><i class="fa fa-search"></i></span>
-                <input type="text" class="form-control" placeholder="Search Service">
+    </section>
+
+
+    <!-- ═══ NEAREST PROVIDERS (dark bg) ═══ -->
+    <section class="experts-section fkh-bg-dark">
+        <div class="container" style="position:relative; z-index:2;">
+            <div class="fkh-section-header">
+                <div>
+                    <span class="fkh-section-label fkh-section-label--dark">Near You</span>
+                    <h2 class="fkh-section-title fkh-section-title--dark">Nearest <em style="color:#b19fe8">Providers</em></h2>
+                    <p class="fkh-section-sub fkh-section-sub--dark">Fitness professionals closest to your location</p>
+                </div>
+                <a href="<?= base_url('providers') ?>" class="fkh-view-all" style="border-color:rgba(255,255,255,0.15); color:rgba(255,255,255,0.7);">
+                    View All <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                </a>
+            </div>
+
+            <div class="swiper nearestSwiper">
+                <div class="swiper-wrapper">
+                    <?php foreach ($nearest_providers as $np): ?>
+                        <div class="swiper-slide">
+                            <div class="expert-card">
+                                <div class="expert-left">
+                                    <div class="expert-logo">
+                                        <img src="<?= base_url(!empty($np->profile_image) ? $np->profile_image : 'assets/images/3d-cartoon-fitness-man.jpg') ?>"
+                                            alt="<?= htmlspecialchars($np->gym_name ?: $np->name) ?>" class="avatar-img">
+                                    </div>
+                                    <div>
+                                        <div class="expert-title"><?= $np->gym_name ?: $np->name ?></div>
+                                        <div class="expert-services"><?= $np->total_services ?> Services</div>
+                                    </div>
+                                </div>
+                                <div class="expert-footer">
+                                    <span class="distance-pill">
+                                        <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                                        <?= !is_null($np->distance) ? round($np->distance, 1) . ' Km' : 'N/A' ?>
+                                    </span>
+                                    <a href="<?= site_url('provider_details/' . $np->provider_id) ?>" class="view-more-btn">
+                                        <span class="view-more-text">View</span>
+                                        <i class="fas fa-chevron-right fkh-arrow-icon" style="font-size:0.75rem; color:var(--primary-color);" aria-hidden="true"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="swiper-button-prev"></div>
+                <div class="swiper-button-next"></div>
             </div>
         </div>
-        <button class="search-btn">Search</button>
-    </div>
+    </section>
+
+
+    <!-- ═══ BANNER 1 — Become a Provider ═══ -->
+    <section class="fkh-banner-wrap">
+        <div class="container">
+            <div class="edemand-banner">
+                <span class="banner-watermark" aria-hidden="true">JOIN</span>
+                <div class="banner-text">
+                    <span class="banner-eyebrow">For Professionals</span>
+                    <h2>Want to Become a<br><em>Service Provider?</em></h2>
+                    <p>Join our platform and grow your business by reaching thousands of customers. Start offering your services online with ease and flexibility.</p>
+                    <a class="buy-btn" href="<?= base_url('provider/sing_up') ?>">
+                        <i class="fas fa-user-plus me-2" aria-hidden="true"></i>Become a Provider
+                    </a>
+                </div>
+                <div class="banner-illustration" aria-hidden="true">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" fill="white">
+                        <circle cx="100" cy="100" r="90" fill="none" stroke="white" stroke-width="5" />
+                        <circle cx="100" cy="72" r="28" />
+                        <path d="M40 160 Q100 110 160 160" stroke="white" stroke-width="6" fill="none" />
+                        <path d="M55 155 Q100 120 145 155" />
+                        <circle cx="152" cy="52" r="14" />
+                        <line x1="152" y1="38" x2="152" y2="22" stroke="white" stroke-width="5" stroke-linecap="round" />
+                        <line x1="152" y1="66" x2="152" y2="82" stroke="white" stroke-width="5" stroke-linecap="round" />
+                        <line x1="138" y1="52" x2="122" y2="52" stroke="white" stroke-width="5" stroke-linecap="round" />
+                        <line x1="166" y1="52" x2="182" y2="52" stroke="white" stroke-width="5" stroke-linecap="round" />
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ═══ POPULAR GYM ═══ -->
+    <section class="experts-section" style="background: var(--bg-light);">
+        <div class="container">
+            <div class="fkh-section-header">
+                <div>
+                    <span class="fkh-section-label">Top Picks</span>
+                    <h2 class="fkh-section-title">Popular <em>Gyms</em></h2>
+                    <p class="fkh-section-sub">Trusted facilities ready to help you reach your goals</p>
+                </div>
+                <a href="<?= base_url('providers?type=gym') ?>" class="fkh-view-all">
+                    View All <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                </a>
+            </div>
+
+            <div class="swiper gymSwiper">
+                <div class="swiper-wrapper">
+                    <?php foreach ($gym_providers as $provider): ?>
+                        <div class="swiper-slide">
+                            <div class="expert-card">
+                                <div class="expert-left">
+                                    <div class="expert-logo">
+                                        <img src="<?= !empty($provider->profile_image) ? base_url($provider->profile_image) : base_url('assets/images/3d-cartoon-fitness-man.jpg') ?>"
+                                            alt="<?= htmlspecialchars($provider->gym_name) ?>" class="avatar-img">
+                                    </div>
+                                    <div>
+                                        <div class="expert-title"><?= $provider->gym_name ?></div>
+                                        <div class="expert-services"><?= $provider->total_services ?? '0' ?> Services</div>
+                                    </div>
+                                </div>
+                                <div class="expert-footer">
+                                    <span class="distance-pill">
+                                        <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                                        <?= isset($provider->distance) ? round($provider->distance, 1) . ' Km' : 'N/A' ?>
+                                    </span>
+                                    <a href="<?= site_url('provider_details/' . $provider->provider_id) ?>" class="view-more-btn">
+                                        <span class="view-more-text">View</span>
+                                        <i class="fas fa-chevron-right fkh-arrow-icon" style="font-size:0.75rem; color:var(--primary-color);" aria-hidden="true"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="swiper-button-prev"></div>
+                <div class="swiper-button-next"></div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ═══ BANNER 2 — Special Offer (accent variant) ═══ -->
+    <section class="fkh-banner-wrap">
+        <div class="container">
+            <div class="edemand-banner edemand-banner--accent">
+                <span class="banner-watermark" aria-hidden="true">OFFER</span>
+                <div class="banner-text">
+                    <span class="banner-eyebrow">Limited Time</span>
+                    <h2>FitPro Gym –<br><em style="-webkit-text-fill-color:var(--warning); background:none;">Special Offer!</em></h2>
+                    <p>Get 20% off on your first membership. Join today with professional trainers and modern facilities designed for results.</p>
+                    <a class="buy-btn" href="<?= base_url('services') ?>">
+                        <i class="fas fa-bolt me-2" aria-hidden="true"></i>Book Now
+                    </a>
+                </div>
+                <div class="banner-illustration" aria-hidden="true">
+                    <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" fill="white">
+                        <rect x="20" y="88" width="160" height="24" rx="12" />
+                        <rect x="10" y="68" width="36" height="64" rx="10" />
+                        <rect x="154" y="68" width="36" height="64" rx="10" />
+                        <rect x="2" y="80" width="22" height="40" rx="8" />
+                        <rect x="176" y="80" width="22" height="40" rx="8" />
+                        <circle cx="155" cy="48" r="26" fill="none" stroke="white" stroke-width="5" />
+                        <text x="155" y="58" text-anchor="middle" font-size="26" font-weight="900" fill="white">%</text>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    <!-- ═══ POPULAR TRAINERS (dark bg) ═══ -->
+    <section class="experts-section fkh-bg-dark" style="padding-bottom: 80px;">
+        <div class="container" style="position:relative; z-index:2;">
+            <div class="fkh-section-header">
+                <div>
+                    <span class="fkh-section-label fkh-section-label--dark">Certified</span>
+                    <h2 class="fkh-section-title fkh-section-title--dark">Popular <em style="color:#b19fe8">Trainers</em></h2>
+                    <p class="fkh-section-sub fkh-section-sub--dark">Professionals ready to assist you anytime, anywhere</p>
+                </div>
+                <a href="<?= base_url('providers?type=trainer') ?>" class="fkh-view-all" style="border-color:rgba(255,255,255,0.15); color:rgba(255,255,255,0.7);">
+                    View All <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                </a>
+            </div>
+
+            <div class="swiper trainerSwiper">
+                <div class="swiper-wrapper">
+                    <?php foreach ($trainer_providers as $provider): ?>
+                        <div class="swiper-slide">
+                            <div class="expert-card">
+                                <div class="expert-left">
+                                    <div class="expert-logo">
+                                        <img src="<?= !empty($provider->profile_image) ? base_url($provider->profile_image) : base_url('assets/images/3d-cartoon-fitness-man.jpg') ?>"
+                                            alt="<?= htmlspecialchars($provider->name) ?>" class="avatar-img">
+                                    </div>
+                                    <div>
+                                        <div class="expert-title"><?= $provider->gym_name ?></div>
+                                        <div class="expert-services"><?= $provider->total_services ?? '0' ?> Services</div>
+                                    </div>
+                                </div>
+                                <div class="expert-footer">
+                                    <span class="distance-pill">
+                                        <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                                        <?= isset($provider->distance) ? round($provider->distance, 1) . ' Km' : 'N/A' ?>
+                                    </span>
+                                    <a href="<?= site_url('provider_details/' . $provider->provider_id) ?>" class="view-more-btn">
+                                        <span class="view-more-text">View</span>
+                                        <i class="fas fa-chevron-right fkh-arrow-icon" style="font-size:0.75rem; color:var(--primary-color);" aria-hidden="true"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="swiper-button-prev"></div>
+                <div class="swiper-button-next"></div>
+            </div>
+        </div>
+    </section>
+
 </div>
-
-
-<!-- Category Section (Slider) -->
-<section class="services-section">
-    <div class="container">
-        <div class="d-flex justify-content-between align-items-center mb-5">
-            <div>
-                <h2 class="fw-bold">Choose Your Category</h2>
-                <p class="text-primary">Discover tailored services for your needs</p>
-            </div>
-            <!-- <a href="#" class="text-dark fw-semibold d-none d-md-block">View All</a> -->
-        </div>
-
-        <div class="swiper categorySwiper">
-            <div class="swiper-wrapper">
-                <?php foreach ($category as $cat): ?>
-                    <div class="swiper-slide">
-                        <div class="service-card">
-                            <div class="service-icon">
-                                <img src="<?= base_url($cat->image); ?>" alt="<?= $cat->name; ?>"
-                                    style="width:60px; height:60px; border-radius:50%; object-fit:cover;">
-                            </div>
-                            <div>
-                                <div class="service-title"><?= strtoupper($cat->name); ?></div>
-                                <div class="service-subtitle">2 Providers</div>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-            <!-- Pagination -->
-            <div class="swiper-pagination"></div>
-        </div>
-    </div>
-</section>
-
-
-
-<!-- Nearest Providers Section (Slider) -->
-<section class="experts-section bg-light">
-    <div class="container">
-        <h2 class="fw-bold">Nearest Providers</h2>
-        <p class="text-primary mb-4">Providers closest to your location!</p>
-
-        <div class="swiper nearestSwiper">
-            <div class="swiper-wrapper">
-                <?php foreach ($nearest_providers as $np): ?>
-                    <div class="swiper-slide">
-                        <div class="expert-card">
-                            <div class="expert-left">
-                               <div class="expert-logo">
-    <img 
-        src="<?= base_url(!empty($np->profile_image) ? $np->profile_image : 'assets/images/3d-cartoon-fitness-man.jpg') ?>" 
-        alt="<?= $np->gym_name ?: $np->name ?>" 
-        class="img-fluid rounded-circle" 
-        style="width:60px; height:60px; object-fit:cover;"
-    >
-</div>
-
-                                <div>
-                                    <div class="expert-title"><?= $np->gym_name ?: $np->name ?></div>
-                                    <div class="expert-services"><?= $np->total_services ?> Services</div>
-                                </div>
-                            </div>
-                            <div class="expert-footer">
-                                <span>
-                                    <i class="fa fa-map-marker-alt text-primary"></i>
-                                    <?php if (!is_null($np->distance)): ?>
-                                        <?= round($np->distance, 1) ?> Km
-                                    <?php else: ?>
-                                        <span> N/A</span>
-                                    <?php endif; ?>
-                                </span>
-                                <a href="<?= site_url('provider_details/' . $np->provider_id) ?>" class="view-more-btn">
-                                    <span class="text-warning"><i class="fa fa-chevron-right"></i></span>
-                                    <span class="view-more-text">View More</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-            <div class="swiper-pagination"></div>
-        </div>
-    </div>
-</section>
-
-
-<!-- Improved Edemand Banner -->
-<section class="container">
-    <div class="edemand-banner">
-        <div class="banner-text">
-            <h2>Want to Become a Service Provider?</h2>
-            <p>Join our platform and grow your business by reaching thousands of customers effortlessly. Start offering
-                your services online with ease and flexibility.</p>
-            <a class="buy-btn btn" href="<?= base_url('provider/sing_up'); ?>">Become a Provider</a>
-
-        </div>
-    </div>
-</section>
-
-<!-- Gym Section (Slider) -->
-<section class="experts-section">
-    <div class="container">
-        <h2 class="fw-bold">Popular Gym</h2>
-        <p class="text-primary">Trusted Professionals Ready To Assist You Anytime, Anywhere!</p>
-
-        <div class="swiper gymSwiper">
-            <div class="swiper-wrapper">
-                <?php foreach ($gym_providers as $provider): ?>
-                    <div class="swiper-slide">
-                        <div class="expert-card">
-                            <div class="expert-left">
-                                <div class="expert-logo bg-primary">
-                                    <img src="<?= !empty($provider->profile_image) ? base_url($provider->profile_image) : base_url('assets/images/3d-cartoon-fitness-man.jpg'); ?>"
-                                        alt="<?= $provider->gym_name; ?>" class="img-fluid rounded-circle"
-                                        style="width:60px;height:60px;object-fit:cover;">
-                                </div>
-                                <div>
-                                    <div class="expert-title"><?= $provider->gym_name; ?></div>
-                                    <div class="expert-services"><?= $provider->total_services ?? '0'; ?> Services</div>
-                                </div>
-                            </div>
-                            <div class="expert-footer">
-                                <span>
-                                    <i class="fa fa-map-marker-alt text-primary"></i>
-                                    <?= isset($provider->distance) ? round($provider->distance, 1) . ' Km' : 'N/A' ?>
-                                </span>
-                                <a href="<?= site_url('provider_details/' . $provider->provider_id) ?>"
-                                    class="view-more-btn">
-                                    <span class="text-warning"><i class="fa fa-chevron-right"></i></span>
-                                    <span class="view-more-text">View More</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-            <div class="swiper-pagination"></div>
-        </div>
-    </div>
-</section>
-<section class="container">
-    <div class="edemand-banner">
-        <div class="banner-text">
-            <h2>FitPro Gym – Special Offer!</h2>
-            <p>Get 20% off on your first membership. Join today and start your fitness journey with professional
-                trainers and modern facilities.</p>
-            <a class="buy-btn btn" href="<?= base_url('services'); ?>">Book Now</a>
-
-        </div>
-    </div>
-</section>
-
-
-<!-- Trainer Section (Slider) -->
-<section class="experts-section bg-light">
-    <div class="container">
-        <h2 class="fw-bold">Popular Trainer</h2>
-        <p class="text-primary">Trusted Professionals Ready To Assist You Anytime, Anywhere!</p>
-
-        <div class="swiper trainerSwiper">
-            <div class="swiper-wrapper">
-                <?php foreach ($trainer_providers as $provider): ?>
-                    <div class="swiper-slide">
-                        <div class="expert-card">
-                            <div class="expert-left">
-                                <div class="expert-logo bg-dark">
-                                    <img src="<?= !empty($provider->profile_image) ? base_url($provider->profile_image) : base_url('assets/images/3d-cartoon-fitness-man.jpg'); ?>"
-                                        alt="<?= $provider->name; ?>" class="img-fluid rounded-circle"
-                                        style="width:60px;height:60px;object-fit:cover;">
-                                </div>
-                                <div>
-                                    <div class="expert-title"><?= $provider->gym_name; ?></div>
-                                    <div class="expert-services"><?= $provider->total_services ?? '0'; ?> Services</div>
-                                </div>
-                            </div>
-                            <div class="expert-footer">
-                                <span>
-                                    <i class="fa fa-map-marker-alt text-primary"></i>
-                                    <?= isset($provider->distance) ? round($provider->distance, 1) . ' Km' : 'N/A' ?>
-                                </span>
-                                <a href="<?= site_url('provider_details/' . $provider->provider_id) ?>"
-                                    class="view-more-btn">
-                                    <span class="text-warning"><i class="fa fa-chevron-right"></i></span>
-                                    <span class="view-more-text">View More</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-            </div>
-            <div class="swiper-pagination"></div>
-        </div>
-    </div>
-</section>

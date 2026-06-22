@@ -57,9 +57,9 @@ class Cart extends User_Controller
         $qty         = (int)$this->input->post('quantity');
         $start_date  = $this->input->post('start_date');
 
-        // âœ… Fetch provider using provider.provider_id (NOT provider.id)
+        // ✅ Fetch provider using provider.provider_id (NOT provider.id)
         $provider = $this->db
-            ->select('provider.*, users.gym_name')
+            ->select('provider.*, users.gym_name, users.profile_image')
             ->from('provider')
             ->join('users', 'users.id = provider.provider_id', 'left')
             ->where('provider.provider_id', $provider_id)

@@ -73,6 +73,8 @@ class Services extends User_Controller
         users.gym_name, 
         provider.city, 
         provider.month_price,
+        (SELECT ROUND(IFNULL(AVG(rating), 0), 1) FROM reviews WHERE reviews.provider_id = service.provider_id) AS avg_rating,
+        (SELECT COUNT(*) FROM reviews WHERE reviews.provider_id = service.provider_id) AS total_reviews,
         (6371 * acos(
             cos(radians($lat)) * cos(radians(provider.latitude)) *
             cos(radians(provider.longitude) - radians($lng)) +

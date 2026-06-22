@@ -6,10 +6,25 @@ $current_method = $this->router->fetch_method();
 
     <style>
         .ft-footer {
-            background: #0f172a;
+            background: #1a1a1a;
             color: #cbd5e1;
             padding: 60px 0 0;
+            margin-top: 40px;
             margin-bottom: 0 !important;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ft-footer::after {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(111, 66, 193, 0.12) 0%, transparent 70%);
+            bottom: -250px;
+            right: -150px;
+            pointer-events: none;
         }
 
         .ft-footer .ft-brand h2 {
@@ -49,8 +64,8 @@ $current_method = $this->router->fetch_method();
         }
 
         .ft-social-icon:hover {
-            background: #e11d48;
-            border-color: #e11d48;
+            background: #6f42c1;
+            border-color: #6f42c1;
             color: #fff;
         }
 
@@ -73,7 +88,7 @@ $current_method = $this->router->fetch_method();
             left: 0;
             width: 30px;
             height: 2px;
-            background: #e11d48;
+            background: #6f42c1;
             border-radius: 2px;
         }
 
@@ -99,7 +114,7 @@ $current_method = $this->router->fetch_method();
 
         .ft-links a::before {
             content: '›';
-            color: #e11d48;
+            color: #6f42c1;
             font-size: 16px;
             opacity: 0;
             transition: opacity 0.2s;
@@ -133,7 +148,7 @@ $current_method = $this->router->fetch_method();
             align-items: center;
             justify-content: center;
             font-size: 14px;
-            color: #e11d48;
+            color: #6f42c1;
         }
 
         .ft-contact-item span {
@@ -155,8 +170,8 @@ $current_method = $this->router->fetch_method();
         }
 
         .ft-app-btn:hover {
-            background: #e11d48;
-            border-color: #e11d48;
+            background: #6f42c1;
+            border-color: #6f42c1;
         }
 
         .ft-app-btn:hover .ft-app-text-main,
@@ -190,7 +205,7 @@ $current_method = $this->router->fetch_method();
 
         .ft-badge {
             display: inline-block;
-            background: #e11d48;
+            background: #6f42c1;
             color: #fff;
             font-size: 10px;
             font-weight: 600;
@@ -232,7 +247,7 @@ $current_method = $this->router->fetch_method();
         }
 
         .ft-bottom-links a:hover {
-            color: #e11d48;
+            color: #6f42c1;
         }
 
         @media (max-width: 576px) {
@@ -252,7 +267,7 @@ $current_method = $this->router->fetch_method();
 
     <footer class="ft-footer">
         <div class="container">
-            <div class="row g-5">
+            <div class="row g-4 g-lg-5">
 
                 <!-- Brand & Social -->
                 <div class="col-lg-3 col-md-6 ft-brand ft-col">
@@ -351,37 +366,52 @@ $current_method = $this->router->fetch_method();
 <script>
     function initSwiper(selector) {
         const totalSlides = document.querySelectorAll(`${selector} .swiper-slide`).length;
-        new Swiper(selector, {
-            slidesPerView: 2,
-            spaceBetween: 20,
+        let config = {
+            slidesPerView: 1,
+            spaceBetween: 0,
+            watchOverflow: true,
+            observer: true,
+            observeParents: true,
             loop: totalSlides > 1,
             autoplay: totalSlides > 1 ? {
                 delay: 2500,
                 disableOnInteraction: false
             } : false,
+            navigation: {
+                nextEl: `${selector} .swiper-button-next`,
+                prevEl: `${selector} .swiper-button-prev`
+            },
             pagination: {
                 el: `${selector} .swiper-pagination`,
-                clickable: true
+                clickable: true,
+                dynamicBullets: true,
+                dynamicMainBullets: 3
             },
-            grid: totalSlides > 2 ? {
-                rows: 2,
-                fill: "row"
-            } : {},
             breakpoints: {
+                0: {
+                    slidesPerView: 2,
+                    spaceBetween: 12
+                },
+                576: {
+                    slidesPerView: 2,
+                    spaceBetween: 12
+                },
                 768: {
                     slidesPerView: 3,
-                    grid: totalSlides > 3 ? {
-                        rows: 2
-                    } : {}
+                    spaceBetween: 16
+                },
+                992: {
+                    slidesPerView: 4,
+                    spaceBetween: 20
                 },
                 1200: {
-                    slidesPerView: 4,
-                    grid: totalSlides > 4 ? {
-                        rows: 2
-                    } : {}
+                    slidesPerView: 5,
+                    spaceBetween: 20
                 }
             }
-        });
+        };
+
+        new Swiper(selector, config);
     }
 
     initSwiper(".categorySwiper");

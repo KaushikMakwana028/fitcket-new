@@ -12,8 +12,9 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
   <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
-
-
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <style>
     :root {
@@ -32,12 +33,46 @@
       margin: 0;
       padding: 0;
       box-sizing: border-box;
+      font-family: 'Poppins', sans-serif !important;
+    }
+
+    /* Restore icon font families overridden by universal Poppins rule */
+    .fa,
+    .fas,
+    .far,
+    .fab,
+    .fa-solid,
+    .fa-regular,
+    .fa-brands {
+      font-family: 'Font Awesome 6 Free' !important;
+    }
+
+    .fa-brands {
+      font-family: 'Font Awesome 6 Brands' !important;
+    }
+
+    .bx,
+    [class^="bx-"],
+    [class*=" bx-"] {
+      font-family: 'boxicons' !important;
+    }
+
+    .bi,
+    [class^="bi-"],
+    [class*=" bi-"] {
+      font-family: 'bootstrap-icons' !important;
+    }
+
+    html, body {
+      overflow-x: hidden !important;
+      width: 100% !important;
+      margin: 0;
+      padding: 0;
     }
 
     body {
-      font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Poppins', sans-serif !important;
       line-height: 1.6;
-      overflow-x: hidden;
     }
 
     /* Enhanced Top Bar */
@@ -129,40 +164,36 @@
 
     /* Enhanced Navigation Links */
     .navbar-nav .nav-link {
-      font-weight: 500;
+      font-weight: 600;
       color: var(--text-dark) !important;
-      padding: 12px 18px !important;
-      margin: 0 3px;
+      padding: 8px 12px !important;
+      margin: 0 1px;
       border-radius: 25px;
       transition: all 0.3s ease;
       position: relative;
       overflow: hidden;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
     }
 
     .navbar-nav .nav-link::before {
-      content: '';
-      position: absolute;
-      bottom: 5px;
-      left: 50%;
-      width: 0;
-      height: 3px;
-      background: var(--gradient-primary);
-      transition: all 0.3s ease;
-      transform: translateX(-50%);
-      border-radius: 2px;
+      display: none !important;
+      /* Hide underline to keep pill design clean */
     }
 
     .navbar-nav .nav-link:hover,
     .navbar-nav .nav-link.active {
       color: var(--primary-color) !important;
-      background: rgba(111, 66, 193, 0.08);
-      transform: translateY(-2px);
+      background: rgba(111, 66, 193, 0.08) !important;
+      transform: none !important;
+      /* Remove jumpy vertical transform */
     }
 
-    .navbar-nav .nav-link:hover::before,
-    .navbar-nav .nav-link.active::before {
-      width: 60%;
+    @media (min-width: 1200px) {
+      .navbar-nav .nav-link {
+        padding: 8px 14px !important;
+        font-size: 0.92rem;
+        margin: 0 2px;
+      }
     }
 
     /* Enhanced Cart Icon */
@@ -940,11 +971,11 @@
             <a class="nav-link <?= ($segment == 'session_booking' ? 'active' : '') ?>" href="<?= base_url('session_booking'); ?>">Session</a>
           </li>
 
-          <li class="nav-item">
+          <!-- <li class="nav-item">
             <a class="nav-link <?= ($segment == 'cricket' ? 'active' : '') ?>" href="<?= base_url('cricket'); ?>">
               Cricket
             </a>
-          </li>
+          </li> -->
 
           <li class="nav-item">
             <a class="nav-link <?= ($segment == 'about-us' ? 'active' : '') ?>" href="<?= base_url('about-us'); ?>">About Us</a>
@@ -1004,11 +1035,11 @@
           <a class="nav-link" href="<?= base_url(); ?>"><i class="fas fa-home me-2"></i>Home</a>
         </li>
 
-       <li class="nav-item">
+        <!-- <li class="nav-item">
           <a class="nav-link" href="<?= base_url('cricket'); ?>">
             <i class="fas fa-baseball-ball me-2"></i>Cricket
           </a>
-        </li>
+        </li> -->
 
         <li class="nav-item">
           <a class="nav-link" href="<?= base_url('about-us'); ?>"><i class="fas fa-info-circle me-2"></i>About Us</a>
