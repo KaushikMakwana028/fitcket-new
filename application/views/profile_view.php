@@ -200,14 +200,16 @@
             border: 2px solid var(--border-color) !important;
             border-radius: 12px !important;
             width: 100% !important;
-            padding: 0.75rem 2.5rem 0.75rem 1rem !important; /* Space for the clear button */
+            padding: 0.75rem 2.5rem 0.75rem 1rem !important;
+            /* Space for the clear button */
             font-size: 0.95rem;
         }
 
         #clearSearchBtn {
             position: absolute !important;
             right: 8px !important;
-            top: 22px !important; /* Align vertically with the input box center */
+            top: 22px !important;
+            /* Align vertically with the input box center */
             transform: translateY(-50%) !important;
             z-index: 5 !important;
             border: none !important;
@@ -227,7 +229,7 @@
         }
 
         /* Hide clear button when input placeholder is shown (input is empty) */
-        #providerSearch:placeholder-shown ~ #clearSearchBtn {
+        #providerSearch:placeholder-shown~#clearSearchBtn {
             display: none !important;
         }
 

@@ -753,6 +753,7 @@
 			padding: 0 !important;
 			width: 100% !important;
 		}
+
 		.page-content .page-content {
 			padding: 0 !important;
 		}
@@ -2281,10 +2282,12 @@
 		.swal2-icon.swal2-success .swal2-success-line-long {
 			font-size: 16px !important;
 		}
+
 		.swal2-icon.swal2-success [class^=swal2-success-line] {
 			box-sizing: content-box !important;
 		}
-		.swal2-icon.swal2-success::before, 
+
+		.swal2-icon.swal2-success::before,
 		.swal2-icon.swal2-success::after,
 		.swal2-success-fix {
 			box-sizing: content-box !important;

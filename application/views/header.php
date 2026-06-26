@@ -63,7 +63,8 @@
       font-family: 'bootstrap-icons' !important;
     }
 
-    html, body {
+    html,
+    body {
       overflow-x: hidden !important;
       width: 100% !important;
       margin: 0;

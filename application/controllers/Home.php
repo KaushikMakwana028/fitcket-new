@@ -33,13 +33,6 @@ class Home extends User_Controller
 
 
         parent::__construct();
-
-
-
-
-
-
-
     }
 
 
@@ -53,8 +46,8 @@ class Home extends User_Controller
         foreach ($categories as &$cat) {
             $cat->provider_count = $this->db
                 ->group_start()
-                    ->where('category', $cat->id)
-                    ->or_where('sub_category', $cat->id)
+                ->where('category', $cat->id)
+                ->or_where('sub_category', $cat->id)
                 ->group_end()
                 ->where('isActive', 1)
                 ->count_all_results('provider');
@@ -221,7 +214,6 @@ class Home extends User_Controller
         $this->load->view('home_view', $this->data);
 
         $this->load->view('footer');
-
     }
 
 
@@ -249,7 +241,6 @@ class Home extends User_Controller
 
 
         echo 'success';
-
     }
 
 
@@ -260,29 +251,29 @@ class Home extends User_Controller
 
     //    public function save_location()
 
-// {
+    // {
 
-//     $lat = $this->input->post('lat');
+    //     $lat = $this->input->post('lat');
 
-//     $lng = $this->input->post('lng');
+    //     $lng = $this->input->post('lng');
 
-//     $address = $this->input->post('address');
+    //     $address = $this->input->post('address');
 
 
 
     //     // Save all three to session
 
-//     $this->session->set_userdata('user_lat', $lat);
+    //     $this->session->set_userdata('user_lat', $lat);
 
-//     $this->session->set_userdata('user_lng', $lng);
+    //     $this->session->set_userdata('user_lng', $lng);
 
-//     $this->session->set_userdata('user_location', $address);
+    //     $this->session->set_userdata('user_location', $address);
 
 
 
     //     echo 'success';
 
-// }
+    // }
 
 
 
@@ -297,9 +288,5 @@ class Home extends User_Controller
         $this->load->view('contact_view');
 
         $this->load->view('footer');
-
-
-
     }
-
 }
