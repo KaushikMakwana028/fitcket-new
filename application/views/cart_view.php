@@ -466,7 +466,7 @@
         justify-content: center;
     }
 
-    .empty-cart i {
+    .empty-cart .empty-icon-wrap i {
         font-size: 2.6rem;
         color: var(--primary-color);
     }

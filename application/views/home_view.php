@@ -1,6 +1,9 @@
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap');
 
+    /* ══════════════════════════════════════════
+       CSS VARIABLES
+    ══════════════════════════════════════════ */
     :root {
         --primary-color: #6f42c1;
         --primary-dark: #5a32a3;
@@ -20,6 +23,9 @@
         --radius-pill: 50px;
     }
 
+    /* ══════════════════════════════════════════
+       BASE
+    ══════════════════════════════════════════ */
     .fitket-home {
         font-family: 'Poppins', sans-serif;
         color: var(--text-dark);
@@ -46,8 +52,8 @@
     }
 
     /* ══════════════════════════════════════════
-     HERO CAROUSEL
-  ══════════════════════════════════════════ */
+       HERO CAROUSEL
+    ══════════════════════════════════════════ */
     .fitket-home .hero-wrapper {
         position: relative;
         margin-bottom: 70px;
@@ -60,36 +66,46 @@
         position: relative;
     }
 
-    /* Layered gradient — deep dark bottom for text, purple glow top-right */
+    /* Dark gradient overlay */
     .fitket-home .carousel-item::before {
         content: '';
         position: absolute;
         inset: 0;
         background:
             radial-gradient(ellipse at 80% 20%, rgba(111, 66, 193, 0.35) 0%, transparent 55%),
-            linear-gradient(160deg, rgba(26, 26, 26, 0.35) 0%, rgba(26, 26, 26, 0.78) 60%, rgba(26, 26, 26, 0.9) 100%);
+            linear-gradient(160deg, rgba(26, 26, 26, 0.3) 0%, rgba(26, 26, 26, 0.75) 55%, rgba(26, 26, 26, 0.92) 100%);
         z-index: 1;
     }
 
+    /*
+     * KEY FIX: Override Bootstrap's .carousel-caption which sets
+     * bottom/left/right/padding-bottom and kills our layout.
+     * We make it cover the full slide, then use .caption-inner for layout.
+     */
     .fitket-home .carousel-caption {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        top: 0;
+        position: absolute !important;
+        top: 0 !important;
+        bottom: 0 !important;
+        left: 0 !important;
+        right: 0 !important;
+        padding: 0 !important;
+        text-align: left !important;
+        z-index: 2;
+    }
+
+    /* Inner flex container: content centered, CTA pinned to bottom */
+    .fitket-home .caption-inner {
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: flex-start;
-        padding: 0 clamp(20px, 6vw, 80px);
-        z-index: 2;
-        text-align: left;
-        max-width: 680px;
+        height: 100%;
+        padding: 60px clamp(28px, 6vw, 80px) 80px;
+        max-width: 720px;
     }
 
-    /* Eyebrow pill */
-    .fitket-home .carousel-caption::before {
-        content: 'Premium Fitness Platform';
+    /* Eyebrow pill badge */
+    .fitket-home .caption-eyebrow {
         display: inline-flex;
         align-items: center;
         gap: 8px;
@@ -102,17 +118,16 @@
         font-weight: 700;
         letter-spacing: 0.1em;
         text-transform: uppercase;
-        margin-bottom: 20px;
+        margin-bottom: 18px;
     }
 
     .fitket-home .carousel-caption h1 {
-        font-size: clamp(1.8rem, 4.5vw, 3.6rem);
+        font-size: clamp(2rem, 4.5vw, 3.6rem);
         font-weight: 900;
         margin-bottom: 14px;
         color: var(--white);
         line-height: 1.1;
         letter-spacing: -0.03em;
-        text-shadow: none;
     }
 
     .fitket-home .carousel-caption h1 span {
@@ -123,18 +138,21 @@
     }
 
     .fitket-home .carousel-caption p {
-        font-size: clamp(0.9rem, 1.6vw, 1.05rem);
+        font-size: clamp(0.95rem, 1.6vw, 1.1rem);
         font-weight: 300;
-        margin-bottom: 32px;
+        margin-bottom: 0;
         color: rgba(255, 255, 255, 0.65);
         line-height: 1.75;
         max-width: 480px;
     }
 
+    /* CTA pinned to bottom via margin-top: auto */
     .fitket-home .cta-group {
         display: flex;
         flex-wrap: wrap;
         gap: 12px;
+        margin-top: auto;
+        padding-top: 28px;
     }
 
     .fitket-home .btn-warning {
@@ -142,11 +160,10 @@
         border: none;
         color: #1a1a1a;
         font-weight: 700;
-        padding: 14px 34px;
+        padding: 14px 36px;
         border-radius: var(--radius-pill);
-        font-size: 0.95rem;
+        font-size: 0.98rem;
         transition: all 0.25s;
-        letter-spacing: 0.01em;
     }
 
     .fitket-home .btn-warning:hover {
@@ -157,12 +174,12 @@
     }
 
     .fitket-home .btn-outline-light {
-        border: 1.5px solid rgba(255, 255, 255, 0.3);
+        border: 1.5px solid rgba(255, 255, 255, 0.35);
         color: var(--white);
-        padding: 14px 34px;
+        padding: 14px 36px;
         border-radius: var(--radius-pill);
         font-weight: 600;
-        font-size: 0.95rem;
+        font-size: 0.98rem;
         background: transparent;
         transition: all 0.25s;
     }
@@ -205,11 +222,11 @@
         opacity: 1;
     }
 
-    /* Slide counter dots */
+    /* Indicator dots */
     .fitket-home #heroCarousel .carousel-indicators {
-        bottom: 80px;
+        bottom: 24px;
         justify-content: flex-start;
-        padding-left: clamp(20px, 6vw, 80px);
+        padding-left: clamp(28px, 6vw, 80px);
         gap: 6px;
         margin: 0;
     }
@@ -230,10 +247,9 @@
         background: var(--primary-color);
     }
 
-
     /* ══════════════════════════════════════════
-     FLOATING SEARCH BAR
-  ══════════════════════════════════════════ */
+       FLOATING SEARCH BAR
+    ══════════════════════════════════════════ */
     .fitket-home .search-bar-container {
         position: absolute;
         bottom: -38px;
@@ -284,7 +300,6 @@
         outline: none;
     }
 
-    /* Divider between inputs */
     .fitket-home .search-divider {
         width: 1px;
         height: 36px;
@@ -312,10 +327,9 @@
         box-shadow: 0 10px 24px rgba(111, 66, 193, 0.32);
     }
 
-
     /* ══════════════════════════════════════════
-     SECTION HEADINGS
-  ══════════════════════════════════════════ */
+       SECTION HEADINGS
+    ══════════════════════════════════════════ */
     .fitket-home .fkh-section-label {
         display: inline-block;
         font-size: 0.7rem;
@@ -350,7 +364,6 @@
         margin-bottom: 0;
     }
 
-    /* ── Dark section variants ── */
     .fitket-home .fkh-section-label--dark {
         color: #b19fe8;
         background: rgba(111, 66, 193, 0.2);
@@ -364,10 +377,9 @@
         color: rgba(255, 255, 255, 0.45);
     }
 
-
     /* ══════════════════════════════════════════
-     CATEGORY SECTION
-  ══════════════════════════════════════════ */
+       CATEGORY SECTION
+    ══════════════════════════════════════════ */
     .fitket-home .services-section {
         padding: 90px 0 60px;
         background: var(--white);
@@ -404,7 +416,13 @@
         transform: translateY(-2px);
     }
 
-    /* Category cards */
+    /* Category grid */
+    .fitket-home .category-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 18px;
+    }
+
     .fitket-home .category-link {
         text-decoration: none;
         color: inherit;
@@ -414,15 +432,17 @@
 
     .fitket-home .service-card {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        padding: 20px 22px;
+        text-align: center;
+        padding: 20px 14px;
         border-radius: var(--radius-lg);
         background: var(--white);
         border: 1.5px solid var(--border-color);
         transition: all 0.3s ease;
         height: 100%;
         cursor: pointer;
-        gap: 16px;
+        gap: 10px;
         position: relative;
         overflow: hidden;
     }
@@ -493,10 +513,9 @@
         font-weight: 600;
     }
 
-
     /* ══════════════════════════════════════════
-     PROVIDER / EXPERT CARDS
-  ══════════════════════════════════════════ */
+       PROVIDER / EXPERT CARDS
+    ══════════════════════════════════════════ */
     .fitket-home .experts-section {
         padding: 70px 0;
     }
@@ -609,7 +628,6 @@
         display: flex;
         align-items: center;
         gap: 6px;
-        transition: transform 0.25s;
         padding: 8px 18px;
         border-radius: var(--radius-pill);
         background: rgba(111, 66, 193, 0.06);
@@ -629,22 +647,18 @@
         font-size: 0.83rem;
     }
 
-    .fitket-home .view-more-btn:hover .view-more-text {
-        color: var(--white);
-    }
-
+    .fitket-home .view-more-btn:hover .view-more-text,
     .fitket-home .view-more-btn:hover .fkh-arrow-icon {
         color: var(--white) !important;
     }
 
-
     /* ══════════════════════════════════════════
-     SWIPER
-  ══════════════════════════════════════════ */
+       SWIPER
+    ══════════════════════════════════════════ */
     .fitket-home .swiper {
-        padding: 8px 0 30px;
-        min-height: 120px;
         position: relative;
+        padding: 8px 4px 30px;
+        min-height: 120px;
     }
 
     .fitket-home .swiper-slide {
@@ -680,53 +694,46 @@
         background: var(--primary-color);
     }
 
-    .fitket-home .swiper-pagination-bullet {
-        width: 7px;
-        height: 7px;
-        background: var(--border-color);
-        opacity: 1;
+    .fitket-home .swiper-button-prev,
+    .fitket-home .swiper-button-next {
+        width: 30px;
+        height: 30px;
+        background: rgba(111, 66, 193, 0.55);
+        border-radius: 50%;
+        top: 24px;
+        margin-top: 0;
+        color: var(--white);
         transition: all 0.25s;
+        z-index: 5;
     }
 
-    .fitket-home .swiper-pagination-bullet-active {
+    .fitket-home .swiper-button-prev:after,
+    .fitket-home .swiper-button-next:after {
+        font-size: 12px;
+        font-weight: 900;
+    }
+
+    .fitket-home .swiper-button-prev:hover,
+    .fitket-home .swiper-button-next:hover {
         background: var(--primary-color);
+        transform: scale(1.1);
     }
 
-    .fitket-home .swiper-pagination-bullets-dynamic {
-        overflow: hidden;
-        white-space: nowrap;
+    .fitket-home .swiper-button-prev {
+        left: 6px;
     }
 
-    @media (max-width: 576px) {
-
-        .fitket-home .expert-card {
-            width: 100%;
-            min-width: 100%;
-        }
-
-        .fitket-home .categorySwiper .service-card {
-            padding: 10px;
-            gap: 8px;
-        }
-
-        .fitket-home .categorySwiper .service-icon {
-            width: 40px;
-            height: 40px;
-        }
-
-        .fitket-home .categorySwiper .service-title {
-            font-size: 12px;
-        }
-
-        .fitket-home .categorySwiper .service-subtitle {
-            font-size: 10px;
-        }
+    .fitket-home .swiper-button-next {
+        right: 6px;
     }
 
+    .fitket-home .swiper-button-disabled {
+        opacity: 0.35;
+    }
 
     /* ══════════════════════════════════════════
-     PROMO BANNERS
-  ══════════════════════════════════════════ */
+       PROMO BANNERS
+    ══════════════════════════════════════════ */
     .fitket-home .fkh-banner-wrap {
         padding: 60px 0 70px;
     }
@@ -743,7 +750,6 @@
         min-height: 260px;
     }
 
-    /* Diagonal accent strip */
     .fitket-home .edemand-banner::before {
         content: '';
         position: absolute;
@@ -756,7 +762,6 @@
         pointer-events: none;
     }
 
-    /* Radial glow */
     .fitket-home .edemand-banner::after {
         content: '';
         position: absolute;
@@ -769,7 +774,6 @@
         pointer-events: none;
     }
 
-    /* Ghost watermark text in banners */
     .fitket-home .banner-watermark {
         position: absolute;
         bottom: -10px;
@@ -869,7 +873,7 @@
         opacity: 0.18;
     }
 
-    /* ── Alternate banner (light accent bg) ── */
+    /* Accent banner variant */
     .fitket-home .edemand-banner--accent {
         background: linear-gradient(135deg, var(--primary-color) 0%, #8b5cf6 50%, var(--accent-color) 100%);
     }
@@ -896,10 +900,9 @@
         -webkit-text-stroke: 1px rgba(255, 255, 255, 0.1);
     }
 
-
     /* ══════════════════════════════════════════
-     BG ALTERNATION
-  ══════════════════════════════════════════ */
+       DARK BG SECTION
+    ══════════════════════════════════════════ */
     .fitket-home .fkh-bg-dark {
         background: var(--secondary-color);
         position: relative;
@@ -976,49 +979,9 @@
         background: var(--primary-color);
     }
 
-    .fitket-home .swiper {
-        position: relative;
-        padding: 8px 4px 30px;
-    }
-
-    .fitket-home .swiper-button-prev,
-    .fitket-home .swiper-button-next {
-        width: 30px;
-        height: 30px;
-        background: rgba(111, 66, 193, 0.55);
-        border-radius: 50%;
-        top: 24px;
-        margin-top: 0;
-        color: var(--white);
-        transition: all 0.25s;
-        z-index: 5;
-    }
-
-    .fitket-home .swiper-button-prev:after,
-    .fitket-home .swiper-button-next:after {
-        font-size: 12px;
-        font-weight: 900;
-    }
-
-    .fitket-home .swiper-button-prev:hover,
-    .fitket-home .swiper-button-next:hover {
-        background: var(--primary-color);
-        transform: scale(1.1);
-    }
-
-    .fitket-home .swiper-button-prev {
-        left: 6px;
-    }
-
-    .fitket-home .swiper-button-next {
-        right: 6px;
-    }
-
-    .fitket-home .swiper-button-disabled {
-        opacity: 0.35;
-    }
-
-    /* Hide arrows on desktop where multiple cards already show, keep on mobile */
+    /* ══════════════════════════════════════════
+       RESPONSIVE — hide swiper arrows on desktop
+    ══════════════════════════════════════════ */
     @media (min-width: 992px) {
 
         .fitket-home .swiper-button-prev,
@@ -1027,29 +990,81 @@
         }
     }
 
-    /* Removed width: 100% !important from .swiper-slide to let Swiper JS manage layout */
-
-
     /* ══════════════════════════════════════════
-     MOBILE RESPONSIVE
-  ══════════════════════════════════════════ */
+       RESPONSIVE — ≤ 991px  (tablets)
+    ══════════════════════════════════════════ */
     @media (max-width: 991px) {
+
+        /* — Hero — */
         .fitket-home .hero-wrapper {
             margin-bottom: 0;
         }
 
+        .fitket-home .carousel-item {
+            height: 480px;
+        }
+
+        .fitket-home .caption-inner {
+            padding: 44px 24px 60px;
+            max-width: 100%;
+            /* Keep justify-content:center so title stays mid-slide */
+        }
+
+        .fitket-home .caption-eyebrow {
+            display: none;
+        }
+
+        .fitket-home .carousel-caption h1 {
+            font-size: clamp(1.55rem, 5.5vw, 2.4rem);
+            line-height: 1.15;
+        }
+
+        .fitket-home .carousel-caption p {
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .fitket-home .cta-group {
+            margin-top: 20px;
+            padding-top: 0;
+            width: 100%;
+        }
+
+        .fitket-home .cta-group .btn {
+            padding: 12px 28px;
+            font-size: 0.9rem;
+        }
+
+        /* — Carousel controls — */
+        .fitket-home #heroCarousel .carousel-control-prev,
+        .fitket-home #heroCarousel .carousel-control-next {
+            width: 32px;
+            height: 32px;
+        }
+
+        .fitket-home #heroCarousel .carousel-control-prev {
+            left: 10px;
+        }
+
+        .fitket-home #heroCarousel .carousel-control-next {
+            right: 10px;
+        }
+
+        .fitket-home #heroCarousel .carousel-control-prev-icon,
+        .fitket-home #heroCarousel .carousel-control-next-icon {
+            width: 12px;
+            height: 12px;
+        }
+
+        /* — Search bar — */
         .fitket-home .search-bar-container {
             position: static;
             transform: none;
-            left: auto;
-            bottom: auto;
             width: 94%;
             margin: 20px auto 0;
             padding: 16px 18px;
-            flex-direction: row;
-            flex-wrap: wrap;
-            gap: 10px;
             border-radius: var(--radius-lg);
+            gap: 10px;
         }
 
         .fitket-home .search-divider {
@@ -1057,7 +1072,7 @@
         }
 
         .fitket-home .search-input-group {
-            flex: 1 1 180px;
+            flex: 1 1 160px;
             min-width: 0;
         }
 
@@ -1066,6 +1081,13 @@
             padding: 12px 24px;
         }
 
+        /* — Category grid — */
+        .fitket-home .category-grid {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+        }
+
+        /* — Banners — */
         .fitket-home .banner-illustration {
             width: 160px;
         }
@@ -1078,16 +1100,43 @@
         .fitket-home .banner-text {
             padding: 40px 36px;
         }
+
+        /* — Swiper arrows — */
+        .fitket-home .swiper-button-prev,
+        .fitket-home .swiper-button-next {
+            display: flex;
+            width: 24px;
+            height: 24px;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        .fitket-home .swiper-button-prev:after,
+        .fitket-home .swiper-button-next:after {
+            font-size: 9px;
+        }
+
+        .fitket-home .swiper-button-prev {
+            left: 2px;
+        }
+
+        .fitket-home .swiper-button-next {
+            right: 2px;
+        }
     }
 
+    /* ══════════════════════════════════════════
+       RESPONSIVE — ≤ 768px  (phones)
+    ══════════════════════════════════════════ */
     @media (max-width: 768px) {
+
+        /* — Hero — */
         .fitket-home .carousel-item {
             height: 420px;
         }
 
-        .fitket-home .carousel-caption {
-            padding: 0 24px;
-            max-width: 100%;
+        .fitket-home .caption-inner {
+            padding: 40px 20px 56px;
         }
 
         .fitket-home .carousel-caption h1 {
@@ -1095,21 +1144,20 @@
         }
 
         .fitket-home .carousel-caption p {
-            font-size: 0.88rem;
-            margin-bottom: 20px;
+            font-size: 0.87rem;
         }
 
         .fitket-home #heroCarousel .carousel-indicators {
-            padding-left: 24px;
-            bottom: 20px;
+            padding-left: 20px;
+            bottom: 18px;
         }
 
+        /* — Search bar — */
         .fitket-home .search-bar-container {
             flex-direction: column;
             gap: 10px;
             padding: 14px 16px;
             width: 92%;
-            margin: 20px auto 0;
         }
 
         .fitket-home .search-input-group {
@@ -1120,16 +1168,22 @@
         .fitket-home .search-btn {
             width: 100%;
             padding: 13px;
-            font-size: 0.95rem;
             border-radius: var(--radius-md);
         }
 
+        /* — Category grid — */
+        .fitket-home .category-grid {
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        /* — Sections — */
         .fitket-home .services-section {
             padding: 42px 0 40px;
         }
 
         .fitket-home .experts-section {
-            padding: 70px 0;
+            padding: 60px 0;
         }
 
         .fitket-home .fkh-section-header {
@@ -1137,27 +1191,7 @@
             text-align: center;
         }
 
-        .fitket-home .service-card {
-            flex-direction: row;
-            text-align: left;
-            padding: 14px 16px;
-            gap: 12px;
-        }
-
-        .fitket-home .service-icon {
-            width: 54px;
-            height: 54px;
-            border-radius: 14px;
-        }
-
-        .fitket-home .service-title {
-            font-size: 0.9rem;
-        }
-
-        .fitket-home .service-subtitle {
-            font-size: 0.78rem;
-        }
-
+        /* — Expert cards — */
         .fitket-home .expert-left {
             padding: 18px 18px 14px;
             gap: 12px;
@@ -1178,6 +1212,7 @@
             gap: 8px;
         }
 
+        /* — Banners — */
         .fitket-home .edemand-banner {
             flex-direction: column;
             min-height: auto;
@@ -1200,30 +1235,80 @@
         .fitket-home .fkh-banner-wrap {
             padding-bottom: 50px;
         }
+
+        /* — Landscape — */
+        @media (orientation: landscape) {
+            .fitket-home .carousel-item {
+                height: 260px;
+            }
+
+            .fitket-home .caption-inner {
+                padding: 24px 20px 40px;
+            }
+
+            .fitket-home .carousel-caption p {
+                display: none;
+            }
+
+            .fitket-home #heroCarousel .carousel-indicators {
+                bottom: 10px;
+            }
+        }
     }
 
+    /* ══════════════════════════════════════════
+       RESPONSIVE — ≤ 576px  (small phones)
+    ══════════════════════════════════════════ */
     @media (max-width: 576px) {
+
+        /* — Hero — */
         .fitket-home .carousel-item {
-            height: 340px;
+            height: 360px;
         }
 
-        .fitket-home .carousel-caption::before {
-            display: none;
+        .fitket-home .caption-inner {
+            padding: 36px 16px 52px;
         }
 
         .fitket-home .carousel-caption h1 {
-            font-size: clamp(1.2rem, 5.5vw, 1.7rem);
+            font-size: clamp(1.3rem, 6vw, 1.85rem);
         }
 
         .fitket-home .carousel-caption p {
-            display: none;
-        }
-
-        .fitket-home .cta-group .btn {
-            padding: 10px 20px;
             font-size: 0.82rem;
         }
 
+        .fitket-home .cta-group .btn {
+            padding: 11px 22px;
+            font-size: 0.84rem;
+        }
+
+        /* — Category grid — */
+        .fitket-home .category-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .fitket-home .category-grid .service-card {
+            padding: 18px 10px;
+            border-radius: 16px;
+        }
+
+        .fitket-home .category-grid .service-icon {
+            width: 52px;
+            height: 52px;
+            border-radius: 13px;
+        }
+
+        .fitket-home .category-grid .service-title {
+            font-size: 0.8rem;
+        }
+
+        .fitket-home .category-grid .service-subtitle {
+            font-size: 0.72rem;
+        }
+
+        /* — Banners — */
         .fitket-home .banner-text {
             padding: 28px 22px;
         }
@@ -1235,33 +1320,31 @@
         .fitket-home .fkh-view-all {
             display: none;
         }
+
+        /* — Expert cards — */
+        .fitket-home .expert-card {
+            min-width: 100%;
+        }
     }
 
+    /* ══════════════════════════════════════════
+       RESPONSIVE — ≤ 480px  (tiny phones)
+    ══════════════════════════════════════════ */
     @media (max-width: 480px) {
         .fitket-home .carousel-item {
-            height: 300px;
+            height: 320px;
+        }
+
+        .fitket-home .caption-inner {
+            padding: 30px 14px 46px;
+        }
+
+        .fitket-home .carousel-caption h1 {
+            font-size: clamp(1.15rem, 5.5vw, 1.55rem);
         }
 
         .fitket-home #heroCarousel .carousel-indicators {
-            bottom: 15px;
-        }
-    }
-
-    @media (max-width: 768px) and (orientation: landscape) {
-        .fitket-home .carousel-item {
-            height: 250px;
-        }
-
-        .fitket-home .carousel-caption::before {
-            display: none;
-        }
-
-        .fitket-home .carousel-caption p {
-            display: none;
-        }
-
-        .fitket-home #heroCarousel .carousel-indicators {
-            bottom: 15px;
+            bottom: 14px;
         }
     }
 </style>
@@ -1288,15 +1371,21 @@
                     <div class="carousel-item <?= $first ? 'active' : '' ?>"
                         style="background-image: url('<?= base_url('uploads/slider/' . $slide->slider_image) ?>');">
                         <div class="carousel-caption">
-                            <h1><?= htmlspecialchars($slide->slider_title) ?></h1>
-                            <p><?= htmlspecialchars($slide->sub_title) ?></p>
-                            <div class="cta-group">
-                                <a href="<?= base_url('providers') ?>" class="btn btn-warning">
-                                    <i class="fas fa-calendar-check me-2" aria-hidden="true"></i>Book Now
-                                </a>
-                                <a href="<?= base_url('services') ?>" class="btn btn-outline-light">
-                                    Explore Services
-                                </a>
+                            <div class="caption-inner">
+                                <span class="caption-eyebrow">
+                                    <i class="fas fa-dumbbell" aria-hidden="true"></i>
+                                    Premium Fitness Platform
+                                </span>
+                                <h1><?= htmlspecialchars($slide->slider_title) ?></h1>
+                                <p><?= htmlspecialchars($slide->sub_title) ?></p>
+                                <div class="cta-group">
+                                    <a href="<?= base_url('providers') ?>" class="btn btn-warning">
+                                        <i class="fas fa-calendar-check me-2" aria-hidden="true"></i>Book Now
+                                    </a>
+                                    <a href="<?= base_url('services') ?>" class="btn btn-outline-light">
+                                        Explore Services
+                                    </a>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1351,27 +1440,20 @@
                     View All <i class="fas fa-arrow-right" aria-hidden="true"></i>
                 </a>
             </div>
-
-            <div class="swiper categorySwiper">
-                <div class="swiper-wrapper">
-                    <?php foreach ($category as $cat): ?>
-                        <div class="swiper-slide">
-                            <a href="<?= base_url('providers?category=' . $cat->id) ?>" class="category-link">
-                                <div class="service-card">
-                                    <div class="service-icon">
-                                        <img src="<?= base_url($cat->image) ?>" alt="<?= htmlspecialchars($cat->name) ?>" class="avatar-img">
-                                    </div>
-                                    <div>
-                                        <div class="service-title"><?= strtoupper($cat->name) ?></div>
-                                        <div class="service-subtitle"><?= $cat->provider_count ?> Providers</div>
-                                    </div>
-                                </div>
-                            </a>
+            <div class="category-grid">
+                <?php foreach ($category as $cat): ?>
+                    <a href="<?= base_url('providers?category=' . $cat->id) ?>" class="category-link">
+                        <div class="service-card">
+                            <div class="service-icon">
+                                <img src="<?= base_url($cat->image) ?>" alt="<?= htmlspecialchars($cat->name) ?>" class="avatar-img">
+                            </div>
+                            <div>
+                                <div class="service-title"><?= strtoupper($cat->name) ?></div>
+                                <div class="service-subtitle"><?= $cat->provider_count ?> Providers</div>
+                            </div>
                         </div>
-                    <?php endforeach; ?>
-                </div>
-                <div class="swiper-button-prev"></div>
-                <div class="swiper-button-next"></div>
+                    </a>
+                <?php endforeach; ?>
             </div>
         </div>
     </section>
@@ -1390,7 +1472,6 @@
                     View All <i class="fas fa-arrow-right" aria-hidden="true"></i>
                 </a>
             </div>
-
             <div class="swiper nearestSwiper">
                 <div class="swiper-wrapper">
                     <?php foreach ($nearest_providers as $np): ?>
@@ -1471,7 +1552,6 @@
                     View All <i class="fas fa-arrow-right" aria-hidden="true"></i>
                 </a>
             </div>
-
             <div class="swiper gymSwiper">
                 <div class="swiper-wrapper">
                     <?php foreach ($gym_providers as $provider): ?>
@@ -1550,7 +1630,6 @@
                     View All <i class="fas fa-arrow-right" aria-hidden="true"></i>
                 </a>
             </div>
-
             <div class="swiper trainerSwiper">
                 <div class="swiper-wrapper">
                     <?php foreach ($trainer_providers as $provider): ?>
