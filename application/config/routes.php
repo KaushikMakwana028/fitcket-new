@@ -87,11 +87,6 @@ $route['inquries'] = 'admin/page/inquries';
 $route['pay_out/(:num)'] = 'admin/pay_out/index/$1';
 $route['payment_setting'] = 'admin/payment/payment_setting';
 $route['offer'] = 'admin/dashboard/offer';
-$route['admin/reviews'] = 'admin/Reviews/review_list';
-$route['admin/reviews/review_list'] = 'admin/Reviews/review_list';
-$route['admin/session'] = 'admin/session/session_list';
-$route['admin/session_list'] = 'admin/session/session_list';
-$route['admin/live_sessions'] = 'admin/session/live_sessions';
 $route['admin/fittv_category'] = 'admin/fittv/category';
 $route['admin/add_fittv_category'] = 'admin/fittv/add_category';
 $route['admin/save_fittv_category'] = 'admin/fittv/save_category';
@@ -106,28 +101,36 @@ $route['admin/save_fittv_video'] = 'admin/fittv/save_video';
 $route['admin/edit_fittv_video/(:num)'] = 'admin/fittv/edit_video/$1';
 $route['admin/update_fittv_video'] = 'admin/fittv/update_video';
 $route['admin/delete_fittv_video/(:num)'] = 'admin/fittv/delete_video/$1';
+
 $route['admin/fittv_course_settings'] = 'admin/fittv/course_settings';
 $route['admin/update_fittv_course_settings'] = 'admin/fittv/update_course_settings';
+
 $route['admin/pools'] = 'admin/pool/index';
-$route['admin/pool/delete/(:num)'] = 'admin/pool/delete/$1';
+
 $route['admin/pool/users/(:num)'] = 'admin/pool/users/$1';
 $route['admin/pool/edit_user_answers/(:num)/(:num)'] = 'admin/pool/edit_user_answers/$1/$2';
 $route['admin/pool/update_user_answers'] = 'admin/pool/update_user_answers';
+
 $route['admin/pool/leaderboard'] = 'admin/pool/leaderboard';
-$route['admin/pool/(:num)'] = 'admin/pool/questions/$1';
+
 $route['admin/pool/(:num)/leaderboard'] = 'admin/pool/leaderboard/$1';
 $route['admin/pool/(:num)/save_questions'] = 'admin/pool/save_questions/$1';
 $route['admin/pool/(:num)/save_answer_key'] = 'admin/pool/save_answer_key/$1';
+
+$route['admin/pool/(:num)'] = 'admin/pool/questions/$1';
+
 $route['admin/cricket_questions'] = 'admin/pool/question_matches';
 $route['admin/cricket_questions/(:num)'] = 'admin/pool/match_questions/$1';
 $route['admin/cricket_questions/(:num)/save_questions'] = 'admin/pool/save_match_questions/$1';
 $route['admin/cricket_questions/(:num)/save_answer_key'] = 'admin/pool/save_match_answer_key/$1';
+
 $route['admin/cricket_matches'] = 'admin/cricket_matches/index';
 $route['admin/cricket_matches/create'] = 'admin/cricket_matches/create';
 $route['admin/cricket_matches/store'] = 'admin/cricket_matches/store';
 $route['admin/cricket_matches/edit/(:num)'] = 'admin/cricket_matches/edit/$1';
 $route['admin/cricket_matches/update/(:num)'] = 'admin/cricket_matches/update/$1';
 $route['admin/cricket_matches/delete/(:num)'] = 'admin/cricket_matches/delete/$1';
+
 $route['admin/pool/prize/(:num)'] = 'admin/pool/prize/$1';
 $route['admin/pool/prize/(:num)/save'] = 'admin/pool/save_prize/$1';
 $route['admin/user_wallet'] = 'admin/user_wallet/index';
@@ -136,13 +139,11 @@ $route['admin/user_wallet/approve_withdraw/(:num)'] = 'admin/user_wallet/approve
 $route['admin/user_wallet/mark_paid_manual/(:num)'] = 'admin/user_wallet/mark_paid_manual/$1';
 $route['admin/user_wallet/reject_withdraw/(:num)'] = 'admin/user_wallet/reject_withdraw/$1';
 
+
 $route['admin/host_requests'] = 'admin/host_requests/index';
 $route['admin/host_requests/accept/(:num)'] = 'admin/host_requests/accept/$1';
 $route['admin/host_requests/reject/(:num)'] = 'admin/host_requests/reject/$1';
 $route['admin/host_requests/pending/(:num)'] = 'admin/host_requests/pending/$1';
-
-
-
 
 //provider route
 $route['wallet'] = 'provider/wallet';
@@ -163,7 +164,6 @@ $route['bank_details'] = 'provider/profile/bank_details';
 $route['image'] = 'provider/profile/image';
 $route['add_image'] = 'provider/profile/add_image';
 $route['certification'] = 'provider/profile/certification';
-$route['provider/reviews'] = 'provider/Reviews/review_list';
 
 
 // provider api
@@ -212,8 +212,6 @@ $route['provider/notifications_get/api'] = 'provider/api/notifications_get';
 $route['provider/notification-read/(:num)'] = 'provider/api/notification_read/$1';
 $route['provider/notification-delete/(:num)'] = 'provider/api/notification_delete/$1';
 $route['provider/notification-delete-all']    = 'provider/api/notification_delete_all';
-$route['provider/delete_notification'] = 'provider/dashboard/delete_notification';
-$route['provider/dashboard/get_notifications'] = 'provider/dashboard/get_notifications';
 
 
 
@@ -244,6 +242,8 @@ $route['terms-condition'] = 'page/terms_condition';
 $route['privacy-policy'] = 'page/privacy_policy';
 $route['refund-policy'] = 'page/refund_policy';
 $route['delete-account'] = 'page/delete_account';
+$route['match'] = 'page/cricket';
+
 
 $route['edit_user/(:num)'] = 'profile/edit_user/$1';
 $route['manage_bank_account/(:num)'] = 'profile/manage_bank_account/$1';
@@ -299,6 +299,22 @@ $route['user/submit_review'] = 'api/submit_review';
 $route['user/fetch_sessions'] = 'api/fetch_sessions';
 $route['user/session_pay'] = 'api/session_pay';
 $route['user/session_payment_callback'] = 'api/session_payment_callback';
+$route['user/pay_fttv'] = 'api/pay_fttv';
+$route['user/fttv_callback'] = 'api/fttv_callback';
+
+$route['user/getfttvprice'] = 'api/getfttvprice';
+$route['user/pay_pool'] = 'api/pay_pool';
+$route['user/pool_callback'] = 'api/pool_callback';
+$route['user/get_matches'] = 'api/get_matches';
+$route['user/become_host'] = 'api/become_host';
+
+// $route['user/pool_history'] = 'api/pool_history';
+
+
+
+
+
+
 
 $route['user/my_sessions'] = 'api/my_booked_sessions';
 $route['user/join_session/(:num)']  = 'api/join_session/$1';
@@ -309,6 +325,7 @@ $route['user/notifications']                   = 'api/user_notifications_get';
 $route['user/notification/read/(:num)']        = 'api/user_notification_read/$1';
 $route['user/notification/delete/(:num)']      = 'api/user_notification_delete/$1';
 $route['user/notifications/delete-all']        = 'api/user_notification_delete_all';
+
 $route['fittv'] = 'fittv/index';
 
 $route['fittv/access'] = 'fittv/access';
@@ -316,8 +333,10 @@ $route['fittv/pay'] = 'fittv/pay';
 $route['fittv/razorpay_callback'] = 'fittv/razorpay_callback';
 $route['fittv/payment_cancel'] = 'fittv/payment_cancel';
 $route['fittv/payment_cancel/(:any)'] = 'fittv/payment_cancel/$1';
-$route['fittv/(:any)'] = 'fittv/gender/$1';
 $route['fittv/videos/(:num)'] = 'fittv/videos/$1';
+
+// 👇 KEEP THIS LAST
+$route['fittv/(:any)'] = 'fittv/gender/$1';
 
 $route['cricket'] = 'cricket/index';
 $route['cricket/becomeHost'] = 'cricket/becomeHost';
@@ -333,6 +352,7 @@ $route['pool/payment_cancel/(:any)'] = 'cricket/pool_payment_cancel/$1';
 $route['pool/history'] = 'cricket/pool_history';
 $route['wallet'] = 'UserWallet/index';
 $route['wallet/withdraw'] = 'UserWallet/withdraw';
+
 
 
 

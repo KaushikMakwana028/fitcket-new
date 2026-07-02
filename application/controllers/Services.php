@@ -73,8 +73,8 @@ class Services extends User_Controller
         users.gym_name, 
         provider.city, 
         provider.month_price,
-        ROUND(IFNULL(r.avg_rating, 0), 1) AS avg_rating,
-        IFNULL(r.total_reviews, 0)        AS total_reviews,
+        (SELECT ROUND(IFNULL(AVG(rating), 0), 1) FROM reviews WHERE reviews.provider_id = service.provider_id) AS avg_rating,
+        (SELECT COUNT(*) FROM reviews WHERE reviews.provider_id = service.provider_id) AS total_reviews,
         (6371 * acos(
             cos(radians($lat)) * cos(radians(provider.latitude)) *
             cos(radians(provider.longitude) - radians($lng)) +
@@ -85,11 +85,6 @@ class Services extends User_Controller
         $this->db->from('service');
         $this->db->join('provider', 'provider.provider_id = service.provider_id', 'left');
         $this->db->join('users', 'users.id = provider.provider_id', 'left');
-        $this->db->join(
-            '(SELECT provider_id, AVG(rating) AS avg_rating, COUNT(*) AS total_reviews FROM reviews GROUP BY provider_id) r',
-            'r.provider_id = service.provider_id',
-            'left'
-        );
         $this->db->where('service.isActive', 1);
 
         if (!empty($search)) {

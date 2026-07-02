@@ -79,9 +79,8 @@ class Login extends CI_Controller
 
 
 
-        // TESTING MODE: fixed default OTP instead of a random one.
-        // Revert to: $otp = rand(100000, 999999); for production.
-        $otp = '000000';
+        // $otp = rand(100000, 999999); // TESTING: disabled random OTP generation
+        $otp = '000000'; // TESTING: default static OTP
 
         $this->session->set_userdata('otp', $otp);
 
@@ -91,7 +90,8 @@ class Login extends CI_Controller
 
 
 
-        $sms_sent = $this->send_otp_via_sms($mobile, $otp);
+        // $sms_sent = $this->send_otp_via_sms($mobile, $otp); // TESTING: SMS sending disabled to save OTP limit
+        $sms_sent = true; // TESTING: assume SMS sent successfully
 
 
 
@@ -189,9 +189,9 @@ class Login extends CI_Controller
         ];
         $this->session->set_userdata('register_form_data', $form_data);
 
-        // TESTING MODE: fixed default OTP instead of a random one.
-        // Revert to: $otp = rand(100000, 999999); for production.
-        $otp = '000000';
+        // Generate OTP
+        // $otp = rand(100000, 999999); // TESTING: disabled random OTP generation
+        $otp = '000000'; // TESTING: default static OTP
         $this->session->set_userdata('otp', $otp);
 
         // Update role 0 → 2 if exists
@@ -200,7 +200,8 @@ class Login extends CI_Controller
         }
 
         // Send OTP
-        $sms_sent = $this->send_otp_via_sms($mobile, $otp);
+        // $sms_sent = $this->send_otp_via_sms($mobile, $otp); // TESTING: SMS sending disabled to save OTP limit
+        $sms_sent = true; // TESTING: assume SMS sent successfully
 
         if ($sms_sent) {
             $masked_mobile = '*******' . substr($mobile, -4);
@@ -337,15 +338,6 @@ class Login extends CI_Controller
 
 
 
-        /* ------------------------------------------------------------------
-         * TESTING MODE: actual SMS sending is disabled to avoid burning
-         * through the OTP/SMS quota. The OTP is still generated/stored as
-         * '000000' (see callers above), so login/register/resend flows work
-         * without hitting the SMS gateway.
-         *
-         * Uncomment this block to re-enable real SMS sending in production.
-         * ------------------------------------------------------------------
-
         $ch = curl_init();
 
         curl_setopt($ch, CURLOPT_URL, $url);
@@ -363,7 +355,6 @@ class Login extends CI_Controller
             curl_close($ch);
 
             return false;
-
         }
 
 
@@ -372,12 +363,16 @@ class Login extends CI_Controller
 
         log_message('info', "OTP sent to $mobileNo. Response: $response");
 
+        // echo "<pre>";
+
+        // print_r($response);
+
+        // exit;
+
+        // redirect('provider/dashboard');
+
+
+
         return $response;
-
-        */
-
-        log_message('info', "TESTING MODE: OTP SMS sending skipped for $mobileNo (OTP: $otp)");
-
-        return true;
     }
 }
