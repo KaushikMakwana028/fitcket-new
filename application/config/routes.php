@@ -190,6 +190,7 @@ $route['provider/api/service_search/search'] = 'provider/api/service_search';
 $route['provider/api/customer_search/search'] = 'provider/api/customer_search';
 $route['provider/api/booking_search/search'] = 'provider/api/booking_search';
 $route['provider/get_profile/api'] = 'provider/api/get_profile';
+$route['provider/add_city/api'] = 'provider/api/add_city';
 $route['provider/save_profile/api'] = 'provider/api/save_profile';
 $route['provider/wallet/api'] = 'provider/api/wallet';
 $route['provider/withdraw_request/api'] = 'provider/api/withdraw_request';

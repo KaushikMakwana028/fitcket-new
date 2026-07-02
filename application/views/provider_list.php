@@ -60,7 +60,8 @@
                         </span>
                     </div>
 
-                    <div class="fkp-distance">
+                    <?php $is_trigger = ($row['distance'] === 'Enable Location'); ?>
+                    <div class="fkp-distance <?= $is_trigger ? 'fkp-enable-loc-trigger' : '' ?>" style="<?= $is_trigger ? 'cursor: pointer; color: var(--primary-color); font-weight: 500;' : '' ?>">
                         <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
                         <?= $row['distance']; ?>
                     </div>

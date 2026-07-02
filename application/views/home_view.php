@@ -33,6 +33,13 @@
         line-height: 1.6;
     }
 
+    .fitket-home .services-section,
+    .fitket-home .fkh-banner-wrap {
+        content-visibility: auto;
+        contain-intrinsic-size: 620px;
+        contain: layout paint style;
+    }
+
     .fitket-home *,
     .fitket-home *::before,
     .fitket-home *::after {
@@ -61,9 +68,19 @@
 
     .fitket-home .carousel-item {
         height: 600px;
-        background-size: cover;
-        background-position: center;
+        background: #1a1a1a;
         position: relative;
+        overflow: hidden;
+    }
+
+    .fitket-home .hero-slide-img {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        z-index: 0;
     }
 
     /* Dark gradient overlay */
@@ -202,9 +219,9 @@
         background: rgba(255, 255, 255, 0.1);
         border: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: 50%;
-        backdrop-filter: blur(8px);
         opacity: 0.9;
-        transition: all 0.25s;
+        transition: background-color 0.25s, border-color 0.25s, opacity 0.25s;
+        z-index: 10;
     }
 
     .fitket-home #heroCarousel .carousel-control-prev {
@@ -315,7 +332,7 @@
         color: var(--white);
         font-weight: 700;
         font-size: 0.95rem;
-        transition: all 0.25s;
+        transition: background-color 0.25s, color 0.25s, transform 0.25s, box-shadow 0.25s;
         white-space: nowrap;
         cursor: pointer;
         letter-spacing: 0.02em;
@@ -439,7 +456,7 @@
         border-radius: var(--radius-lg);
         background: var(--white);
         border: 1.5px solid var(--border-color);
-        transition: all 0.3s ease;
+        transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
         height: 100%;
         cursor: pointer;
         gap: 10px;
@@ -525,7 +542,7 @@
         border-radius: var(--radius-lg);
         overflow: hidden;
         border: 1.5px solid var(--border-color);
-        transition: all 0.3s ease;
+        transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease;
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -664,7 +681,6 @@
     .fitket-home .swiper-slide {
         height: auto;
         display: flex;
-        width: 100%;
     }
 
     .fitket-home .swiper-pagination {
@@ -1368,8 +1384,13 @@
             <div class="carousel-inner">
                 <?php $first = true;
                 foreach ($sliders as $slide): ?>
-                    <div class="carousel-item <?= $first ? 'active' : '' ?>"
-                        style="background-image: url('<?= base_url('uploads/slider/' . $slide->slider_image) ?>');">
+                    <div class="carousel-item <?= $first ? 'active' : '' ?>">
+                        <img src="<?= base_url('uploads/slider/' . $slide->slider_image) ?>"
+                            alt="<?= htmlspecialchars($slide->slider_title) ?>"
+                            class="hero-slide-img"
+                            loading="<?= $first ? 'eager' : 'lazy' ?>"
+                            decoding="async"
+                            <?= $first ? 'fetchpriority="high"' : '' ?>>
                         <div class="carousel-caption">
                             <div class="caption-inner">
                                 <span class="caption-eyebrow">
@@ -1410,6 +1431,9 @@
                     <span class="input-group-text"><i class="fas fa-map-marker-alt" aria-hidden="true"></i></span>
                     <input type="text" id="locationInput" class="form-control" placeholder="Your location"
                         aria-label="Your location"
+                        data-lat="<?= $this->session->userdata('user_lat') ?>"
+                        data-lng="<?= $this->session->userdata('user_lng') ?>"
+                        data-cities="<?= htmlspecialchars(implode(',', $all_db_cities ?? [])) ?>"
                         value="<?= !empty($user_location) ? htmlspecialchars($user_location) : '' ?>">
                 </div>
             </div>
@@ -1417,10 +1441,10 @@
             <div class="search-input-group">
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-search" aria-hidden="true"></i></span>
-                    <input type="text" class="form-control" placeholder="Search service or trainer…" aria-label="Search Service">
+                    <input type="text" id="homepageSearchInput" class="form-control" placeholder="Search service or trainer…" aria-label="Search Service">
                 </div>
             </div>
-            <button class="search-btn" type="button">
+            <button class="search-btn" id="homepageSearchBtn" type="button">
                 <i class="fas fa-search me-2" aria-hidden="true"></i>Search
             </button>
         </div>
@@ -1445,7 +1469,7 @@
                     <a href="<?= base_url('providers?category=' . $cat->id) ?>" class="category-link">
                         <div class="service-card">
                             <div class="service-icon">
-                                <img src="<?= base_url($cat->image) ?>" alt="<?= htmlspecialchars($cat->name) ?>" class="avatar-img">
+                                <img src="<?= base_url($cat->image) ?>" alt="<?= htmlspecialchars($cat->name) ?>" class="avatar-img" loading="lazy" decoding="async">
                             </div>
                             <div>
                                 <div class="service-title"><?= strtoupper($cat->name) ?></div>
@@ -1459,6 +1483,7 @@
     </section>
 
 
+    <?php if (!empty($nearest_providers)): ?>
     <!-- ═══ NEAREST PROVIDERS (dark bg) ═══ -->
     <section class="experts-section fkh-bg-dark">
         <div class="container" style="position:relative; z-index:2;">
@@ -1480,7 +1505,7 @@
                                 <div class="expert-left">
                                     <div class="expert-logo">
                                         <img src="<?= base_url(!empty($np->profile_image) ? $np->profile_image : 'assets/images/3d-cartoon-fitness-man.jpg') ?>"
-                                            alt="<?= htmlspecialchars($np->gym_name ?: $np->name) ?>" class="avatar-img">
+                                            alt="<?= htmlspecialchars($np->gym_name ?: $np->name) ?>" class="avatar-img" loading="lazy" decoding="async">
                                     </div>
                                     <div>
                                         <div class="expert-title"><?= $np->gym_name ?: $np->name ?></div>
@@ -1488,9 +1513,14 @@
                                     </div>
                                 </div>
                                 <div class="expert-footer">
-                                    <span class="distance-pill">
+                                    <?php 
+                                    $is_loc_enabled = ($lat != 0 && $lng != 0);
+                                    $dist_label = !is_null($np->distance) ? round($np->distance, 1) . ' Km' : ($is_loc_enabled ? 'N/A' : 'Enable Location');
+                                    $is_trigger = ($dist_label === 'Enable Location');
+                                    ?>
+                                    <span class="distance-pill <?= $is_trigger ? 'fkp-enable-loc-trigger' : '' ?>" style="<?= $is_trigger ? 'cursor: pointer; color: #b19fe8;' : '' ?>">
                                         <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-                                        <?= !is_null($np->distance) ? round($np->distance, 1) . ' Km' : 'N/A' ?>
+                                        <?= $dist_label ?>
                                     </span>
                                     <a href="<?= site_url('provider_details/' . $np->provider_id) ?>" class="view-more-btn">
                                         <span class="view-more-text">View</span>
@@ -1506,6 +1536,7 @@
             </div>
         </div>
     </section>
+    <?php endif; ?>
 
 
     <!-- ═══ BANNER 1 — Become a Provider ═══ -->
@@ -1560,7 +1591,7 @@
                                 <div class="expert-left">
                                     <div class="expert-logo">
                                         <img src="<?= !empty($provider->profile_image) ? base_url($provider->profile_image) : base_url('assets/images/3d-cartoon-fitness-man.jpg') ?>"
-                                            alt="<?= htmlspecialchars($provider->gym_name) ?>" class="avatar-img">
+                                            alt="<?= htmlspecialchars($provider->gym_name) ?>" class="avatar-img" loading="lazy" decoding="async">
                                     </div>
                                     <div>
                                         <div class="expert-title"><?= $provider->gym_name ?></div>
@@ -1568,9 +1599,14 @@
                                     </div>
                                 </div>
                                 <div class="expert-footer">
-                                    <span class="distance-pill">
+                                    <?php 
+                                    $is_loc_enabled = ($lat != 0 && $lng != 0);
+                                    $dist_label = !is_null($provider->distance) ? round($provider->distance, 1) . ' Km' : ($is_loc_enabled ? 'N/A' : 'Enable Location');
+                                    $is_trigger = ($dist_label === 'Enable Location');
+                                    ?>
+                                    <span class="distance-pill <?= $is_trigger ? 'fkp-enable-loc-trigger' : '' ?>" style="<?= $is_trigger ? 'cursor: pointer; color: var(--primary-color);' : '' ?>">
                                         <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-                                        <?= isset($provider->distance) ? round($provider->distance, 1) . ' Km' : 'N/A' ?>
+                                        <?= $dist_label ?>
                                     </span>
                                     <a href="<?= site_url('provider_details/' . $provider->provider_id) ?>" class="view-more-btn">
                                         <span class="view-more-text">View</span>
@@ -1626,7 +1662,7 @@
                     <h2 class="fkh-section-title fkh-section-title--dark">Popular <em style="color:#b19fe8">Trainers</em></h2>
                     <p class="fkh-section-sub fkh-section-sub--dark">Professionals ready to assist you anytime, anywhere</p>
                 </div>
-                <a href="<?= base_url('providers?type=trainer') ?>" class="fkh-view-all" style="border-color:rgba(255,255,255,0.15); color:rgba(255,255,255,0.7);">
+                <a href="<?= base_url('providers?type=trainer&popular=1') ?>" class="fkh-view-all" style="border-color:rgba(255,255,255,0.15); color:rgba(255,255,255,0.7);">
                     View All <i class="fas fa-arrow-right" aria-hidden="true"></i>
                 </a>
             </div>
@@ -1638,17 +1674,31 @@
                                 <div class="expert-left">
                                     <div class="expert-logo">
                                         <img src="<?= !empty($provider->profile_image) ? base_url($provider->profile_image) : base_url('assets/images/3d-cartoon-fitness-man.jpg') ?>"
-                                            alt="<?= htmlspecialchars($provider->name) ?>" class="avatar-img">
+                                            alt="<?= htmlspecialchars($provider->name) ?>" class="avatar-img" loading="lazy" decoding="async">
                                     </div>
                                     <div>
                                         <div class="expert-title"><?= $provider->gym_name ?></div>
-                                        <div class="expert-services"><?= $provider->total_services ?? '0' ?> Services</div>
+                                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                            <span class="expert-services"><?= $provider->total_services ?? '0' ?> Services</span>
+                                            <?php if ($provider->avg_rating > 3.5): ?>
+                                                <span class="expert-rating" style="display: inline-flex; align-items: center; gap: 3px; color: #ffb800; font-size: 0.8rem;">
+                                                    <i class="fas fa-star" aria-hidden="true"></i>
+                                                    <span style="font-weight: 600; color: #fff;"><?= number_format($provider->avg_rating, 1) ?></span>
+                                                    <span style="color: rgba(255,255,255,0.5); font-size: 0.75rem;">(<?= $provider->total_reviews ?>)</span>
+                                                </span>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="expert-footer">
-                                    <span class="distance-pill">
+                                    <?php 
+                                    $is_loc_enabled = ($lat != 0 && $lng != 0);
+                                    $dist_label = !is_null($provider->distance) ? round($provider->distance, 1) . ' Km' : ($is_loc_enabled ? 'N/A' : 'Enable Location');
+                                    $is_trigger = ($dist_label === 'Enable Location');
+                                    ?>
+                                    <span class="distance-pill <?= $is_trigger ? 'fkp-enable-loc-trigger' : '' ?>" style="<?= $is_trigger ? 'cursor: pointer; color: #b19fe8;' : '' ?>">
                                         <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-                                        <?= isset($provider->distance) ? round($provider->distance, 1) . ' Km' : 'N/A' ?>
+                                        <?= $dist_label ?>
                                     </span>
                                     <a href="<?= site_url('provider_details/' . $provider->provider_id) ?>" class="view-more-btn">
                                         <span class="view-more-text">View</span>
@@ -1658,7 +1708,7 @@
                             </div>
                         </div>
                     <?php endforeach; ?>
-                </div>
+                 </div>
                 <div class="swiper-button-prev"></div>
                 <div class="swiper-button-next"></div>
             </div>
@@ -1666,3 +1716,28 @@
     </section>
 
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const searchInput = document.getElementById("homepageSearchInput");
+    const searchBtn = document.getElementById("homepageSearchBtn");
+
+    if (searchBtn && searchInput) {
+        searchBtn.addEventListener("click", function() {
+            const keyword = searchInput.value.trim();
+            if (keyword) {
+                window.location.href = "<?= base_url('providers') ?>?search=" + encodeURIComponent(keyword);
+            }
+        });
+
+        searchInput.addEventListener("keydown", function(e) {
+            if (e.key === "Enter") {
+                const keyword = searchInput.value.trim();
+                if (keyword) {
+                    window.location.href = "<?= base_url('providers') ?>?search=" + encodeURIComponent(keyword);
+                }
+            }
+        });
+    }
+});
+</script>

@@ -915,6 +915,21 @@
                                 </select>
                             </div>
 
+                            <!-- City -->
+                            <div class="filter-group mb-3">
+                                <label class="filter-label">
+                                    <i class="fas fa-map-marker-alt me-1"></i>City
+                                </label>
+                                <select class="form-select" id="city_filter">
+                                    <option value="" selected>Select...</option>
+                                    <?php if (!empty($cities)): ?>
+                                        <?php foreach ($cities as $city_opt): ?>
+                                            <option value="<?= htmlspecialchars($city_opt) ?>" <?= ($this->input->get('city') == $city_opt) ? 'selected' : '' ?>><?= htmlspecialchars(ucfirst($city_opt)) ?></option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
+                            </div>
+
                             <!-- Language -->
                             <div class="filter-group mb-3">
                                 <label class="filter-label">
@@ -973,6 +988,7 @@
     $(document).ready(function() {
 
         var searchTimer;
+        var baseParams = new URLSearchParams(window.location.search);
 
         // ── Build filters object from current UI state ────────────────────────────
         function getFilters(page) {
@@ -983,13 +999,17 @@
             var exp = $('#experience_filter').val() || '';
             var category = $('#category_filter').val() || '';
             var language = $('#language_filter').val() || '';
+            var city = $('#city_filter').val() || '';
 
+            if (baseParams.get('type')) filters.type = baseParams.get('type');
+            if (baseParams.get('popular')) filters.popular = baseParams.get('popular');
             if (search) filters.search = search;
             if (price) filters.price = price;
             if (rating) filters.rating = rating;
             if (exp) filters.exp = exp;
             if (category) filters.category = category;
             if (language) filters.language = language;
+            if (city) filters.city = city;
             if (page > 1) filters.page = page;
 
             return filters;
@@ -1056,6 +1076,7 @@
             $('#experience_filter').val('');
             $('#category_filter').val('');
             $('#language_filter').val('');
+            $('#city_filter').val('');
             performSearch(1);
         }
 

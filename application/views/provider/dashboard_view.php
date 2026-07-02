@@ -28,6 +28,55 @@
     font-size: 14px;
 
   }
+
+  .profile-activation-alert {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 18px;
+    margin-bottom: 18px;
+    border: 1px solid rgba(255, 193, 7, 0.3);
+    border-left: 5px solid #ffc107;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #fff9e6, #fff);
+    box-shadow: 0 10px 25px rgba(255, 193, 7, 0.12);
+  }
+
+  .profile-activation-alert .alert-copy {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #5f4700;
+    font-weight: 600;
+  }
+
+  .profile-activation-alert .alert-icon {
+    width: 38px;
+    height: 38px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 38px;
+    border-radius: 12px;
+    background: #ffc107;
+    color: #fff;
+    font-size: 20px;
+  }
+
+  .profile-activation-alert .btn {
+    border-radius: 999px;
+    padding: 8px 18px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  @media (max-width: 767px) {
+    .profile-activation-alert {
+      align-items: flex-start;
+      flex-direction: column;
+    }
+  }
 </style>
 
 
@@ -39,6 +88,18 @@
 
 
     <!-- Top Cards -->
+
+    <?php if (!empty($profile_notice['show'])): ?>
+      <div class="profile-activation-alert">
+        <div class="alert-copy">
+          <span class="alert-icon"><i class="bx bx-info-circle"></i></span>
+          <span>Your account is inactive. Please fill all information to activate your account.</span>
+        </div>
+        <a href="<?= base_url('provider/profile') ?>" class="btn btn-warning">
+          Profile <i class="bx bx-right-arrow-alt ms-1"></i>
+        </a>
+      </div>
+    <?php endif; ?>
 
     <div class="row g-3 row-cols-1 row-cols-md-2 row-cols-xl-4">
 

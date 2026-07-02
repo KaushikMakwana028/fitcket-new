@@ -1,148 +1,324 @@
 document.addEventListener("DOMContentLoaded", function () {
-  const locationInput = document.getElementById("locationInput");
+	const locationInput = document.getElementById("locationInput");
 
-  if (locationInput) {
-    if (!locationInput.value) {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-          successCallback,
-          errorCallback
-        );
-      } else {
-        locationInput.placeholder = "Location not supported";
-      }
-    }
-  }
+	if (locationInput) {
+		const hasSavedLocation =
+			locationInput.value && locationInput.value.trim() !== "";
 
-  function successCallback(position) {
-    const lat = position.coords.latitude;
-    const lon = position.coords.longitude;
+		if (!hasSavedLocation) {
+			if (navigator.geolocation) {
+				navigator.geolocation.getCurrentPosition(
+					successCallback,
+					errorCallback,
+				);
+			} else {
+				locationInput.placeholder = "Location not supported";
+			}
+		}
 
-    fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`
-    )
-      .then((response) => response.json())
-      .then((data) => {
-        const city =
-          data.address.city ||
-          data.address.town ||
-          data.address.village ||
-          data.address.county ||
-          data.address.state_district ||
-          data.address.suburb ||
-          data.address.hamlet ||
-          "";
-        const state = data.address.state || "";
-        const country = data.address.country || "";
-        const location = `${city}, ${state}, ${country}`;
-        locationInput.value = location;
+		// Geocode manually entered location when it changes
+		locationInput.addEventListener("change", function () {
+			const address = this.value.trim();
+			if (address) {
+				geocodeAddress(address);
+			}
+		});
 
-        fetch(site_url + "home/save_location", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body:
-            "lat=" +
-            encodeURIComponent(lat) +
-            "&lng=" +
-            encodeURIComponent(lon) +
-            "&address=" +
-            encodeURIComponent(location),
-        }).then(() => {
-          location.reload();
-        });
-      })
-      .catch(() => {
-        locationInput.placeholder = "Unable to fetch location";
-      });
-  }
+		function geocodeAddress(address) {
+			fetch(
+				`https://nominatim.openstreetmap.org/search?format=json&countrycodes=in&limit=1&q=${encodeURIComponent(address)}`,
+				{
+					headers: {
+						"User-Agent": "FitTicketApp/1.0",
+					},
+				},
+			)
+				.then((response) => response.json())
+				.then((data) => {
+					if (data && data.length > 0) {
+						const lat = parseFloat(data[0].lat);
+						const lon = parseFloat(data[0].lon);
+						fetch(site_url + "home/save_location", {
+							method: "POST",
+							headers: { "Content-Type": "application/x-www-form-urlencoded" },
+							body:
+								"lat=" +
+								encodeURIComponent(lat) +
+								"&lng=" +
+								encodeURIComponent(lon) +
+								"&address=" +
+								encodeURIComponent(locationInput.value.trim()),
+						}).then(() => {
+							window.location.reload();
+						});
+					} else if (address.includes(",")) {
+						// Fallback: Remove the first part (e.g. house number / street name) and retry
+						const parts = address.split(",");
+						parts.shift();
+						const fallbackAddress = parts.join(",").trim();
+						if (fallbackAddress) {
+							console.log("Retrying geocoding with fallback:", fallbackAddress);
+							geocodeAddress(fallbackAddress);
+						}
+					} else {
+						// Last-resort fallback: try just the PIN code so we don't
+						// silently default to the whole city center
+						const pinMatch = address.match(/\b\d{6}\b/);
+						if (pinMatch) {
+							console.log("Retrying geocoding with PIN code:", pinMatch[0]);
+							geocodeAddressByPin(pinMatch[0]);
+						} else {
+							console.log("No geocoding results found for address:", address);
+							locationInput.placeholder =
+								"Location not found, try a simpler address";
+						}
+					}
+				})
+				.catch((err) => {
+					console.error("Geocoding failed:", err);
+				});
+		}
 
-  function errorCallback() {
-    locationInput.placeholder = "Permission denied or unavailable";
-  }
+		function geocodeAddressByPin(pin) {
+			fetch(
+				`https://nominatim.openstreetmap.org/search?format=json&countrycodes=in&limit=1&postalcode=${encodeURIComponent(pin)}`,
+				{
+					headers: {
+						"User-Agent": "FitTicketApp/1.0",
+					},
+				},
+			)
+				.then((response) => response.json())
+				.then((data) => {
+					if (data && data.length > 0) {
+						const lat = parseFloat(data[0].lat);
+						const lon = parseFloat(data[0].lon);
+						fetch(site_url + "home/save_location", {
+							method: "POST",
+							headers: { "Content-Type": "application/x-www-form-urlencoded" },
+							body:
+								"lat=" +
+								encodeURIComponent(lat) +
+								"&lng=" +
+								encodeURIComponent(lon) +
+								"&address=" +
+								encodeURIComponent(locationInput.value.trim()),
+						}).then(() => {
+							window.location.reload();
+						});
+					} else {
+						locationInput.placeholder =
+							"Location not found, try a simpler address";
+					}
+				})
+				.catch((err) => {
+					console.error("PIN geocoding failed:", err);
+				});
+		}
+	}
+
+	function successCallback(position) {
+		const lat = position.coords.latitude;
+		const lon = position.coords.longitude;
+
+		const oldLat = parseFloat(locationInput.getAttribute("data-lat"));
+		const oldLng = parseFloat(locationInput.getAttribute("data-lng"));
+
+		// Check if the current saved location string contains any known active DB cities
+		const knownCitiesAttr = locationInput.getAttribute("data-cities") || "";
+		const knownCities = knownCitiesAttr ? knownCitiesAttr.split(",") : [];
+		const currentValue = (locationInput.value || "").toLowerCase();
+		const hasKnownCity =
+			knownCities.length === 0 ||
+			knownCities.some((city) =>
+				currentValue.includes(city.toLowerCase().trim()),
+			);
+
+		// Check if location is not set, doesn't contain a known city, or has changed significantly (> 0.001 degrees, approx 100 meters)
+		const isDifferent =
+			isNaN(oldLat) ||
+			isNaN(oldLng) ||
+			oldLat === 0 ||
+			oldLng === 0 ||
+			!hasKnownCity ||
+			Math.abs(lat - oldLat) > 0.001 ||
+			Math.abs(lon - oldLng) > 0.001;
+
+		if (isDifferent) {
+			fetch(
+				`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`,
+			)
+				.then((response) => response.json())
+				.then((data) => {
+					const city =
+						data.address.city ||
+						data.address.town ||
+						data.address.state_district ||
+						data.address.county ||
+						data.address.village ||
+						data.address.suburb ||
+						data.address.hamlet ||
+						"";
+					const state = data.address.state || "";
+					const country = data.address.country || "";
+					const locationName = `${city}, ${state}, ${country}`;
+					locationInput.value = locationName;
+
+					fetch(site_url + "home/save_location", {
+						method: "POST",
+						headers: { "Content-Type": "application/x-www-form-urlencoded" },
+						body:
+							"lat=" +
+							encodeURIComponent(lat) +
+							"&lng=" +
+							encodeURIComponent(lon) +
+							"&address=" +
+							encodeURIComponent(locationName),
+					}).then(() => {
+						window.location.reload();
+					});
+				})
+				.catch(() => {
+					locationInput.placeholder = "Unable to fetch location";
+				});
+		}
+	}
+
+	function errorCallback() {
+		if (!locationInput.value) {
+			locationInput.placeholder = "Permission denied or unavailable";
+		}
+	}
+
+	// Trigger browser location prompt on clicking 'Enable Location' pills
+	document.addEventListener("click", function (e) {
+		const trigger = e.target.closest(".fkp-enable-loc-trigger");
+		if (trigger) {
+			if (navigator.geolocation) {
+				navigator.geolocation.getCurrentPosition(successCallback, function () {
+					alert(
+						"Location permission denied or unavailable. Please enable location permissions for this website in your browser settings.",
+					);
+				});
+			} else {
+				alert("Location is not supported by your browser.");
+			}
+		}
+	});
 });
 
 document.addEventListener("DOMContentLoaded", function () {
-  // Keep the selected tab active after reload
-  var activeTab = window.location.hash;
-  if (activeTab) {
-    var tabElement = document.querySelector(
-      'button[data-bs-target="' + activeTab + '"]'
-    );
-    if (tabElement) {
-      new bootstrap.Tab(tabElement).show();
-    }
-  }
+	// Keep the selected tab active after reload
+	var activeTab = window.location.hash;
+	if (activeTab) {
+		var tabElement = document.querySelector(
+			'button[data-bs-target="' + activeTab + '"]',
+		);
+		if (tabElement) {
+			new bootstrap.Tab(tabElement).show();
+		}
+	}
 
-  // Update hash when tab is clicked
-  var tabButtons = document.querySelectorAll(
-    '#providerTabs button[data-bs-toggle="pill"]'
-  );
-  tabButtons.forEach(function (btn) {
-    btn.addEventListener("shown.bs.tab", function () {
-      window.location.hash = btn.getAttribute("data-bs-target");
-    });
-  });
+	// Update hash when tab is clicked
+	var tabButtons = document.querySelectorAll(
+		'#providerTabs button[data-bs-toggle="pill"]',
+	);
+	tabButtons.forEach(function (btn) {
+		btn.addEventListener("shown.bs.tab", function () {
+			window.location.hash = btn.getAttribute("data-bs-target");
+		});
+	});
 });
 function openAboutTab() {
-  var aboutTab = document.getElementById("about-tab");
-  if (aboutTab) {
-    aboutTab.click();
-    window.scrollTo({
-      top: document.getElementById("about").offsetTop - 100,
-      behavior: "smooth",
-    });
-  }
+	var aboutTab = document.getElementById("about-tab");
+	if (aboutTab) {
+		aboutTab.click();
+		window.scrollTo({
+			top: document.getElementById("about").offsetTop - 100,
+			behavior: "smooth",
+		});
+	}
 }
 document.querySelectorAll('input[name="priceOption"]').forEach((radio) => {
-  radio.addEventListener("change", function () {
-    const label = this.getAttribute("data-label");
-    document.getElementById("selectedOption").textContent = `Book for ${label}`;
-  });
+	radio.addEventListener("change", function () {
+		const label = this.getAttribute("data-label");
+		document.getElementById("selectedOption").textContent = `Book for ${label}`;
+	});
 });
 function checkLogin(userId) {
-  if (parseInt(userId) === 0) {
-    window.location.assign(site_url + "login");
-  } else {
-    window.location.assign(site_url + "cart");
-  }
+	if (parseInt(userId) === 0) {
+		window.location.assign(site_url + "login");
+	} else {
+		window.location.assign(site_url + "cart");
+	}
 }
 function validateAndBook(userId) {
-  const startDateInput = document.getElementById("startDate");
-  const dateError = document.getElementById("dateError");
-  const selectedDate = new Date(startDateInput.value);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+	const startDateInput = document.getElementById("startDate");
+	const dateError = document.getElementById("dateError");
+	const selectedDate = new Date(startDateInput.value);
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
 
-  // Validate date field
-  if (!startDateInput.value) {
-    dateError.textContent = "Please select a start date.";
-    dateError.classList.remove("d-none");
-    return;
-  }
-  if (selectedDate < today) {
-    dateError.textContent = "Start date cannot be earlier than today.";
-    dateError.classList.remove("d-none");
-    return;
-  }
-  dateError.classList.add("d-none");
+	// Validate date field
+	if (!startDateInput.value) {
+		dateError.textContent = "Please select a start date.";
+		dateError.classList.remove("d-none");
+		return;
+	}
+	if (selectedDate < today) {
+		dateError.textContent = "Start date cannot be earlier than today.";
+		dateError.classList.remove("d-none");
+		return;
+	}
+	dateError.classList.add("d-none");
 
-  // If user not logged in, redirect to login
-  if (parseInt(userId) === 0) {
-    const currentUrl = encodeURIComponent(window.location.href);
-  window.location.assign(site_url + "sign_in?redirect=" + currentUrl);
-  } else {
-    // Logged in: submit the form
-    document.getElementById("cartForm").submit();
-  }
+	// Validate Holiday Day
+	if (startDateInput.value) {
+		const [year, month, day] = startDateInput.value.split("-").map(Number);
+		const localDate = new Date(year, month - 1, day);
+		const dayName = localDate
+			.toLocaleDateString("en-US", { weekday: "long" })
+			.toLowerCase();
+
+		if (
+			typeof providerSchedule !== "undefined" &&
+			Array.isArray(providerSchedule)
+		) {
+			const daySched = providerSchedule.find(
+				(s) => s.day.toLowerCase() === dayName,
+			);
+			if (daySched && daySched.status !== "open") {
+				Swal.fire({
+					icon: "error",
+					title: "Provider on Holiday",
+					text:
+						"This provider is on Holiday on the selected date (" +
+						startDateInput.value +
+						"). Please select another day.",
+					confirmButtonColor: "#6c5ce7",
+				});
+				return;
+			}
+		}
+	}
+
+	// If user not logged in, redirect to login
+	if (parseInt(userId) === 0) {
+		const currentUrl = encodeURIComponent(window.location.href);
+		window.location.assign(site_url + "sign_in?redirect=" + currentUrl);
+	} else {
+		// Logged in: submit the form
+		document.getElementById("cartForm").submit();
+	}
 }
 document.querySelectorAll("input[name='priceOption']").forEach((radio) => {
-  radio.addEventListener("change", function () {
-    document.getElementById("priceInput").value = this.dataset.price;
-    document.getElementById("durationInput").value =
-      this.dataset.label.toLowerCase();
-    document.getElementById("selectedOption").textContent =
-      "Book for " + this.dataset.label;
-  });
+	radio.addEventListener("change", function () {
+		document.getElementById("priceInput").value = this.dataset.price;
+		document.getElementById("durationInput").value =
+			this.dataset.label.toLowerCase();
+		document.getElementById("selectedOption").textContent =
+			"Book for " + this.dataset.label;
+	});
 });
 
 // document.addEventListener("DOMContentLoaded", function () {
@@ -192,19 +368,19 @@ document.querySelectorAll("input[name='priceOption']").forEach((radio) => {
 //   });
 // });
 function updateCartCount() {
-  $.ajax({
-    url: site_url + "cart/get_cart_count",
-    method: "GET",
-    dataType: "json",
-    success: function (res) {
-      $(".cartCount").text(res.count).show();
-    },
-  });
+	$.ajax({
+		url: site_url + "cart/get_cart_count",
+		method: "GET",
+		dataType: "json",
+		success: function (res) {
+			$(".cartCount").text(res.count).show();
+		},
+	});
 }
 
 $(document).ready(function () {
-  $(".cartCount").hide();
-  updateCartCount();
+	$(".cartCount").hide();
+	updateCartCount();
 });
 
 // $(document).on("click", ".remove-cart-item", function (e) {
@@ -253,377 +429,407 @@ $(document).ready(function () {
 //     });
 // });
 
-
 $(document).on("click", ".pagination a", function (e) {
-  e.preventDefault();
-  var url = $(this).attr("href");
+	e.preventDefault();
+	var url = $(this).attr("href");
 
-  $.ajax({
-    url: url,
-    type: "GET",
-    dataType: "json",
-    success: function (res) {
-      $("#providerList").html(res.html);
-      $("#paginationLinks").html(res.pagination);
-      $("html, body").animate({ scrollTop: 0 }, "slow");
-    },
-  });
+	$.ajax({
+		url: url,
+		type: "GET",
+		dataType: "json",
+		success: function (res) {
+			$("#providerList").html(res.html);
+			$("#paginationLinks").html(res.pagination);
+			$("html, body").animate({ scrollTop: 0 }, "slow");
+		},
+	});
 });
 function fetchProviders(url = null) {
-    let data = {
-        price: $("#price_filter").val() || '',
-        rating: $("#rating_filter").val() || '',
-        exp: $("#experience_filter").val() || '',
-        category: $("#category_filter").val() || '',
-        language: $("#language_filter").val() || '',
-        service: $("#servcie_filter").val() || ''  // Note: typo in your HTML id
-    };
+	let data = {
+		price: $("#price_filter").val() || "",
+		rating: $("#rating_filter").val() || "",
+		exp: $("#experience_filter").val() || "",
+		category: $("#category_filter").val() || "",
+		language: $("#language_filter").val() || "",
+		service: $("#servcie_filter").val() || "", // Note: typo in your HTML id
+	};
 
-    // Remove empty values
-    Object.keys(data).forEach(key => {
-        if (data[key] === '' || data[key] === null) {
-            delete data[key];
-        }
-    });
+	// Remove empty values
+	Object.keys(data).forEach((key) => {
+		if (data[key] === "" || data[key] === null) {
+			delete data[key];
+		}
+	});
 
-    $.ajax({
-        url: url ?? site_url + "profile/index",
-        type: "GET",
-        data: data,
-        dataType: "json",
-        success: function (res) {
-            $("#providerList").html(res.html);
-            $("#paginationLinks").html(res.pagination);
-            $("html, body").animate({ scrollTop: 0 }, "slow");
-        },
-        error: function(xhr, status, error) {
-            console.log('Error:', error);
-            console.log('Response:', xhr.responseText);
-        }
-    });
+	$.ajax({
+		url: url ?? site_url + "profile/index",
+		type: "GET",
+		data: data,
+		dataType: "json",
+		success: function (res) {
+			$("#providerList").html(res.html);
+			$("#paginationLinks").html(res.pagination);
+			$("html, body").animate({ scrollTop: 0 }, "slow");
+		},
+		error: function (xhr, status, error) {
+			console.log("Error:", error);
+			console.log("Response:", xhr.responseText);
+		},
+	});
 }
 
 /* Apply button */
 $(".btn-search").on("click", function () {
-    fetchProviders();
-    $("#collapseFilter").collapse("hide");
+	fetchProviders();
+	$("#collapseFilter").collapse("hide");
 });
 
 /* Pagination click */
 $(document).on("click", ".pagination a", function (e) {
-    e.preventDefault();
-    fetchProviders($(this).attr("href"));
+	e.preventDefault();
+	fetchProviders($(this).attr("href"));
 });
 
 /* Reset - Fixed to properly reset select elements */
 $(".btn-outline-secondary").on("click", function () {
-    $("#filterAccordion select").each(function() {
-        $(this).prop('selectedIndex', 0);  // Reset to first option
-    });
-    fetchProviders();
+	$("#filterAccordion select").each(function () {
+		$(this).prop("selectedIndex", 0); // Reset to first option
+	});
+	fetchProviders();
 });
-
-
 
 // Function to recalc totals and duration dynamically
 function recalcCart() {
-    let subtotal = 0;
+	let subtotal = 0;
 
-    $(".cart-item-row").each(function () {
-        let row = $(this);
-        let qty = parseInt(row.find(".qtyInput").first().val(), 10) || 0;
-        let price = parseFloat(row.find(".itemPrice").first().text().replace(/[^0-9.]/g, "")) || 0;
-        let itemTotal = qty * price;
+	$(".cart-item-row").each(function () {
+		let row = $(this);
+		let qty = parseInt(row.find(".qtyInput").first().val(), 10) || 0;
+		let price =
+			parseFloat(
+				row
+					.find(".itemPrice")
+					.first()
+					.text()
+					.replace(/[^0-9.]/g, ""),
+			) || 0;
+		let itemTotal = qty * price;
 
-        row.find(".itemSubtotal").text("\u20B9" + itemTotal.toFixed(2));
-        subtotal += itemTotal;
-    });
+		row.find(".itemSubtotal").text("\u20B9" + itemTotal.toFixed(2));
+		subtotal += itemTotal;
+	});
 
-    let offerPercent = 0;
-    let minOfferAmount = 0;
+	let offerPercent = 0;
+	let minOfferAmount = 0;
 
-    if (typeof platformOfferPercent !== "undefined") {
-      offerPercent = parseFloat(platformOfferPercent) || 0;
-    }
-    if (typeof minAmountForOffer !== "undefined") {
-      minOfferAmount = parseFloat(minAmountForOffer) || 0;
-    }
+	if (typeof platformOfferPercent !== "undefined") {
+		offerPercent = parseFloat(platformOfferPercent) || 0;
+	}
+	if (typeof minAmountForOffer !== "undefined") {
+		minOfferAmount = parseFloat(minAmountForOffer) || 0;
+	}
 
-    let discount = 0;
-    if (offerPercent > 0 && (minOfferAmount === 0 || subtotal >= minOfferAmount)) {
-      discount = (subtotal * offerPercent) / 100;
-    }
-    let total = Math.max(0, subtotal - discount);
+	let discount = 0;
+	if (
+		offerPercent > 0 &&
+		(minOfferAmount === 0 || subtotal >= minOfferAmount)
+	) {
+		discount = (subtotal * offerPercent) / 100;
+	}
+	let total = Math.max(0, subtotal - discount);
 
-    $("#cartSubtotal").text("\u20B9" + subtotal.toFixed(2));
-    $("#cartTotal").text("\u20B9" + total.toFixed(2));
-    $("#platformDiscountAmount").text("\u20B9" + discount.toFixed(2));
-    $("#platformDiscountRow").toggleClass("d-none", !(discount > 0));
-    $(".pay-now-btn").prop("disabled", total <= 0);
+	$("#cartSubtotal").text("\u20B9" + subtotal.toFixed(2));
+	$("#cartTotal").text("\u20B9" + total.toFixed(2));
+	$("#platformDiscountAmount").text("\u20B9" + discount.toFixed(2));
+	$("#platformDiscountRow").toggleClass("d-none", !(discount > 0));
+	$(".pay-now-btn").prop("disabled", total <= 0);
 }
 
 // Remove cart item
 $(document).on("click", ".remove-cart-item", function (e) {
-    e.preventDefault();
+	e.preventDefault();
 
-    let itemId = $(this).data("id");
-    let $row = $(".cart-item-row[data-id='" + itemId + "']");
+	let itemId = $(this).data("id");
+	let $row = $(".cart-item-row[data-id='" + itemId + "']");
 
-    $.post(site_url + "cart/remove", { id: itemId }, function (res) {
-        if (res && res.status === "success") {
-            $row.fadeOut(300, function () {
-                $(this).remove();
-                $(".duration-item[data-id='" + itemId + "']").remove();
-                recalcCart();
-            });
-            $(".cart-count, .cart-badge").text((res.count || 0));
-        }
-    }, "json");
+	$.post(
+		site_url + "cart/remove",
+		{ id: itemId },
+		function (res) {
+			if (res && res.status === "success") {
+				$row.fadeOut(300, function () {
+					$(this).remove();
+					$(".duration-item[data-id='" + itemId + "']").remove();
+					recalcCart();
+				});
+				$(".cart-count, .cart-badge").text(res.count || 0);
+			}
+		},
+		"json",
+	);
 });
 
 // Increase/Decrease quantity
 $(document).on("click", ".increaseQty, .decreaseQty", function (e) {
-    e.preventDefault();
+	e.preventDefault();
 
-    let $btn = $(this);
-    if ($btn.prop("disabled")) return;
+	let $btn = $(this);
+	if ($btn.prop("disabled")) return;
 
-    let itemId = $btn.data("id");
-    let action = $btn.hasClass("increaseQty") ? "increase" : "decrease";
-    let $row = $(".cart-item-row[data-id='" + itemId + "']");
-    let $rowButtons = $row.find(".increaseQty, .decreaseQty");
+	let itemId = $btn.data("id");
+	let action = $btn.hasClass("increaseQty") ? "increase" : "decrease";
+	let $row = $(".cart-item-row[data-id='" + itemId + "']");
+	let $rowButtons = $row.find(".increaseQty, .decreaseQty");
 
-    $rowButtons.prop("disabled", true);
+	$rowButtons.prop("disabled", true);
 
-    $.ajax({
-        url: site_url + "cart/update_quantity",
-        type: "POST",
-        dataType: "json",
-        data: { id: itemId, action: action }
-    }).done(function (res) {
-        if (!res || res.status !== "success") return;
+	$.ajax({
+		url: site_url + "cart/update_quantity",
+		type: "POST",
+		dataType: "json",
+		data: { id: itemId, action: action },
+	})
+		.done(function (res) {
+			if (!res || res.status !== "success") return;
 
-        let nextQty = parseInt(res.qty, 10);
-        if (!Number.isFinite(nextQty)) {
-            let currentQty = parseInt($row.find(".qtyInput").first().val(), 10) || 1;
-            nextQty = action === "increase" ? currentQty + 1 : Math.max(1, currentQty - 1);
-        }
+			let nextQty = parseInt(res.qty, 10);
+			if (!Number.isFinite(nextQty)) {
+				let currentQty =
+					parseInt($row.find(".qtyInput").first().val(), 10) || 1;
+				nextQty =
+					action === "increase" ? currentQty + 1 : Math.max(1, currentQty - 1);
+			}
 
-        $row.find(".qtyInput").val(nextQty);
+			$row.find(".qtyInput").val(nextQty);
 
-        let rowSubtotal = parseFloat(res.item_subtotal);
-        if (!Number.isFinite(rowSubtotal)) {
-            let price = parseFloat($row.find(".itemPrice").first().text().replace(/[^0-9.]/g, "")) || 0;
-            rowSubtotal = price * nextQty;
-        }
+			let rowSubtotal = parseFloat(res.item_subtotal);
+			if (!Number.isFinite(rowSubtotal)) {
+				let price =
+					parseFloat(
+						$row
+							.find(".itemPrice")
+							.first()
+							.text()
+							.replace(/[^0-9.]/g, ""),
+					) || 0;
+				rowSubtotal = price * nextQty;
+			}
 
-        $row.find(".itemSubtotal").text("\u20B9" + rowSubtotal.toFixed(2));
+			$row.find(".itemSubtotal").text("\u20B9" + rowSubtotal.toFixed(2));
 
-        let $dur = $(".duration-item[data-id='" + itemId + "']");
-        $dur.find(".durationQty").text(nextQty);
-        $dur.find(".durationSubtotal").text("\u20B9" + rowSubtotal.toFixed(2));
+			let $dur = $(".duration-item[data-id='" + itemId + "']");
+			$dur.find(".durationQty").text(nextQty);
+			$dur.find(".durationSubtotal").text("\u20B9" + rowSubtotal.toFixed(2));
 
-        recalcCart();
+			recalcCart();
 
-        $.getJSON(site_url + "cart/get_cart_count", function (countRes) {
-            $(".cart-count, .cart-badge").text(countRes.count || 0);
-        });
-    }).always(function () {
-        $rowButtons.prop("disabled", false);
-    });
-});
-
-
-$(document).ready(function(){
-
-    $('#user_profile_form').on('submit', function(e){
-        e.preventDefault(); // prevent default submission
-
-        // Clear previous error messages
-        $('.error-msg').remove();
-
-        // Get form values
-        var name = $('#full-name').val().trim();
-        var email = $('#email').val().trim();
-        var mobile = $('#phone').val().trim();
-
-        var hasError = false;
-
-        // Validation
-        if(name === ''){
-            $('#full-name').after('<small class="error-msg text-danger">Full Name is required.</small>');
-            hasError = true;
-        }
-
-        if(email === ''){
-            $('#email').after('<small class="error-msg text-danger">Email Address is required.</small>');
-            hasError = true;
-        } else {
-            // Simple email format check
-            var emailPattern = /^[^ ]+@[^ ]+\.[a-z]{2,3}$/;
-            if(!emailPattern.test(email)){
-                $('#email').after('<small class="error-msg text-danger">Enter a valid email.</small>');
-                hasError = true;
-            }
-        }
-
-        if(mobile === ''){
-            $('#phone').after('<small class="error-msg text-danger">Phone Number is required.</small>');
-            hasError = true;
-        }
-
-        if(hasError) return; 
-
-        
-        var formData = new FormData(this);
-
-        $.ajax({
-            url: site_url+ "profile/edit_user_profile",
-            type: 'POST',
-            data: formData,
-            contentType: false,
-            processData: false,
-            dataType: 'json',
-            beforeSend: function(){
-                $('.submit-btn').prop('disabled', true).html('Saving...');
-            },
-            success: function(response){
-                $('.submit-btn').prop('disabled', false).html('<i class="bi bi-save"></i> Save Changes');
-
-                if(response.status === 'success'){
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Success!',
-                        text: 'Profile updated successfully!',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-
-                    // Update profile image if server returns new image
-                    if(response.profile_image){
-                        $('.profile-avatar').attr('src', response.profile_image);
-                    }
-
-                } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error!',
-                        text: response.message || 'Something went wrong!'
-                    });
-                }
-            },
-            error: function(xhr, status, error){
-                $('.submit-btn').prop('disabled', false).html('<i class="bi bi-save"></i> Save Changes');
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error!',
-                    text: error
-                });
-            }
-        });
-
-    });
-
-});
-document.addEventListener('DOMContentLoaded', function() {
-    const fileInput = document.getElementById('profile-picture');
-    const profileImg = document.querySelector('.profile-avatar');
-
-    // Only add event listener if both elements exist
-    if (fileInput && profileImg) {
-        fileInput.addEventListener('change', function() {
-            if (fileInput.files && fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    profileImg.src = e.target.result;
-                }
-                reader.readAsDataURL(fileInput.files[0]);
-            }
-        });
-    }
+			$.getJSON(site_url + "cart/get_cart_count", function (countRes) {
+				$(".cart-count, .cart-badge").text(countRes.count || 0);
+			});
+		})
+		.always(function () {
+			$rowButtons.prop("disabled", false);
+		});
 });
 
 $(document).ready(function () {
-  let form = $("#bankDetailsForm");
+	$("#user_profile_form").on("submit", function (e) {
+		e.preventDefault(); // prevent default submission
 
-  // Save / Update
-  form.on("submit", function (e) {
-    e.preventDefault();
+		// Clear previous error messages
+		$(".error-msg").remove();
 
-    if (form[0].checkValidity() === false) {
-      e.stopPropagation();
-      form.addClass("was-validated");
-      return false;
-    }
+		// Get form values
+		var name = $("#full-name").val().trim();
+		var email = $("#email").val().trim();
+		var mobile = $("#phone").val().trim();
 
-    $.ajax({
-      url: site_url + "profile/saveBankDetails",
-      type: "POST",
-      data: form.serialize(),
-      dataType: "json",
-      success: function (res) {
-        Swal.fire({
-          icon: res.status,
-          title: res.status === "success" ? "Success" : "Error",
-          text: res.message,
-        }).then(() => location.reload());
-      },
-    });
-  });
+		var hasError = false;
 
-  // Edit button â†’ Fill form
-  $(document).on("click", ".edit-account", function () {
-    let account = $(this).data("account");
-    $("#id").val(account.id);
-    $("#accountHolderName").val(account.account_holder_name);
-    $("#bankName").val(account.bank_name);
-    $("#accountNumber").val(account.account_number);
-    $("#ifscCode").val(account.ifsc_code);
-    $("#accountType").val(account.account_type);
-    $("#branchName").val(account.branch_name);
-    $("html, body").animate({ scrollTop: form.offset().top - 100 }, 500);
-  });
+		// Validation
+		if (name === "") {
+			$("#full-name").after(
+				'<small class="error-msg text-danger">Full Name is required.</small>',
+			);
+			hasError = true;
+		}
 
-  // Delete
-  $(document).on("click", ".delete-account", function () {
-    let id = $(this).data("id");
-    Swal.fire({
-      title: "Are you sure?",
-      text: "This will remove the bank account.",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonText: "Yes, delete it!"
-    }).then((result) => {
-      if (result.isConfirmed) {
-        $.ajax({
-          url: site_url + "profile/deleteBank/" + id,
-          type: "POST",
-          dataType: "json",
-          success: function (res) {
-            Swal.fire("Deleted!", res.message, "success").then(() => location.reload());
-          },
-        });
-      }
-    });
-  });
+		if (email === "") {
+			$("#email").after(
+				'<small class="error-msg text-danger">Email Address is required.</small>',
+			);
+			hasError = true;
+		} else {
+			// Simple email format check
+			var emailPattern = /^[^ ]+@[^ ]+\.[a-z]{2,3}$/;
+			if (!emailPattern.test(email)) {
+				$("#email").after(
+					'<small class="error-msg text-danger">Enter a valid email.</small>',
+				);
+				hasError = true;
+			}
+		}
 
-  // Reset form
-  $("#resetForm").on("click", function () {
-    form.removeClass("was-validated")[0].reset();
-    $("#id").val("");
-  });
+		if (mobile === "") {
+			$("#phone").after(
+				'<small class="error-msg text-danger">Phone Number is required.</small>',
+			);
+			hasError = true;
+		}
+
+		if (hasError) return;
+
+		var formData = new FormData(this);
+
+		$.ajax({
+			url: site_url + "profile/edit_user_profile",
+			type: "POST",
+			data: formData,
+			contentType: false,
+			processData: false,
+			dataType: "json",
+			beforeSend: function () {
+				$(".submit-btn").prop("disabled", true).html("Saving...");
+			},
+			success: function (response) {
+				$(".submit-btn")
+					.prop("disabled", false)
+					.html('<i class="bi bi-save"></i> Save Changes');
+
+				if (response.status === "success") {
+					Swal.fire({
+						icon: "success",
+						title: "Success!",
+						text: "Profile updated successfully!",
+						timer: 2000,
+						showConfirmButton: false,
+					});
+
+					// Update profile image if server returns new image
+					if (response.profile_image) {
+						$(".profile-avatar").attr("src", response.profile_image);
+					}
+				} else {
+					Swal.fire({
+						icon: "error",
+						title: "Error!",
+						text: response.message || "Something went wrong!",
+					});
+				}
+			},
+			error: function (xhr, status, error) {
+				$(".submit-btn")
+					.prop("disabled", false)
+					.html('<i class="bi bi-save"></i> Save Changes');
+				Swal.fire({
+					icon: "error",
+					title: "Error!",
+					text: error,
+				});
+			},
+		});
+	});
+});
+document.addEventListener("DOMContentLoaded", function () {
+	const fileInput = document.getElementById("profile-picture");
+	const profileImg = document.querySelector(".profile-avatar");
+
+	// Only add event listener if both elements exist
+	if (fileInput && profileImg) {
+		fileInput.addEventListener("change", function () {
+			if (fileInput.files && fileInput.files[0]) {
+				const reader = new FileReader();
+				reader.onload = function (e) {
+					profileImg.src = e.target.result;
+				};
+				reader.readAsDataURL(fileInput.files[0]);
+			}
+		});
+	}
+});
+
+$(document).ready(function () {
+	let form = $("#bankDetailsForm");
+
+	// Save / Update
+	form.on("submit", function (e) {
+		e.preventDefault();
+
+		if (form[0].checkValidity() === false) {
+			e.stopPropagation();
+			form.addClass("was-validated");
+			return false;
+		}
+
+		$.ajax({
+			url: site_url + "profile/saveBankDetails",
+			type: "POST",
+			data: form.serialize(),
+			dataType: "json",
+			success: function (res) {
+				Swal.fire({
+					icon: res.status,
+					title: res.status === "success" ? "Success" : "Error",
+					text: res.message,
+				}).then(() => location.reload());
+			},
+		});
+	});
+
+	// Edit button â†’ Fill form
+	$(document).on("click", ".edit-account", function () {
+		let account = $(this).data("account");
+		$("#id").val(account.id);
+		$("#accountHolderName").val(account.account_holder_name);
+		$("#bankName").val(account.bank_name);
+		$("#accountNumber").val(account.account_number);
+		$("#ifscCode").val(account.ifsc_code);
+		$("#accountType").val(account.account_type);
+		$("#branchName").val(account.branch_name);
+		$("html, body").animate({ scrollTop: form.offset().top - 100 }, 500);
+	});
+
+	// Delete
+	$(document).on("click", ".delete-account", function () {
+		let id = $(this).data("id");
+		Swal.fire({
+			title: "Are you sure?",
+			text: "This will remove the bank account.",
+			icon: "warning",
+			showCancelButton: true,
+			confirmButtonText: "Yes, delete it!",
+		}).then((result) => {
+			if (result.isConfirmed) {
+				$.ajax({
+					url: site_url + "profile/deleteBank/" + id,
+					type: "POST",
+					dataType: "json",
+					success: function (res) {
+						Swal.fire("Deleted!", res.message, "success").then(() =>
+							location.reload(),
+						);
+					},
+				});
+			}
+		});
+	});
+
+	// Reset form
+	$("#resetForm").on("click", function () {
+		form.removeClass("was-validated")[0].reset();
+		$("#id").val("");
+	});
 });
 const startDate = document.getElementById("startDate");
 
 if (startDate) {
-  startDate.addEventListener("focus", function() {
-    this.type = "date";
-    if (typeof this.showPicker === "function") {
-      this.showPicker(); // force open datepicker if supported
-    }
-  });
+	startDate.addEventListener("focus", function () {
+		this.type = "date";
+		if (typeof this.showPicker === "function") {
+			this.showPicker(); // force open datepicker if supported
+		}
+	});
 }
-
 
 // startDate.addEventListener("blur", function() {
 //   if (!this.value) {
@@ -632,239 +838,248 @@ if (startDate) {
 // });
 let currentFilter = "";
 
-$(document).on("click", ".filter-btn", function(e) {
-    e.preventDefault();
-    currentFilter = $(this).data("filter");
+$(document).on("click", ".filter-btn", function (e) {
+	e.preventDefault();
+	currentFilter = $(this).data("filter");
 
-    $.ajax({
-        url: site_url + "rent_payment/index",
-        type: "GET",
-        data: { filter: currentFilter, page: 1 },
-        success: function(response) {
-            $("#transactions-container").html(response);
-            $(".filter-btn").removeClass("btn-primary").addClass("btn-outline-primary");
-            $(".filter-btn[data-filter='" + currentFilter + "']").removeClass("btn-outline-primary").addClass("btn-primary");
-        }
-    });
+	$.ajax({
+		url: site_url + "rent_payment/index",
+		type: "GET",
+		data: { filter: currentFilter, page: 1 },
+		success: function (response) {
+			$("#transactions-container").html(response);
+			$(".filter-btn")
+				.removeClass("btn-primary")
+				.addClass("btn-outline-primary");
+			$(".filter-btn[data-filter='" + currentFilter + "']")
+				.removeClass("btn-outline-primary")
+				.addClass("btn-primary");
+		},
+	});
 });
 
-$(document).on("click", ".pagination-controls .page-btn", function(e) {
-    e.preventDefault();
+$(document).on("click", ".pagination-controls .page-btn", function (e) {
+	e.preventDefault();
 
-    let page = $(this).data("page");
-    if (!page) {
-        if ($(this).attr("id") === "prev-page") {
-            page = $(".pagination-controls .page-btn.active").data("page") - 1;
-        } else if ($(this).attr("id") === "next-page") {
-            page = $(".pagination-controls .page-btn.active").data("page") + 1;
-        }
-    }
+	let page = $(this).data("page");
+	if (!page) {
+		if ($(this).attr("id") === "prev-page") {
+			page = $(".pagination-controls .page-btn.active").data("page") - 1;
+		} else if ($(this).attr("id") === "next-page") {
+			page = $(".pagination-controls .page-btn.active").data("page") + 1;
+		}
+	}
 
-    if (page) {
-        $.ajax({
-            url: site_url + "rent_payment/index",
-            type: "GET",
-            data: { page: page, filter: currentFilter },
-            success: function(response) {
-                $("#transactions-container").html(response);
-            }
-        });
-    }
+	if (page) {
+		$.ajax({
+			url: site_url + "rent_payment/index",
+			type: "GET",
+			data: { page: page, filter: currentFilter },
+			success: function (response) {
+				$("#transactions-container").html(response);
+			},
+		});
+	}
 });
 document.addEventListener("DOMContentLoaded", function () {
-    // âœ… Remove recipient
-    document.querySelectorAll(".remove-btn-reception").forEach(btn => {
-    btn.addEventListener("click", function () {
-        let recipientId = this.getAttribute("data-id");
-        let recipientItem = this.closest(".recipient-item");
+	// âœ… Remove recipient
+	document.querySelectorAll(".remove-btn-reception").forEach((btn) => {
+		btn.addEventListener("click", function () {
+			let recipientId = this.getAttribute("data-id");
+			let recipientItem = this.closest(".recipient-item");
 
-        Swal.fire({
-            title: "Are you sure?",
-            text: "Do you really want to remove this recipient?",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#d33",
-            cancelButtonColor: "#3085d6",
-            confirmButtonText: "Yes, remove it"
-        }).then((result) => {
-            if (!result.isConfirmed) return;
+			Swal.fire({
+				title: "Are you sure?",
+				text: "Do you really want to remove this recipient?",
+				icon: "warning",
+				showCancelButton: true,
+				confirmButtonColor: "#d33",
+				cancelButtonColor: "#3085d6",
+				confirmButtonText: "Yes, remove it",
+			}).then((result) => {
+				if (!result.isConfirmed) return;
 
-            fetch(site_url + "rent_payment/remove_recipient", {
-                method: "POST",
-                headers: { "Content-Type": "application/x-www-form-urlencoded" },
-                body: "id=" + recipientId
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === "success") {
-                    recipientItem.remove();
+				fetch(site_url + "rent_payment/remove_recipient", {
+					method: "POST",
+					headers: { "Content-Type": "application/x-www-form-urlencoded" },
+					body: "id=" + recipientId,
+				})
+					.then((res) => res.json())
+					.then((data) => {
+						if (data.status === "success") {
+							recipientItem.remove();
 
-                    Swal.fire({
-                        title: "Deleted!",
-                        text: "Recipient has been removed successfully.",
-                        icon: "success",
-                        timer: 1500,
-                        showConfirmButton: false
-                    });
-                } else {
-                    Swal.fire("Error!", "Error removing recipient.", "error");
-                }
-            })
-            .catch(() => {
-                Swal.fire("Error!", "Request failed. Try again.", "error");
-            });
-        });
-    });
-});
+							Swal.fire({
+								title: "Deleted!",
+								text: "Recipient has been removed successfully.",
+								icon: "success",
+								timer: 1500,
+								showConfirmButton: false,
+							});
+						} else {
+							Swal.fire("Error!", "Error removing recipient.", "error");
+						}
+					})
+					.catch(() => {
+						Swal.fire("Error!", "Request failed. Try again.", "error");
+					});
+			});
+		});
+	});
 
+	// âœ… Repay autofill
+	document.querySelectorAll(".repay-btn").forEach((btn) => {
+		btn.addEventListener("click", function () {
+			let item = this.closest(".recipient-item");
 
-    // âœ… Repay autofill
-    document.querySelectorAll(".repay-btn").forEach(btn => {
-        btn.addEventListener("click", function () {
-            let item = this.closest(".recipient-item");
+			// Fill form fields
+			document.getElementById("name").value = item
+				.querySelector(".recipient-name")
+				.textContent.trim();
+			document.getElementById("account_number").value =
+				item.getAttribute("data-account");
+			document.getElementById("confirm_account_number").value =
+				item.getAttribute("data-account");
+			document.getElementById("ifsc_code").value =
+				item.getAttribute("data-ifsc");
+			document.getElementById("bank_name").value =
+				item.getAttribute("data-bank");
 
-            // Fill form fields
-            document.getElementById("name").value = item.querySelector(".recipient-name").textContent.trim();
-            document.getElementById("account_number").value = item.getAttribute("data-account");
-            document.getElementById("confirm_account_number").value = item.getAttribute("data-account");
-            document.getElementById("ifsc_code").value = item.getAttribute("data-ifsc");
-            document.getElementById("bank_name").value = item.getAttribute("data-bank");
+			// Focus on amount field
+			let amountField = document.getElementById("transfer_amount");
+			if (amountField) {
+				amountField.focus();
+			}
 
-            // Focus on amount field
-            let amountField = document.getElementById("transfer_amount");
-            if (amountField) {
-                amountField.focus();
-            }
-
-            // Smooth scroll to form
-            document.getElementById("bank-payment-form").scrollIntoView({ behavior: "smooth" });
-        });
-    });
+			// Smooth scroll to form
+			document
+				.getElementById("bank-payment-form")
+				.scrollIntoView({ behavior: "smooth" });
+		});
+	});
 });
 
 $(document).ready(function () {
-  $("#contactForm").on("submit", function (e) {
-    e.preventDefault();
+	$("#contactForm").on("submit", function (e) {
+		e.preventDefault();
 
-    // Bootstrap validation
-    if (!this.checkValidity()) {
-      e.stopPropagation();
-      $(this).addClass("was-validated");
-      return;
-    }
+		// Bootstrap validation
+		if (!this.checkValidity()) {
+			e.stopPropagation();
+			$(this).addClass("was-validated");
+			return;
+		}
 
-    const formData = {
-      first_name: $("#firstName").val(),
-      last_name: $("#lastName").val(),
-      email: $("#email").val(),
-      phone: $("#phone").val(),
-      subject: $("#subject").val(),
-      message: $("#message").val(),
-      newsletter: $("#newsletter").is(":checked") ? 1 : 0,
-    };
+		const formData = {
+			first_name: $("#firstName").val(),
+			last_name: $("#lastName").val(),
+			email: $("#email").val(),
+			phone: $("#phone").val(),
+			subject: $("#subject").val(),
+			message: $("#message").val(),
+			newsletter: $("#newsletter").is(":checked") ? 1 : 0,
+		};
 
-    $.ajax({
-      url: site_url +"page/submit_query",
-      type: "POST",
-      data: formData,
-      dataType: "json",
-      beforeSend: function () {
-        Swal.fire({
-          title: "Sending...",
-          text: "Please wait while we process your request.",
-          allowOutsideClick: false,
-          didOpen: () => Swal.showLoading(),
-        });
-      },
-      success: function (res) {
-        Swal.close();
-        if (res.status === "success") {
-          Swal.fire({
-            icon: "success",
-            title: "Message Sent!",
-            text: "Weâ€™ll get back to you within 24 hours.",
-            showConfirmButton: false,
-            timer: 2500
-          });
-          $("#contactForm")[0].reset();
-          $("#contactForm").removeClass("was-validated");
-        } else {
-          Swal.fire("Error", res.message || "Something went wrong!", "error");
-        }
-      },
-      error: function (xhr) {
-        Swal.close();
-        Swal.fire("Error", "Server error. Please try again later.", "error");
-      },
-    });
-  });
+		$.ajax({
+			url: site_url + "page/submit_query",
+			type: "POST",
+			data: formData,
+			dataType: "json",
+			beforeSend: function () {
+				Swal.fire({
+					title: "Sending...",
+					text: "Please wait while we process your request.",
+					allowOutsideClick: false,
+					didOpen: () => Swal.showLoading(),
+				});
+			},
+			success: function (res) {
+				Swal.close();
+				if (res.status === "success") {
+					Swal.fire({
+						icon: "success",
+						title: "Message Sent!",
+						text: "Weâ€™ll get back to you within 24 hours.",
+						showConfirmButton: false,
+						timer: 2500,
+					});
+					$("#contactForm")[0].reset();
+					$("#contactForm").removeClass("was-validated");
+				} else {
+					Swal.fire("Error", res.message || "Something went wrong!", "error");
+				}
+			},
+			error: function (xhr) {
+				Swal.close();
+				Swal.fire("Error", "Server error. Please try again later.", "error");
+			},
+		});
+	});
 });
 $(document).on("click", "#openReviewModal", function () {
+	let user_id = $("#review_user").val();
+	let provider_id = $("#review_provider").val();
 
-    let user_id     = $("#review_user").val();
-    let provider_id = $("#review_provider").val();
+	$.ajax({
+		url: site_url + "page/get_review",
+		type: "POST",
+		dataType: "json",
+		data: {
+			user_id: user_id,
+			provider_id: provider_id,
+		},
+		success: function (res) {
+			// reset form first
+			$("#reviewForm")[0].reset();
 
-    $.ajax({
-        url: site_url + "page/get_review",
-        type: "POST",
-        dataType: "json",
-        data: {
-            user_id: user_id,
-            provider_id: provider_id
-        },
-        success: function (res) {
+			if (res.exists) {
+				// PREFILL DATA
+				$("input[name='rating'][value='" + res.data.rating + "']").prop(
+					"checked",
+					true,
+				);
+				$("#reviewText").val(res.data.review_text);
 
-            // reset form first
-            $("#reviewForm")[0].reset();
+				$("#submitReviewBtn")
+					.text("Update Review")
+					.removeClass("btn-primary")
+					.addClass("btn-warning");
+			} else {
+				$("#submitReviewBtn")
+					.text("Submit Review")
+					.removeClass("btn-warning")
+					.addClass("btn-primary");
+			}
 
-            if (res.exists) {
-                // PREFILL DATA
-                $("input[name='rating'][value='" + res.data.rating + "']").prop("checked", true);
-                $("#reviewText").val(res.data.review_text);
-
-                $("#submitReviewBtn")
-                    .text("Update Review")
-                    .removeClass("btn-primary")
-                    .addClass("btn-warning");
-            } else {
-                $("#submitReviewBtn")
-                    .text("Submit Review")
-                    .removeClass("btn-warning")
-                    .addClass("btn-primary");
-            }
-
-            $("#addReviewModal").modal("show");
-        }
-    });
+			$("#addReviewModal").modal("show");
+		},
+	});
 });
 
 $(document).on("click", "#submitReviewBtn", function (e) {
-    e.preventDefault();
+	e.preventDefault();
 
-    let rating      = $("input[name='rating']:checked").val();
-    let review_text = $("#reviewText").val();
+	let rating = $("input[name='rating']:checked").val();
+	let review_text = $("#reviewText").val();
 
-    if (!rating || !review_text) {
-        Swal.fire("Error", "Please fill all required fields", "warning");
-        return;
-    }
+	if (!rating || !review_text) {
+		Swal.fire("Error", "Please fill all required fields", "warning");
+		return;
+	}
 
-    $.ajax({
-        url: site_url + "page/save_review",
-        type: "POST",
-        dataType: "json",
-        data: {
-            user_id: $("#review_user").val(),
-            provider_id: $("#review_provider").val(),
-            rating: rating,
-            review_text: review_text
-        },
-        success: function (res) {
-            Swal.fire("Success", res.message, "success");
-            $("#addReviewModal").modal("hide");
-        }
-    });
+	$.ajax({
+		url: site_url + "page/save_review",
+		type: "POST",
+		dataType: "json",
+		data: {
+			user_id: $("#review_user").val(),
+			provider_id: $("#review_provider").val(),
+			rating: rating,
+			review_text: review_text,
+		},
+		success: function (res) {
+			Swal.fire("Success", res.message, "success");
+			$("#addReviewModal").modal("hide");
+		},
+	});
 });
-
-
-

@@ -73,6 +73,7 @@ class Profile extends Provider_Controller
         $input = $this->input->post();
 
         $provider_id = trim($input['id']);
+        $full_name = trim(($input['first_name'] ?? '') . ' ' . ($input['last_name'] ?? ''));
 
         $profile_image = null;
 
@@ -114,40 +115,44 @@ class Profile extends Provider_Controller
         // Build provider data
 
         $address = trim($input['address']);
+        $latitude = !empty($input['latitude']) ? trim($input['latitude']) : null;
+        $longitude = !empty($input['longitude']) ? trim($input['longitude']) : null;
 
+        if (empty($latitude) || empty($longitude)) {
+            $temp_address = $address;
+            while (!empty($temp_address)) {
+                $ch = curl_init();
+                curl_setopt($ch, CURLOPT_URL, "https://nominatim.openstreetmap.org/search?format=json&q=" . urlencode($temp_address));
+                curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+                curl_setopt($ch, CURLOPT_USERAGENT, 'FitTicketApp/1.0 (support@fitticket.com)');
+                $response = curl_exec($ch);
+                curl_close($ch);
 
+                if ($response) {
+                    $data = json_decode($response, true);
+                    if (!empty($data)) {
+                        $latitude = $data[0]['lat'];
+                        $longitude = $data[0]['lon'];
+                        break;
+                    }
+                }
 
-        // Call OpenStreetMap API to get lat/lng
+                if (strpos($temp_address, ',') !== false) {
+                    $parts = explode(',', $temp_address);
+                    array_shift($parts);
+                    $temp_address = trim(implode(',', $parts));
+                } else {
+                    break;
+                }
+            }
 
-        $ch = curl_init();
-
-        curl_setopt($ch, CURLOPT_URL, "https://nominatim.openstreetmap.org/search?format=json&q=" . urlencode($address));
-
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-
-        curl_setopt($ch, CURLOPT_USERAGENT, 'FitTicketApp/1.0 (support@fitticket.com)');
-
-        $response = curl_exec($ch);
-
-        curl_close($ch);
-
-
-
-        $latitude = null;
-
-        $longitude = null;
-
-
-
-        if ($response) {
-
-            $data = json_decode($response, true);
-
-            if (!empty($data)) {
-
-                $latitude = $data[0]['lat'];
-
-                $longitude = $data[0]['lon'];
+            // If geocoding still fails, retain existing coordinates
+            if (empty($latitude) || empty($longitude)) {
+                $existing_provider = $this->general_model->getOne('provider', array('provider_id' => $provider_id));
+                if ($existing_provider) {
+                    $latitude = $existing_provider->latitude;
+                    $longitude = $existing_provider->longitude;
+                }
             }
         }
 
@@ -160,7 +165,7 @@ class Profile extends Provider_Controller
             'description' => $input['description'],
 
             'category'   => $input['category'],              // updated
-            // 'sub_category' => $input['subcategory'] ?? null,
+            'sub_category' => $input['subcategory'] ?? null,
 
             'city' => isset($input['availability']) ? implode(',', $input['availability']) : '',
             'language' => isset($input['language']) ? implode(',', $input['language']) : '',
@@ -213,6 +218,13 @@ class Profile extends Provider_Controller
 
             $this->general_model->insert('provider', $providerData);
         }
+
+        $this->general_model->update('users', ['id' => $provider_id], [
+            'name' => $full_name,
+            'gym_name' => $input['gym_name'] ?? '',
+            'email' => $input['email'] ?? '',
+            'mobile' => $input['mobile'] ?? '',
+        ]);
 
 
 
@@ -601,6 +613,53 @@ class Profile extends Provider_Controller
         echo json_encode([
             'status' => true,
             'message' => 'Certification deleted successfully'
+        ]);
+    }
+
+    public function add_city_ajax()
+    {
+        header('Content-Type: application/json');
+
+        $state = $this->input->post('state');
+        $city = $this->input->post('city');
+
+        if (empty($state) || empty($city)) {
+            echo json_encode([
+                'success' => false,
+                'message' => 'State and City are required'
+            ]);
+            return;
+        }
+
+        $exist = $this->general_model->getOne('cities', [
+            'state' => $state,
+            'city'  => $city
+        ]);
+
+        if ($exist) {
+            if ($exist->isActive == 0) {
+                $this->general_model->update('cities', ['id' => $exist->id], ['isActive' => 1]);
+            }
+            echo json_encode([
+                'success' => true,
+                'city' => $exist->city
+            ]);
+            return;
+        }
+
+        $data = [
+            'state'      => $state,
+            'city'       => $city,
+            'isActive'   => 1,
+            'created_on' => date('Y-m-d H:i:s')
+        ];
+
+        $this->general_model->insert('cities', $data);
+        $insert_id = $this->db->insert_id();
+
+        echo json_encode([
+            'success' => (bool) $insert_id,
+            'city' => $city
         ]);
     }
 }

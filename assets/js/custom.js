@@ -964,6 +964,24 @@ const geonamesUsername = "rvmawar"; // Replace with your actual GeoNames usernam
 const stateCodeMap = {}; // We'll store state name => adminCode1 mapping
 
 $(document).ready(function () {
+	// Initialize Select2 on state and city elements if they exist
+	if ($("#state").length > 0) {
+		$("#state").select2({
+			placeholder: "Select State",
+			allowClear: true,
+			width: "100%",
+			theme: "bootstrap-5",
+		});
+	}
+	if ($("#city").length > 0) {
+		$("#city").select2({
+			placeholder: "Select City",
+			allowClear: true,
+			width: "100%",
+			theme: "bootstrap-5",
+		});
+	}
+
 	// Load all Indian states with their codes
 	$.ajax({
 		url: "https://secure.geonames.org/childrenJSON",
@@ -981,6 +999,7 @@ $(document).ready(function () {
 
 				$("#state").append(`<option value="${name}">${name}</option>`);
 			});
+			$("#state").trigger('change');
 		},
 		error: function () {
 			// alert("Error fetching states.");
@@ -1011,13 +1030,14 @@ $(document).ready(function () {
 							`<option value="${city.name}">${city.name}</option>`,
 						);
 					});
+					$("#city").trigger('change');
 				},
 				error: function () {
 					alert("Error fetching cities.");
 				},
 			});
 		} else {
-			$("#city").empty().append('<option value="">Select City</option>');
+			$("#city").empty().append('<option value="">Select City</option>').trigger('change');
 		}
 	});
 });

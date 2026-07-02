@@ -68,6 +68,16 @@ class Services extends User_Controller
     🔥 STEP 2: FETCH DATA (FRESH QUERY AGAIN)
     ==========================================
     */
+        if ($lat != 0 && $lng != 0) {
+            $distance_select = "(6371 * acos(
+                cos(radians($lat)) * cos(radians(provider.latitude)) *
+                cos(radians(provider.longitude) - radians($lng)) +
+                sin(radians($lat)) * sin(radians(provider.latitude))
+            )) AS distance";
+        } else {
+            $distance_select = "NULL AS distance";
+        }
+
         $this->db->select("
         service.*, 
         users.gym_name, 
@@ -75,11 +85,7 @@ class Services extends User_Controller
         provider.month_price,
         (SELECT ROUND(IFNULL(AVG(rating), 0), 1) FROM reviews WHERE reviews.provider_id = service.provider_id) AS avg_rating,
         (SELECT COUNT(*) FROM reviews WHERE reviews.provider_id = service.provider_id) AS total_reviews,
-        (6371 * acos(
-            cos(radians($lat)) * cos(radians(provider.latitude)) *
-            cos(radians(provider.longitude) - radians($lng)) +
-            sin(radians($lat)) * sin(radians(provider.latitude))
-        )) AS distance
+        $distance_select
     ", false);
 
         $this->db->from('service');
@@ -104,13 +110,14 @@ class Services extends User_Controller
     🔥 STEP 3: FORMAT DISTANCE
     ==========================================
     */
+        $is_loc_enabled = ($lat != 0 && $lng != 0);
         foreach ($services as &$service) {
-            if (!empty($service->distance) && is_numeric($service->distance)) {
+            if (!is_null($service->distance) && is_numeric($service->distance)) {
                 $service->distance = ($service->distance < 1)
                     ? round($service->distance * 1000) . ' m'
                     : round($service->distance, 1) . ' km';
             } else {
-                $service->distance = 'N/A';
+                $service->distance = $is_loc_enabled ? 'N/A' : 'Enable Location';
             }
         }
         unset($service);

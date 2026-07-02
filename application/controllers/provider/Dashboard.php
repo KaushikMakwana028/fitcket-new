@@ -41,6 +41,7 @@ class Dashboard extends Provider_Controller
  public function index()
 {
     $provider_id = $this->provider['id'] ?? $this->provider['user_id'];
+    $data['profile_notice'] = $this->get_profile_notice($provider_id);
 
     // -------- Total Customers ----------
     $this->db->select('COUNT(DISTINCT o.user_id) as total_customers');
@@ -97,8 +98,65 @@ class Dashboard extends Provider_Controller
     $this->load->view('provider/footer');
 }
 
+private function get_profile_notice($provider_id)
+{
+    $user = $this->general_model->getOne('users', ['id' => $provider_id]);
+    $profile = $this->general_model->getOne('provider', ['provider_id' => $provider_id]);
+    $tags_count = $this->db
+        ->where('provider_id', $provider_id)
+        ->count_all_results('expertise_tag');
+
+    $missing = [];
+
+    if (!$profile || (int) $profile->isActive !== 1) {
+        $missing[] = 'active profile';
+    }
+
+    $user_fields = [
+        'name' => 'partner name',
+        'gym_name' => 'business name',
+        'email' => 'email',
+        'mobile' => 'mobile',
+    ];
+
+    foreach ($user_fields as $field => $label) {
+        if (!$user || trim((string) ($user->{$field} ?? '')) === '') {
+            $missing[] = $label;
+        }
+    }
+
+    $profile_fields = [
+        'service_type' => 'service type',
+        'exp' => 'experience',
+        'category' => 'category',
+        'sub_category' => 'sub category',
+        'description' => 'description',
+        'address' => 'address',
+        'city' => 'availability city',
+        'language' => 'language',
+        'day_price' => 'day price',
+        'week_price' => 'week price',
+        'month_price' => 'month price',
+        'year_price' => 'year price',
+    ];
+
+    foreach ($profile_fields as $field => $label) {
+        if (!$profile || trim((string) ($profile->{$field} ?? '')) === '') {
+            $missing[] = $label;
+        }
+    }
+
+    if ($tags_count < 1) {
+        $missing[] = 'expertise tags';
+    }
+
+    return [
+        'show' => !empty($missing),
+        'missing' => array_values(array_unique($missing)),
+    ];
+}
+
 
 
 
 }
-

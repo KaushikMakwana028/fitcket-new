@@ -1946,6 +1946,7 @@
 ══════════════════════════════════════════ -->
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
+    const providerSchedule = <?= json_encode($schedule ?? []); ?>;
     $(document).ready(function() {
         const providerId = "<?= $provider->provider_id; ?>";
         const baseUrl = "<?= base_url(); ?>";

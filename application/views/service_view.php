@@ -658,6 +658,10 @@
                     } else {
                         res.services.forEach(service => {
                             let ratingText = (service.avg_rating && parseFloat(service.avg_rating) > 0) ? parseFloat(service.avg_rating).toFixed(1) : 'New';
+                            let isTrigger = (service.distance === 'Enable Location');
+                            let distanceClass = isTrigger ? 'fkp-enable-loc-trigger' : '';
+                            let distanceStyle = isTrigger ? 'cursor: pointer; color: var(--primary-color) !important; font-weight: 500;' : '';
+
                             html += `
                             <div class="provider-card">
 
@@ -681,7 +685,7 @@
                                         <span class="badge-city" title="${service.city || 'N/A'}">
                                             <i class="fas fa-map-marker-alt" aria-hidden="true"></i>${service.city || 'N/A'}
                                         </span>
-                                        <span class="badge-distance" title="${service.distance || 'N/A'}">
+                                        <span class="badge-distance ${distanceClass}" style="${distanceStyle}" title="${service.distance || 'N/A'}">
                                             <i class="fas fa-route" aria-hidden="true"></i>${service.distance || 'N/A'}
                                         </span>
                                     </div>

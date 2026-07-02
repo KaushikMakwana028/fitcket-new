@@ -34,6 +34,11 @@ class Profile extends User_Controller
         $category = $this->input->get('category') ?? '';
         $language = $this->input->get('language') ?? '';
         $service  = $this->input->get('service')  ?? '';
+        $city     = trim($this->input->get('city')      ?? '');
+        $type     = trim($this->input->get('type')      ?? '');
+        $popular  = trim($this->input->get('popular')   ?? '');
+
+        $trainer_id = $this->db->get_where('categories', ['name' => 'TRAINER', 'isActive' => 1])->row()->id ?? 0;
 
         // ── FIX 1: Unify offset — AJAX sends ?page=N, normal load uses URI segment
         $page   = (int)($this->input->get('page') ?? 0);
@@ -50,12 +55,28 @@ class Profile extends User_Controller
             $language,
             $service,
             $exp,
-            $rating
+            $rating,
+            $city,
+            $type,
+            $popular,
+            $trainer_id
         ) {
+            if (!empty($type)) {
+                if ($type === 'trainer') {
+                    $this->db->where('provider.sub_category', $trainer_id);
+                } elseif ($type === 'gym') {
+                    $this->db->where('provider.sub_category !=', $trainer_id);
+                }
+            }
             if (!empty($search)) {
                 $this->db->group_start();
                 $this->db->like('users.gym_name', $search, 'both');
                 $this->db->or_like('users.name',  $search, 'both');
+                $this->db->group_end();
+            }
+            if (!empty($city)) {
+                $this->db->group_start();
+                $this->db->where("FIND_IN_SET(" . $this->db->escape($city) . ", REPLACE(provider.city, ' ', '')) > 0", null, false);
                 $this->db->group_end();
             }
             if (!empty($category)) {
@@ -66,9 +87,9 @@ class Profile extends User_Controller
             }
             if (!empty($language)) {
                 $this->db->where(
-                    "FIND_IN_SET('" . $this->db->escape_str($language) . "', provider.language) >",
-                    0,
-                    false
+                     "FIND_IN_SET('" . $this->db->escape_str($language) . "', provider.language) >",
+                     0,
+                     false
                 );
             }
             if (!empty($service)) {
@@ -96,24 +117,28 @@ class Profile extends User_Controller
             if ($includeHaving && !empty($rating) && $rating !== 'top_rated') {
                 $min = ['4_plus' => 4, '3_plus' => 3, '2_plus' => 2][$rating] ?? 0;
                 if ($min > 0) {
-                    if ($includeHaving && !empty($rating) && $rating !== 'top_rated') {
-                        $min = ['4_plus' => 4, '3_plus' => 3, '2_plus' => 2][$rating] ?? 0;
-                        if ($min > 0) {
-                            $this->db->having('AVG(reviews.rating) >= ' . $min);
-                        }
-                    }
+                    $this->db->having('AVG(reviews.rating) >= ' . $min);
                 }
+            }
+            if ($includeHaving && $type === 'trainer' && $popular === '1') {
+                $this->db->having('AVG(reviews.rating) >', 3.5);
             }
         };
 
         /* ======================================================
-       COUNT TOTAL (with filters)
-    ====================================================== */
+        COUNT TOTAL (with filters)
+     ====================================================== */
         $this->db->select('provider.id');
         $this->db->from('provider');
         $this->db->join('users',   'users.id = provider.provider_id',            'left');
         $this->db->join('reviews', 'reviews.provider_id = provider.provider_id', 'left');
         $this->db->where('users.isActive', 1);
+        if (!($type === 'trainer' && $popular === '1')) {
+            $this->db->where('provider.latitude IS NOT NULL');
+            $this->db->where('provider.longitude IS NOT NULL');
+            $this->db->where('provider.latitude !=', 0);
+            $this->db->where('provider.longitude !=', 0);
+        }
         $applyFilters(true);
         $this->db->group_by('provider.id');
 
@@ -122,8 +147,18 @@ class Profile extends User_Controller
         $total_records = $count_result->row()->total;
 
         /* ======================================================
-       FETCH PROVIDERS (with filters + sort + pagination)
-    ====================================================== */
+        FETCH PROVIDERS (with filters + sort + pagination)
+     ====================================================== */
+        if ($lat != 0 && $lng != 0) {
+            $distance_select = "(6371 * acos(
+                cos(radians($lat)) * cos(radians(provider.latitude)) *
+                cos(radians(provider.longitude) - radians($lng)) +
+                sin(radians($lat)) * sin(radians(provider.latitude))
+            )) AS distance";
+        } else {
+            $distance_select = "NULL AS distance";
+        }
+
         $this->db->select("
         provider.id,
         provider.provider_id,
@@ -143,11 +178,7 @@ class Profile extends User_Controller
         COUNT(DISTINCT service.id)  AS service_count,
         ROUND(IFNULL(AVG(reviews.rating), 0), 1) AS avg_rating,
         COUNT(DISTINCT reviews.id)  AS total_reviews,
-        (6371 * acos(
-            cos(radians($lat)) * cos(radians(provider.latitude)) *
-            cos(radians(provider.longitude) - radians($lng)) +
-            sin(radians($lat)) * sin(radians(provider.latitude))
-        )) AS distance
+        $distance_select
     ", false);
 
         $this->db->from('provider');
@@ -155,6 +186,12 @@ class Profile extends User_Controller
         $this->db->join('service',  'service.provider_id = provider.provider_id', 'left');
         $this->db->join('reviews',  'reviews.provider_id = provider.provider_id', 'left');
         $this->db->where('users.isActive', 1);
+        if (!($type === 'trainer' && $popular === '1')) {
+            $this->db->where('provider.latitude IS NOT NULL');
+            $this->db->where('provider.longitude IS NOT NULL');
+            $this->db->where('provider.latitude !=', 0);
+            $this->db->where('provider.longitude !=', 0);
+        }
         $applyFilters(true);
         $this->db->group_by('provider.id');
 
@@ -164,6 +201,8 @@ class Profile extends User_Controller
         } elseif ($price === 'high_to_low') {
             $this->db->order_by('provider.day_price', 'DESC');
         } elseif ($rating === 'top_rated') {
+            $this->db->order_by('avg_rating', 'DESC');
+        } elseif ($type === 'trainer' && $popular === '1') {
             $this->db->order_by('avg_rating', 'DESC');
         } else {
             $this->db->order_by('provider.created_on', 'DESC');
@@ -179,13 +218,38 @@ class Profile extends User_Controller
                     ? round($p['distance'] * 1000) . ' m'
                     : round($p['distance'], 1) . ' km';
             } else {
-                $p['distance'] = 'N/A';
+                $p['distance'] = ($lat == 0 || $lng == 0) ? 'Enable Location' : 'N/A';
             }
         }
         unset($p);
 
+        // Fetch unique cities from active providers
+        $active_providers_cities = $this->db
+            ->select('city')
+            ->from('provider')
+            ->join('users', 'users.id = provider.provider_id', 'left')
+            ->where('users.isActive', 1)
+            ->where('provider.city IS NOT NULL')
+            ->where('provider.city !=', '')
+            ->get()
+            ->result();
+
+        $cities = [];
+        foreach ($active_providers_cities as $p) {
+            $parts = explode(',', $p->city);
+            foreach ($parts as $part) {
+                $city_trimmed = trim($part);
+                if ($city_trimmed !== '') {
+                    $cities[] = $city_trimmed;
+                }
+            }
+        }
+        $cities = array_unique($cities);
+        sort($cities);
+
         $data['provider'] = $providers;
         $data['categories'] = $this->general_model->getAll('categories', ['isActive' => 1]);
+        $data['cities'] = $cities;
 
         /* ======================================================
        PAGINATION
@@ -304,18 +368,7 @@ class Profile extends User_Controller
 
             $user_id = $this->user['id'] ?? null;
 
-            $has_order = $this->db
-                ->select('oi.id')
-                ->from('orders o')
-                ->join('order_items oi', 'oi.order_id = o.id')
-                ->where('o.user_id', $user_id)
-                ->where('o.status', 'success')
-                ->where('oi.provider_id', $id)
-                ->limit(1)
-                ->get()
-                ->row();
-
-            $this->data['can_add_review'] = $has_order ? true : false;
+            $this->data['can_add_review'] = !empty($user_id) ? true : false;
 
             $this->load->view('header');
             $this->load->view('profile_details', $this->data);

@@ -365,17 +365,31 @@ $current_method = $this->router->fetch_method();
 
 <script>
     function initSwiper(selector) {
-        const totalSlides = document.querySelectorAll(`${selector} .swiper-slide`).length;
+        const root = document.querySelector(selector);
+        if (!root || typeof Swiper === 'undefined') {
+            return;
+        }
+
+        const totalSlides = root.querySelectorAll('.swiper-slide').length;
+        if (!totalSlides) {
+            return;
+        }
+
         let config = {
             slidesPerView: 1,
             spaceBetween: 0,
             watchOverflow: true,
-            observer: true,
-            observeParents: true,
+            observer: false,
+            observeParents: false,
+            observeSlideChildren: false,
+            resizeObserver: false,
+            preloadImages: false,
+            lazy: true,
             loop: totalSlides > 1,
             autoplay: totalSlides > 1 ? {
-                delay: 2500,
-                disableOnInteraction: false
+                delay: 4000,
+                disableOnInteraction: false,
+                pauseOnMouseEnter: true
             } : false,
             navigation: {
                 nextEl: `${selector} .swiper-button-next`,
@@ -411,30 +425,40 @@ $current_method = $this->router->fetch_method();
             }
         };
 
-        new Swiper(selector, config);
+        new Swiper(root, config);
     }
 
-    new Swiper(".categorySwiper", {
-        slidesPerView: 2,
-        spaceBetween: 12,
+    if (typeof Swiper !== 'undefined' && document.querySelector(".categorySwiper")) {
+        new Swiper(".categorySwiper", {
+            slidesPerView: 2,
+            spaceBetween: 12,
 
-        navigation: {
-            nextEl: ".categorySwiper .swiper-button-next",
-            prevEl: ".categorySwiper .swiper-button-prev"
-        },
+            watchOverflow: true,
+            observer: false,
+            observeParents: false,
+            observeSlideChildren: false,
+            resizeObserver: false,
+            preloadImages: false,
+            lazy: true,
 
-        breakpoints: {
-            768: {
-                slidesPerView: 3
+            navigation: {
+                nextEl: ".categorySwiper .swiper-button-next",
+                prevEl: ".categorySwiper .swiper-button-prev"
             },
-            992: {
-                slidesPerView: 4
-            },
-            1200: {
-                slidesPerView: 5
+
+            breakpoints: {
+                768: {
+                    slidesPerView: 3
+                },
+                992: {
+                    slidesPerView: 4
+                },
+                1200: {
+                    slidesPerView: 5
+                }
             }
-        }
-    });
+        });
+    }
 
     initSwiper(".nearestSwiper");
     initSwiper(".gymSwiper");

@@ -779,9 +779,9 @@ class Api extends CI_Controller
         $user_id = (int) $decoded->data->id;
         $default_profile_image = base_url('assets/images/3d-cartoon-fitness-man.jpg');
 
-        $lat = floatval($this->input->post('lat') ?? $this->input->get('lat') ?? 0);
-        $lng = floatval($this->input->post('lng') ?? $this->input->get('lng') ?? 0);
-        $user_location = $this->input->post('address') ?? $this->input->get('address') ?? '';
+        $lat = floatval($this->input->post('lat') ?? $this->input->get('lat') ?? $this->input->post('latitude') ?? $this->input->get('latitude') ?? 0);
+        $lng = floatval($this->input->post('lng') ?? $this->input->get('lng') ?? $this->input->post('longitude') ?? $this->input->get('longitude') ?? 0);
+        $user_location = trim($this->input->post('address') ?? $this->input->get('address') ?? $this->input->post('location') ?? $this->input->get('location') ?? '');
 
         // ✅ Fetch categories and add full path
         $categories = $this->general_model->getAll('categories', ['isActive' => 1]);
@@ -789,6 +789,13 @@ class Api extends CI_Controller
             if (!empty($cat->image)) {
                 $cat->image = base_url($cat->image);
             }
+            $cat->provider_count = $this->db
+                ->group_start()
+                ->where('category', $cat->id)
+                ->or_where('sub_category', $cat->id)
+                ->group_end()
+                ->where('isActive', 1)
+                ->count_all_results('provider');
         }
 
         // ✅ Fetch sliders with full image path
@@ -808,76 +815,167 @@ class Api extends CI_Controller
         $trainer_id = $this->db->get_where('categories', ['name' => 'TRAINER', 'isActive' => 1])->row()->id ?? 0;
         $gym_id = $this->db->get_where('categories', ['name' => 'GYM', 'isActive' => 1])->row()->id ?? 0;
 
-        // ✅ Common select query (distance removed)
-        $select_query = "
-        provider.*, users.name, users.gym_name, COUNT(service.id) as total_services
-    ";
+        $active_provider_cities = $this->db
+            ->select('provider.city')
+            ->from('provider')
+            ->join('users', 'users.id = provider.provider_id', 'left')
+            ->where('provider.isActive', 1)
+            ->where('users.isActive', 1)
+            ->where('provider.city IS NOT NULL')
+            ->where('provider.city !=', '')
+            ->get()
+            ->result();
+
+        $all_db_cities = [];
+        foreach ($active_provider_cities as $row) {
+            foreach (explode(',', $row->city) as $city_part) {
+                $city = strtolower(trim($city_part));
+                if ($city !== '') {
+                    $all_db_cities[] = $city;
+                }
+            }
+        }
+        $all_db_cities = array_values(array_unique($all_db_cities));
+
+        $user_city = '';
+        if ($user_location !== '') {
+            foreach ($all_db_cities as $db_city) {
+                if (stripos($user_location, $db_city) !== false) {
+                    $user_city = $db_city;
+                    break;
+                }
+            }
+
+            if ($user_city === '') {
+                $parts = explode(',', $user_location);
+                $user_city = strtolower(trim($parts[0] ?? ''));
+            }
+        }
+
+        if ($lat != 0 && $lng != 0) {
+            $distance_select = "(6371 * acos(
+                cos(radians($lat)) * cos(radians(provider.latitude)) * cos(radians(provider.longitude) - radians($lng)) +
+                sin(radians($lat)) * sin(radians(provider.latitude))
+            )) AS distance";
+            $order_by = 'distance';
+            $order_dir = 'ASC';
+        } else {
+            $distance_select = "NULL AS distance";
+            $order_by = 'provider.id';
+            $order_dir = 'DESC';
+        }
+
+        $select_query = "provider.*, users.name, users.gym_name, COUNT(service.id) as total_services, $distance_select,
+            (SELECT ROUND(IFNULL(AVG(rating), 0), 1) FROM reviews WHERE reviews.provider_id = provider.provider_id) AS avg_rating,
+            (SELECT COUNT(*) FROM reviews WHERE reviews.provider_id = provider.provider_id) AS total_reviews";
+
+        $format_provider = function (&$provider) use ($default_profile_image, $lat, $lng) {
+            $provider->profile_image = !empty($provider->profile_image) ? base_url($provider->profile_image) : $default_profile_image;
+
+            if (!is_null($provider->distance) && is_numeric($provider->distance)) {
+                $provider->distance_label = ($provider->distance < 1)
+                    ? round($provider->distance * 1000) . ' m'
+                    : round($provider->distance, 1) . ' Km';
+            } else {
+                $provider->distance_label = ($lat != 0 && $lng != 0) ? 'N/A' : 'Enable Location';
+            }
+        };
 
         // ✅ Trainer providers
         $trainer_providers = $this->db
-            ->select($select_query)
+            ->select($select_query, false)
             ->from('provider')
             ->join('users', 'users.id = provider.provider_id', 'left')
             ->join('service', 'service.provider_id = provider.provider_id', 'left')
             ->where('provider.sub_category', $trainer_id)
             ->where('provider.isActive', 1)
+            ->where('users.isActive', 1)
             ->group_by('provider.id')
+            ->having('avg_rating >', 3.5)
+            ->order_by('avg_rating', 'DESC')
             ->get()
             ->result();
 
         foreach ($trainer_providers as &$trainer) {
-            if (!empty($trainer->profile_image)) {
-                $trainer->profile_image = base_url($trainer->profile_image);
-            } else {
-                $trainer->profile_image = $default_profile_image;
-            }
+            $format_provider($trainer);
         }
 
         // ✅ Gym providers
         $gym_providers = $this->db
-            ->select($select_query)
+            ->select($select_query, false)
             ->from('provider')
             ->join('users', 'users.id = provider.provider_id', 'left')
             ->join('service', 'service.provider_id = provider.provider_id', 'left')
-            ->where('provider.sub_category', $gym_id)
+            ->where('provider.sub_category !=', $trainer_id)
             ->where('provider.isActive', 1)
+            ->where('users.isActive', 1)
+            ->where('provider.latitude IS NOT NULL')
+            ->where('provider.longitude IS NOT NULL')
+            ->where('provider.latitude !=', 0)
+            ->where('provider.longitude !=', 0)
             ->group_by('provider.id')
+            ->having('avg_rating >', 3.5)
+            ->order_by('avg_rating', 'DESC')
             ->get()
             ->result();
 
         foreach ($gym_providers as &$gym) {
-            if (!empty($gym->profile_image)) {
-                $gym->profile_image = base_url($gym->profile_image);
-            } else {
-                $gym->profile_image = $default_profile_image;
-            }
+            $format_provider($gym);
         }
 
-        // ✅ Nearest providers (distance removed)
-        $nearest_providers = $this->db
-            ->select($select_query)
+        // ✅ Nearest providers: coordinates first, city fallback only when coords are missing
+        $this->db
+            ->select($select_query, false)
             ->from('provider')
             ->join('users', 'users.id = provider.provider_id', 'left')
             ->join('service', 'service.provider_id = provider.provider_id', 'left')
             ->where('provider.isActive', 1)
-            ->group_by('provider.id')
+            ->where('users.isActive', 1);
+
+        $location_required = false;
+
+        if ($lat != 0 && $lng != 0) {
+            $this->db
+                ->where('provider.latitude IS NOT NULL')
+                ->where('provider.longitude IS NOT NULL')
+                ->where('provider.latitude !=', 0)
+                ->where('provider.longitude !=', 0);
+        } elseif ($user_city !== '') {
+            $normalized_user_city = preg_replace('/\s+/', '', strtolower($user_city));
+            $this->db->where(
+                "FIND_IN_SET(" . $this->db->escape($normalized_user_city) . ", REPLACE(LOWER(provider.city), ' ', '')) > 0",
+                null,
+                false
+            );
+        } else {
+            $location_required = true;
+            $this->db->where('1 = 0', null, false);
+        }
+
+        $this->db->group_by('provider.id');
+
+        if ($lat != 0 && $lng != 0) {
+            $this->db->having('distance <=', 50);
+        }
+
+        $nearest_providers = $this->db
+            ->order_by($lat != 0 && $lng != 0 ? 'distance IS NULL' : 'provider.id', $lat != 0 && $lng != 0 ? 'ASC' : 'DESC', false)
+            ->order_by($order_by, $order_dir)
             ->get()
             ->result();
 
         foreach ($nearest_providers as &$provider) {
-            if (!empty($provider->profile_image)) {
-                $provider->profile_image = base_url($provider->profile_image);
-            } else {
-                $provider->profile_image = $default_profile_image;
-            }
+            $format_provider($provider);
         }
 
-        // ✅ Final response (distance not included)
+        // ✅ Final response
         echo json_encode([
             'code' => 200,
             'status' => true,
             'message' => 'Data fetched successfully',
             'user_location' => $user_location,
+            'location_required' => $location_required,
+            'all_db_cities' => $all_db_cities,
             'categories' => $categories,
             'sliders' => $sliders,
             'trainer_providers' => $trainer_providers,
