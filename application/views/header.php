@@ -969,22 +969,26 @@
       display: flex;
       overflow: hidden;
     }
+
     .swiper:not(.swiper-initialized) .swiper-wrapper {
       display: flex;
       flex-direction: row;
       flex-wrap: nowrap;
       width: 100%;
     }
+
     .swiper:not(.swiper-initialized) .swiper-slide {
       width: 100% !important;
       flex-shrink: 0;
     }
+
     @media (min-width: 768px) {
       .swiper:not(.swiper-initialized) .swiper-slide {
         width: calc(50% - 10px) !important;
         margin-right: 20px;
       }
     }
+
     @media (min-width: 992px) {
       .swiper:not(.swiper-initialized) .swiper-slide {
         width: calc(33.333% - 16px) !important;

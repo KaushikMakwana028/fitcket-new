@@ -87,9 +87,9 @@ class Profile extends User_Controller
             }
             if (!empty($language)) {
                 $this->db->where(
-                     "FIND_IN_SET('" . $this->db->escape_str($language) . "', provider.language) >",
-                     0,
-                     false
+                    "FIND_IN_SET('" . $this->db->escape_str($language) . "', provider.language) >",
+                    0,
+                    false
                 );
             }
             if (!empty($service)) {

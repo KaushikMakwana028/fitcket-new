@@ -141,11 +141,8 @@ class Home extends User_Controller
                 if ($city_trimmed !== '') {
 
                     $all_db_cities[] = strtolower($city_trimmed);
-
                 }
-
             }
-
         }
 
         $all_db_cities = array_unique($all_db_cities);
@@ -163,9 +160,7 @@ class Home extends User_Controller
                     $user_city = $db_city;
 
                     break;
-
                 }
-
             }
 
             if (empty($user_city)) {
@@ -175,11 +170,8 @@ class Home extends User_Controller
                 if (!empty($parts)) {
 
                     $user_city = trim($parts[0]);
-
                 }
-
             }
-
         }
 
 
@@ -198,7 +190,6 @@ class Home extends User_Controller
             $order_by = 'distance';
 
             $order_dir = 'ASC';
-
         } else {
 
             $distance_select = "NULL AS distance";
@@ -206,7 +197,6 @@ class Home extends User_Controller
             $order_by = 'provider.id';
 
             $order_dir = 'DESC';
-
         }
 
 
@@ -302,7 +292,6 @@ class Home extends User_Controller
                 ->where('provider.longitude IS NOT NULL')
                 ->where('provider.latitude !=', 0)
                 ->where('provider.longitude !=', 0);
-
         } elseif (!empty($user_city)) {
 
             $normalized_user_city = preg_replace('/\s+/', '', strtolower($user_city));
@@ -312,7 +301,6 @@ class Home extends User_Controller
                 null,
                 false
             );
-
         }
 
 
@@ -322,7 +310,6 @@ class Home extends User_Controller
         if ($lat != 0 && $lng != 0) {
 
             $this->db->having('distance <=', 50);
-
         }
 
         $this->data['nearest_providers'] = $this->db

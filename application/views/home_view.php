@@ -1484,58 +1484,58 @@
 
 
     <?php if (!empty($nearest_providers)): ?>
-    <!-- ═══ NEAREST PROVIDERS (dark bg) ═══ -->
-    <section class="experts-section fkh-bg-dark">
-        <div class="container" style="position:relative; z-index:2;">
-            <div class="fkh-section-header">
-                <div>
-                    <span class="fkh-section-label fkh-section-label--dark">Near You</span>
-                    <h2 class="fkh-section-title fkh-section-title--dark">Nearest <em style="color:#b19fe8">Providers</em></h2>
-                    <p class="fkh-section-sub fkh-section-sub--dark">Fitness professionals closest to your location</p>
+        <!-- ═══ NEAREST PROVIDERS (dark bg) ═══ -->
+        <section class="experts-section fkh-bg-dark">
+            <div class="container" style="position:relative; z-index:2;">
+                <div class="fkh-section-header">
+                    <div>
+                        <span class="fkh-section-label fkh-section-label--dark">Near You</span>
+                        <h2 class="fkh-section-title fkh-section-title--dark">Nearest <em style="color:#b19fe8">Providers</em></h2>
+                        <p class="fkh-section-sub fkh-section-sub--dark">Fitness professionals closest to your location</p>
+                    </div>
+                    <a href="<?= base_url('providers') ?>" class="fkh-view-all" style="border-color:rgba(255,255,255,0.15); color:rgba(255,255,255,0.7);">
+                        View All <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                    </a>
                 </div>
-                <a href="<?= base_url('providers') ?>" class="fkh-view-all" style="border-color:rgba(255,255,255,0.15); color:rgba(255,255,255,0.7);">
-                    View All <i class="fas fa-arrow-right" aria-hidden="true"></i>
-                </a>
-            </div>
-            <div class="swiper nearestSwiper">
-                <div class="swiper-wrapper">
-                    <?php foreach ($nearest_providers as $np): ?>
-                        <div class="swiper-slide">
-                            <div class="expert-card">
-                                <div class="expert-left">
-                                    <div class="expert-logo">
-                                        <img src="<?= base_url(!empty($np->profile_image) ? $np->profile_image : 'assets/images/3d-cartoon-fitness-man.jpg') ?>"
-                                            alt="<?= htmlspecialchars($np->gym_name ?: $np->name) ?>" class="avatar-img" loading="lazy" decoding="async">
+                <div class="swiper nearestSwiper">
+                    <div class="swiper-wrapper">
+                        <?php foreach ($nearest_providers as $np): ?>
+                            <div class="swiper-slide">
+                                <div class="expert-card">
+                                    <div class="expert-left">
+                                        <div class="expert-logo">
+                                            <img src="<?= base_url(!empty($np->profile_image) ? $np->profile_image : 'assets/images/3d-cartoon-fitness-man.jpg') ?>"
+                                                alt="<?= htmlspecialchars($np->gym_name ?: $np->name) ?>" class="avatar-img" loading="lazy" decoding="async">
+                                        </div>
+                                        <div>
+                                            <div class="expert-title"><?= $np->gym_name ?: $np->name ?></div>
+                                            <div class="expert-services"><?= $np->total_services ?> Services</div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <div class="expert-title"><?= $np->gym_name ?: $np->name ?></div>
-                                        <div class="expert-services"><?= $np->total_services ?> Services</div>
+                                    <div class="expert-footer">
+                                        <?php
+                                        $is_loc_enabled = ($lat != 0 && $lng != 0);
+                                        $dist_label = !is_null($np->distance) ? round($np->distance, 1) . ' Km' : ($is_loc_enabled ? 'N/A' : 'Enable Location');
+                                        $is_trigger = ($dist_label === 'Enable Location');
+                                        ?>
+                                        <span class="distance-pill <?= $is_trigger ? 'fkp-enable-loc-trigger' : '' ?>" style="<?= $is_trigger ? 'cursor: pointer; color: #b19fe8;' : '' ?>">
+                                            <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
+                                            <?= $dist_label ?>
+                                        </span>
+                                        <a href="<?= site_url('provider_details/' . $np->provider_id) ?>" class="view-more-btn">
+                                            <span class="view-more-text">View</span>
+                                            <i class="fas fa-chevron-right fkh-arrow-icon" style="font-size:0.75rem; color:var(--primary-color);" aria-hidden="true"></i>
+                                        </a>
                                     </div>
-                                </div>
-                                <div class="expert-footer">
-                                    <?php 
-                                    $is_loc_enabled = ($lat != 0 && $lng != 0);
-                                    $dist_label = !is_null($np->distance) ? round($np->distance, 1) . ' Km' : ($is_loc_enabled ? 'N/A' : 'Enable Location');
-                                    $is_trigger = ($dist_label === 'Enable Location');
-                                    ?>
-                                    <span class="distance-pill <?= $is_trigger ? 'fkp-enable-loc-trigger' : '' ?>" style="<?= $is_trigger ? 'cursor: pointer; color: #b19fe8;' : '' ?>">
-                                        <i class="fas fa-map-marker-alt" aria-hidden="true"></i>
-                                        <?= $dist_label ?>
-                                    </span>
-                                    <a href="<?= site_url('provider_details/' . $np->provider_id) ?>" class="view-more-btn">
-                                        <span class="view-more-text">View</span>
-                                        <i class="fas fa-chevron-right fkh-arrow-icon" style="font-size:0.75rem; color:var(--primary-color);" aria-hidden="true"></i>
-                                    </a>
                                 </div>
                             </div>
-                        </div>
-                    <?php endforeach; ?>
+                        <?php endforeach; ?>
+                    </div>
+                    <div class="swiper-button-prev"></div>
+                    <div class="swiper-button-next"></div>
                 </div>
-                <div class="swiper-button-prev"></div>
-                <div class="swiper-button-next"></div>
             </div>
-        </div>
-    </section>
+        </section>
     <?php endif; ?>
 
 
@@ -1599,7 +1599,7 @@
                                     </div>
                                 </div>
                                 <div class="expert-footer">
-                                    <?php 
+                                    <?php
                                     $is_loc_enabled = ($lat != 0 && $lng != 0);
                                     $dist_label = !is_null($provider->distance) ? round($provider->distance, 1) . ' Km' : ($is_loc_enabled ? 'N/A' : 'Enable Location');
                                     $is_trigger = ($dist_label === 'Enable Location');
@@ -1691,7 +1691,7 @@
                                     </div>
                                 </div>
                                 <div class="expert-footer">
-                                    <?php 
+                                    <?php
                                     $is_loc_enabled = ($lat != 0 && $lng != 0);
                                     $dist_label = !is_null($provider->distance) ? round($provider->distance, 1) . ' Km' : ($is_loc_enabled ? 'N/A' : 'Enable Location');
                                     $is_trigger = ($dist_label === 'Enable Location');
@@ -1708,7 +1708,7 @@
                             </div>
                         </div>
                     <?php endforeach; ?>
-                 </div>
+                </div>
                 <div class="swiper-button-prev"></div>
                 <div class="swiper-button-next"></div>
             </div>
@@ -1718,26 +1718,26 @@
 </div>
 
 <script>
-document.addEventListener("DOMContentLoaded", function() {
-    const searchInput = document.getElementById("homepageSearchInput");
-    const searchBtn = document.getElementById("homepageSearchBtn");
+    document.addEventListener("DOMContentLoaded", function() {
+        const searchInput = document.getElementById("homepageSearchInput");
+        const searchBtn = document.getElementById("homepageSearchBtn");
 
-    if (searchBtn && searchInput) {
-        searchBtn.addEventListener("click", function() {
-            const keyword = searchInput.value.trim();
-            if (keyword) {
-                window.location.href = "<?= base_url('providers') ?>?search=" + encodeURIComponent(keyword);
-            }
-        });
-
-        searchInput.addEventListener("keydown", function(e) {
-            if (e.key === "Enter") {
+        if (searchBtn && searchInput) {
+            searchBtn.addEventListener("click", function() {
                 const keyword = searchInput.value.trim();
                 if (keyword) {
                     window.location.href = "<?= base_url('providers') ?>?search=" + encodeURIComponent(keyword);
                 }
-            }
-        });
-    }
-});
+            });
+
+            searchInput.addEventListener("keydown", function(e) {
+                if (e.key === "Enter") {
+                    const keyword = searchInput.value.trim();
+                    if (keyword) {
+                        window.location.href = "<?= base_url('providers') ?>?search=" + encodeURIComponent(keyword);
+                    }
+                }
+            });
+        }
+    });
 </script>
